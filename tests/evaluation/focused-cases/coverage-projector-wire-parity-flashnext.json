@@ -1,0 +1,161 @@
+{
+  "source": {
+    "report": "eval-results/harness-flashnext-v15-p18-full-matrix-live-2026-10-14.json",
+    "reportSha256": "d1bfa447c2336ea2dac6995eaed9544b67d190a2143cad040f50d9c1343726c1",
+    "caseId": "topic-meaningHanzi",
+    "repetition": 1,
+    "callIndex": 12
+  },
+  "context": {
+    "kind": "topic",
+    "settings": {
+      "quizLevel": "meaningHanzi",
+      "complexity": "phrases",
+      "scope": "everyday",
+      "focus": "characters",
+      "topic": "Courtesy"
+    },
+    "objective": "Distinguish thanking someone from apologizing.",
+    "conversationContext": "Zheng: 谢谢！对不起。\nThank you! Sorry.",
+    "targets": [
+      {
+        "cardId": "evaluation-card-1",
+        "hanzi": "谢谢",
+        "meaning": "thank you"
+      },
+      {
+        "cardId": "evaluation-card-2",
+        "hanzi": "对不起",
+        "meaning": "sorry"
+      }
+    ],
+    "sources": [
+      {
+        "id": "evaluation-card-source-1",
+        "title": "谢谢 — learning card",
+        "excerpt": "谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition."
+      },
+      {
+        "id": "evaluation-card-source-2",
+        "title": "对不起 — learning card",
+        "excerpt": "对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition."
+      }
+    ],
+    "graph": {
+      "overview": "Recognize 谢谢 as the expression used to thank someone, not to apologize. Recognize 对不起 as the expression used to apologize for a mistake or inconvenience, not to thank someone.",
+      "waypoints": [
+        {
+          "id": "w1",
+          "cardIds": [
+            "evaluation-card-1"
+          ],
+          "dependsOn": [],
+          "objective": "Recognize 谢谢 as the expression used to thank someone, not to apologize.",
+          "explanation": "谢谢 means \"thank you.\" You say it when someone does something for you or gives you something, to show gratitude. It is not used when you have done something wrong; that is a different expression.",
+          "exampleHanzi": "谢谢！",
+          "exampleMeaning": "Thank you!",
+          "sourceIds": [
+            "evaluation-card-source-1"
+          ]
+        },
+        {
+          "id": "w2",
+          "cardIds": [
+            "evaluation-card-2"
+          ],
+          "dependsOn": [
+            "w1"
+          ],
+          "objective": "Recognize 对不起 as the expression used to apologize for a mistake or inconvenience, not to thank someone.",
+          "explanation": "对不起 means \"sorry.\" You say it when you have done something wrong, caused a problem, or inconvenienced someone, to apologize. It is not used to show gratitude when someone helps you; for that you say 谢谢. So the two expressions fill opposite situations: 谢谢 for a favor received, 对不起 for a fault you caused.",
+          "exampleHanzi": "对不起。",
+          "exampleMeaning": "Sorry.",
+          "sourceIds": [
+            "evaluation-card-source-2"
+          ]
+        }
+      ]
+    },
+    "phase": "practice",
+    "currentQuestions": [],
+    "coverage": [],
+    "proposedDirections": "1. (w1, w2) Missing understanding: choosing the correct expression based on who caused what — gratitude for a received favor vs. apology for one's own fault. No practice item yet contrasts the two in a single decision point; current graph has no question stems at all. Ask the learner to identify which expression fits a situation where one person helps versus where one person causes a problem.\n\n2. (w2) Missing understanding: 对不起 covers causing an inconvenience or problem, not only a clear wrongdoing. No evidence yet that the learner maps a minor accidental inconvenience (e.g., bumping into someone, being late) onto 对不起 rather than 谢谢.\n\n3. (w1) Missing understanding: 谢谢 responds to something given or done for the learner, and is not used when the learner is at fault. No evidence yet that the learner rejects 谢谢 in a fault scenario; a recognition item where the situation is the learner's own mistake would isolate this distinction.",
+    "recognitionEligibleWaypointIds": [
+      "w2"
+    ],
+    "question": {
+      "id": "q1",
+      "stem": "In which situation would a speaker say this expression?",
+      "passage": "对不起。",
+      "options": [
+        {
+          "id": "A",
+          "text": "The speaker accidentally bumped into someone and caused them a small problem"
+        },
+        {
+          "id": "B",
+          "text": "Someone handed the speaker a gift and the speaker wants to show gratitude"
+        },
+        {
+          "id": "C",
+          "text": "The speaker is meeting someone for the first time and wants to be polite"
+        },
+        {
+          "id": "D",
+          "text": "The speaker did not hear what was said and wants it said again"
+        }
+      ]
+    },
+    "generationMode": "evaluate_question_coverage"
+  },
+  "reviewedQuestion": {
+    "cardId": "evaluation-card-2",
+    "stem": "In which situation would a speaker say this expression?",
+    "passage": "对不起。",
+    "options": [
+      {
+        "id": "A",
+        "text": "The speaker accidentally bumped into someone and caused them a small problem"
+      },
+      {
+        "id": "B",
+        "text": "Someone handed the speaker a gift and the speaker wants to show gratitude"
+      },
+      {
+        "id": "C",
+        "text": "The speaker is meeting someone for the first time and wants to be polite"
+      },
+      {
+        "id": "D",
+        "text": "The speaker did not hear what was said and wants it said again"
+      }
+    ],
+    "quizLevel": "meaningHanzi",
+    "correctOptionId": "A",
+    "explanation": "This expression is an apology, used when the speaker has caused a mistake, problem, or inconvenience — such as accidentally bumping into someone. It is not gratitude: when someone gives you a gift or does you a favor, a different expression is used to thank them. It also does not serve as a first-time greeting or as a request to repeat something.",
+    "distractorFeedback": [
+      {
+        "optionId": "B",
+        "explanation": "This expression is an apology, used when the speaker has caused a mistake, problem, or inconvenience — such as accidentally bumping into someone. It is not gratitude: when someone gives you a gift or does you a favor, a different expression is used to thank them. It also does not serve as a first-time greeting or as a request to repeat something."
+      },
+      {
+        "optionId": "C",
+        "explanation": "This expression is an apology, used when the speaker has caused a mistake, problem, or inconvenience — such as accidentally bumping into someone. It is not gratitude: when someone gives you a gift or does you a favor, a different expression is used to thank them. It also does not serve as a first-time greeting or as a request to repeat something."
+      },
+      {
+        "optionId": "D",
+        "explanation": "This expression is an apology, used when the speaker has caused a mistake, problem, or inconvenience — such as accidentally bumping into someone. It is not gratitude: when someone gives you a gift or does you a favor, a different expression is used to thank them. It also does not serve as a first-time greeting or as a request to repeat something."
+      }
+    ],
+    "sourceIds": [
+      "evaluation-card-source-1",
+      "evaluation-card-source-2"
+    ],
+    "objective": "Recognize the apology expression as covering a fault or inconvenience caused by the speaker, contrasted with gratitude for a received favor.",
+    "workedExample": {
+      "hanzi": "对不起。",
+      "meaning": "Sorry.",
+      "explanation": "对不起 means \"sorry.\" You say it when you have done something wrong, caused a problem, or inconvenienced someone, to apologize. It is not used to show gratitude when someone helps you; for that you say 谢谢. So the two expressions fill opposite situations: 谢谢 for a favor received, 对不起 for a fault you caused."
+    }
+  }
+}

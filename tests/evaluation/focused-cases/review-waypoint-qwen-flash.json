@@ -1,0 +1,35 @@
+{
+  "format": "visual-language-focused-stage-cases",
+  "version": 1,
+  "status": "finished",
+  "description": "Frozen authored lesson context; no credentials or learner workspace data.",
+  "results": [
+    {
+      "caseId": "topic-meaningHanzi",
+      "calls": [
+        {
+          "mode": "verify_lesson_waypoint",
+          "repair": false,
+          "request": {
+            "generationTrace": {
+              "stage": "reviewWaypoint"
+            },
+            "messages": [
+              {
+                "role": "user",
+                "content": "{\"generationMode\":\"verify_lesson_waypoint\",\"kind\":\"topic\",\"settings\":{\"quizLevel\":\"meaningHanzi\",\"complexity\":\"phrases\",\"scope\":\"everyday\",\"focus\":\"characters\",\"topic\":\"Courtesy\"},\"objective\":\"Distinguish thanking someone from apologizing.\",\"conversationContext\":\"Zheng: 谢谢！对不起。\\nThank you! Sorry.\",\"targets\":[{\"cardId\":\"card-af65cb84-7472-4e6d-aa5f-5d33efa22d56\",\"hanzi\":\"谢谢\",\"meaning\":\"thank you\"},{\"cardId\":\"card-bf6472fd-a651-4357-8ac3-9097cdf5684b\",\"hanzi\":\"对不起\",\"meaning\":\"sorry\"}],\"sources\":[{\"id\":\"source-7cc26acf-e256-4bde-9ebe-c6f83ae6e9d5\",\"title\":\"谢谢 — learning card\",\"excerpt\":\"谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition.\"},{\"id\":\"source-ca547a69-b6e7-471c-b52b-bf6aa44e577d\",\"title\":\"对不起 — learning card\",\"excerpt\":\"对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition.\"}],\"graph\":{\"overview\":\"\",\"waypoints\":[]},\"candidate\":{\"id\":\"w1\",\"cardIds\":[\"card-af65cb84-7472-4e6d-aa5f-5d33efa22d56\"],\"dependsOn\":[],\"objective\":\"Recognize 谢谢 as the expression used to thank someone.\",\"explanation\":\"谢谢 means \\\"thank you.\\\" Use it when someone has done something for you or given you something. It looks toward a kindness you received, not a mistake you made.\",\"exampleHanzi\":\"谢谢！\",\"exampleMeaning\":\"Thank you!\",\"sourceIds\":[\"source-7cc26acf-e256-4bde-9ebe-c6f83ae6e9d5\"]}}\n\nTool call:\nverify_lesson_waypoint(decision: \"accept\" | \"revise\" | \"reject\", reason: string)\nSubmit exactly one native tool call."
+              }
+            ],
+            "tools": [
+              {
+                "function": {
+                  "name": "verify_lesson_waypoint"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

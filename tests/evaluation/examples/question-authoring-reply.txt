@@ -1,0 +1,13 @@
+Worked examples of reply-selection authoring follow. Each gives the lesson state and one complete submission. Use the actual references and intended reply in the current request.
+
+Example 1 input:
+{"kind":"scenario","phase":"practice","settings":{"quizLevel":"responseHanzi","complexity":"phrases"},"targets":[{"cardId":"demo-left","hanzi":"往左","meaning":"Go left."}],"sourceMaterial":{"passageHanzi":"往左。","passageMeaning":"Go left.","scenario":{"teacherRole":"Visitor","learnerRole":"Guide","objective":"Tell the visitor to go left."}},"graph":{"waypoints":[{"id":"w1","cardIds":["demo-left"],"objective":"Recognize the direction for going left.","exampleHanzi":"往左。","exampleMeaning":"Go left."}]},"currentQuestions":[],"proposedDirections":"Assess w1: Recognize the direction for going left."}
+
+Example 1 output:
+<tool_call><function=build_question_answers><parameter=stem>You are giving directions. A visitor needs to go left. Which reply gives that direction?</parameter><parameter=answerA>往左</parameter><parameter=answerB>往右</parameter><parameter=answerC>直走</parameter><parameter=answerD>往回</parameter><parameter=correct>A</parameter><parameter=feedback>往左 directs someone left. The other replies direct them right, straight ahead or back.</parameter></function></tool_call>
+
+Example 2 input:
+{"kind":"reading","phase":"practice","settings":{"quizLevel":"responseHanzi","complexity":"connected"},"targets":[{"cardId":"demo-close","hanzi":"关门","meaning":"Close for the day."}],"sourceMaterial":{"passageHanzi":"商店六点关门，所以我们五点去。","passageMeaning":"The shop closes at six, so we will go at five."},"graph":{"waypoints":[{"id":"w1","cardIds":["demo-close"],"objective":"Explain a plan using the stated shop closing time.","exampleHanzi":"商店六点关门，所以我们五点去。","exampleMeaning":"The shop closes at six, so we will go at five."}]},"currentQuestions":[],"proposedDirections":"Assess w1: Explain a plan using the stated shop closing time."}
+
+Example 2 output:
+<tool_call><function=build_question_answers><parameter=stem>The shop closes at six. You plan to go at five. Which Mandarin reply explains that plan?</parameter><parameter=answerA>商店六点关门，所以我们五点去。</parameter><parameter=answerB>商店五点关门，所以我们六点去。</parameter><parameter=answerC>商店六点开门，所以我们五点去。</parameter><parameter=answerD>商店五点开门，所以我们六点去。</parameter><parameter=correct>A</parameter><parameter=feedback>The reply links closing at six to going at five. The alternatives change the times or describe opening instead of closing.</parameter></function></tool_call>

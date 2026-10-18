@@ -1,0 +1,14 @@
+{
+  "name": "CC-CEDICT",
+  "publisher": "MDBG and CC-CEDICT contributors",
+  "date": "2026-09-10T22:27:42Z",
+  "entries": 125050,
+  "file": "cc-cedict-20260910-9e8c364a.txt.gz",
+  "url": "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz",
+  "source": "https://www.mdbg.net/chinese/dictionary?page=cedict",
+  "license": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "bytes": 3973985,
+  "expandedBytes": 9847371,
+  "expandedSha256": "4e1d27ebc02b0b4f15370ab102e1dbc1928113b7438eee856a6a76de5d121584",
+  "sha256": "9e8c364a020db10248c6dcf686d1028e3f552474aa2b819b8199c39ff0949131"
+}

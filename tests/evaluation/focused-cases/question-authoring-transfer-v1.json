@@ -1,0 +1,202 @@
+{
+  "format": "visual-language-authoring-transfer-inputs",
+  "version": 1,
+  "purpose": "Locked content-transfer inputs prepared before two-shot candidate inference results. No semantic gold labels or successful-output examples.",
+  "quizLevels": [
+    "meaningPinyin",
+    "meaningHanzi",
+    "responsePinyin",
+    "responseHanzi"
+  ],
+  "phase": "practice",
+  "scopeLimit": "Twelve input variants cover three lesson kinds, four presentation levels and three assigned complexities. Check-phase novelty, multiple targets, prerequisites, corrections and the full complexity cross-product remain outside this diagnostic.",
+  "cases": [
+    {
+      "id": "transfer-topic",
+      "context": {
+        "kind": "topic",
+        "settings": {
+          "quizLevel": "meaningHanzi",
+          "complexity": "simple",
+          "scope": "everyday",
+          "focus": "complexity",
+          "topic": "Waiting for assistance"
+        },
+        "objective": "Recognize a request to wait briefly.",
+        "conversationContext": "Authored evaluation input, not retrieved evidence.",
+        "targets": [
+          {
+            "cardId": "transfer-topic",
+            "hanzi": "请稍等",
+            "meaning": "please wait a moment"
+          }
+        ],
+        "sources": [
+          {
+            "id": "transfer-evidence-topic",
+            "title": "Authored transfer input",
+            "excerpt": "请稍等。\nPlease wait a moment.\nSelected expression: 请稍等 — please wait a moment"
+          }
+        ],
+        "phase": "practice",
+        "graph": {
+          "overview": "Recognize a request to wait briefly.",
+          "waypoints": [
+            {
+              "id": "w1",
+              "cardIds": [
+                "transfer-topic"
+              ],
+              "dependsOn": [],
+              "objective": "Recognize a request to wait briefly.",
+              "explanation": "Please wait a moment.",
+              "exampleHanzi": "请稍等。",
+              "exampleMeaning": "Please wait a moment.",
+              "sourceIds": [
+                "transfer-evidence-topic"
+              ]
+            }
+          ]
+        },
+        "currentQuestions": [],
+        "practiceQuestions": [],
+        "coverage": [],
+        "remainingWaypointIds": [
+          "w1"
+        ],
+        "proposedDirections": "Assess w1: Recognize a request to wait briefly."
+      }
+    },
+    {
+      "id": "transfer-scenario",
+      "context": {
+        "kind": "scenario",
+        "settings": {
+          "quizLevel": "meaningHanzi",
+          "complexity": "phrases",
+          "scope": "topic",
+          "focus": "complexity",
+          "topic": "Taking food away"
+        },
+        "objective": "Recognize a request to pack food to take away.",
+        "conversationContext": "Authored evaluation input, not retrieved evidence.",
+        "targets": [
+          {
+            "cardId": "transfer-scenario",
+            "hanzi": "打包",
+            "meaning": "pack food to take away"
+          }
+        ],
+        "sources": [
+          {
+            "id": "transfer-evidence-scenario",
+            "title": "Authored transfer input",
+            "excerpt": "打包\nPack it to take away.\nSelected expression: 打包 — pack food to take away"
+          }
+        ],
+        "phase": "practice",
+        "graph": {
+          "overview": "Recognize a request to pack food to take away.",
+          "waypoints": [
+            {
+              "id": "w1",
+              "cardIds": [
+                "transfer-scenario"
+              ],
+              "dependsOn": [],
+              "objective": "Recognize a request to pack food to take away.",
+              "explanation": "Pack it to take away.",
+              "exampleHanzi": "打包",
+              "exampleMeaning": "Pack it to take away.",
+              "sourceIds": [
+                "transfer-evidence-scenario"
+              ]
+            }
+          ]
+        },
+        "currentQuestions": [],
+        "practiceQuestions": [],
+        "coverage": [],
+        "remainingWaypointIds": [
+          "w1"
+        ],
+        "proposedDirections": "Assess w1: Recognize a request to pack food to take away.",
+        "sourceMaterial": {
+          "draftId": "transfer-draft-scenario",
+          "passageHanzi": "打包",
+          "passageMeaning": "Pack it to take away.",
+          "scenario": {
+            "situation": "A customer wants to take their food away instead of eating at the restaurant.",
+            "teacherRole": "Restaurant server",
+            "learnerRole": "Customer",
+            "openingHanzi": "在这儿吃还是打包？",
+            "openingMeaning": "Eat here or take it away?",
+            "objective": "Ask for the food to be packed to take away."
+          }
+        }
+      }
+    },
+    {
+      "id": "transfer-reading",
+      "context": {
+        "kind": "reading",
+        "settings": {
+          "quizLevel": "meaningHanzi",
+          "complexity": "connected",
+          "scope": "topic",
+          "focus": "complexity",
+          "topic": "Library opening hours"
+        },
+        "objective": "Understand when the library opens and how that explains the return time.",
+        "conversationContext": "Authored evaluation input, not retrieved evidence.",
+        "targets": [
+          {
+            "cardId": "transfer-reading",
+            "hanzi": "开放",
+            "meaning": "be open to the public"
+          }
+        ],
+        "sources": [
+          {
+            "id": "transfer-evidence-reading",
+            "title": "Authored transfer input",
+            "excerpt": "图书馆九点开放，所以我们九点再来。\nThe library opens at nine, so we will come back at nine.\nSelected expression: 开放 — be open to the public"
+          }
+        ],
+        "phase": "practice",
+        "graph": {
+          "overview": "Understand when the library opens and how that explains the return time.",
+          "waypoints": [
+            {
+              "id": "w1",
+              "cardIds": [
+                "transfer-reading"
+              ],
+              "dependsOn": [],
+              "objective": "Understand when the library opens and how that explains the return time.",
+              "explanation": "The library opens at nine, so we will come back at nine.",
+              "exampleHanzi": "图书馆九点开放，所以我们九点再来。",
+              "exampleMeaning": "The library opens at nine, so we will come back at nine.",
+              "sourceIds": [
+                "transfer-evidence-reading"
+              ]
+            }
+          ]
+        },
+        "currentQuestions": [],
+        "practiceQuestions": [],
+        "coverage": [],
+        "remainingWaypointIds": [
+          "w1"
+        ],
+        "proposedDirections": "Assess w1: Understand when the library opens and how that explains the return time.",
+        "sourceMaterial": {
+          "draftId": "transfer-draft-reading",
+          "passageHanzi": "图书馆九点开放，所以我们九点再来。",
+          "passageMeaning": "The library opens at nine, so we will come back at nine.",
+          "scenario": null
+        }
+      }
+    }
+  ]
+}

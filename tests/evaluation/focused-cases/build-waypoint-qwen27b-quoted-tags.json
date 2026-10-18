@@ -1,0 +1,79 @@
+{
+  "format": "visual-language-frozen-stage-context",
+  "version": 1,
+  "stage": "buildWaypoint",
+  "source": {
+    "report": "eval-results/harness-qwen27b-v7-full-matrix-live-2026-10-13.json",
+    "sha256": "ccd0a10eaad69a123ee96509ca6620105475c1cc92b73ea21745823f850ea7f1",
+    "status": "interrupted",
+    "caseId": "topic-meaningPinyin",
+    "callIndex": 3
+  },
+  "context": {
+    "kind": "topic",
+    "settings": {
+      "quizLevel": "meaningPinyin",
+      "complexity": "phrases",
+      "scope": "everyday",
+      "focus": "characters",
+      "topic": "Courtesy"
+    },
+    "objective": "Distinguish thanking someone from apologizing.",
+    "conversationContext": "Zheng: 谢谢！对不起。\nThank you! Sorry.",
+    "targets": [
+      {
+        "cardId": "card-665d96d5-2121-4384-9017-8854a57bbee9",
+        "hanzi": "谢谢",
+        "meaning": "thank you"
+      },
+      {
+        "cardId": "card-f45b418d-3303-4c54-bc04-d1137e262184",
+        "hanzi": "对不起",
+        "meaning": "sorry"
+      }
+    ],
+    "sources": [
+      {
+        "id": "source-657087a2-d180-44d9-9854-3d7b42d3cf6e",
+        "title": "谢谢 — learning card",
+        "excerpt": "谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition."
+      },
+      {
+        "id": "source-3ca99e20-172b-4557-b6bc-85acaaac986e",
+        "title": "对不起 — learning card",
+        "excerpt": "对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition."
+      }
+    ],
+    "graph": {
+      "overview": "",
+      "waypoints": [
+        {
+          "id": "w1",
+          "cardIds": [
+            "card-665d96d5-2121-4384-9017-8854a57bbee9"
+          ],
+          "dependsOn": [],
+          "objective": "Recognize 谢谢 as the expression used to thank someone.",
+          "explanation": "谢谢 is the standard Mandarin phrase for expressing gratitude. It is used when someone has helped you, given you something, or done a kind act.",
+          "exampleHanzi": "谢谢",
+          "exampleMeaning": "thank you",
+          "sourceIds": [
+            "source-657087a2-d180-44d9-9854-3d7b42d3cf6e"
+          ]
+        }
+      ]
+    },
+    "nextWaypointId": "w2",
+    "revision": {
+      "reason": "The lesson currently only teaches 谢谢 (thank you), but the objective is to distinguish thanking from apologizing. A waypoint for 对不起 (sorry) is missing to complete the contrast."
+    },
+    "generationMode": "add_lesson_waypoint"
+  },
+  "malformedSubmissions": [
+    "<tool_call><function=add_lesson_waypoint><parameter=cardIds>[\"card-f45b418d-3303-4c54-bc04-d1137e262184\"]</parameter><parameter=dependsOn>[\"w1\"]</parameter><parameter=objective\">Recognize 对不起 as the expression used to apologize.</parameter><parameter=explanation\">对不起 is the standard Mandarin phrase for expressing an apology. It is used when you have made a mistake, caused inconvenience, or need to express regret for an action.</parameter><parameter=exampleHanzi>对不起</parameter><parameter=exampleMeaning>sorry</parameter><parameter=sourceIds>[\"source-3ca99e20-172b-4557-b6bc-85acaaac986e\"]</parameter></function></tool_call>",
+    "<tool_call><function=add_lesson_waypoint><parameter=cardIds>[\"card-f45b418d-3303-4c54-bc04-d1137e262184\"]</parameter><parameter=dependsOn>[\"w1\"]</parameter><parameter=objective\">Recognize 对不起 as the expression used to apologize.</parameter><parameter=explanation\">对不起 is the standard Mandarin phrase for expressing an apology. It is used when you have made a mistake, caused inconvenience, or need to express regret for an action.</parameter><parameter=exampleHanzi>对不起</parameter><parameter=exampleMeaning>sorry</parameter><parameter=sourceIds>[\"source-3ca99e20-172b-4557-b6bc-85acaaac986e\"]</parameter></function></tool_call>",
+    "<tool_call><function=add_lesson_waypoint><parameter=cardIds>[\"card-f45b418d-3303-4c54-bc04-d1137e262184\"]</parameter><parameter=dependsOn>[\"w1\"]</parameter><parameter=objective\">Recognize 对不起 as the expression used to apologize.</parameter><parameter=explanation\">对不起 is the standard Mandarin phrase for expressing an apology. It is used when you have made a mistake, caused inconvenience, or need to say sorry for a transgression.</parameter><parameter=exampleHanzi>对不起</parameter><parameter=exampleMeaning>sorry</parameter><parameter=sourceIds>[\"source-3ca99e20-172b-4557-b6bc-85acaaac986e\"]</parameter></function></tool_call>",
+    "<tool_call><function=add_lesson_waypoint><parameter=cardIds>[\"card-f45b418d-3303-4c54-bc04-d1137e262184\"]</parameter><parameter=dependsOn>[\"w1\"]</parameter><parameter=objective\">Recognize 对不起 as the expression used to apologize.</parameter><parameter=explanation\">对不起 is the standard Mandarin phrase for expressing an apology. It is used when you have made a mistake, caused inconvenience, or need to express regret for an action.</parameter><parameter=exampleHanzi>对不起</parameter><parameter=exampleMeaning>sorry</parameter><parameter=sourceIds>[\"source-3ca99e20-172b-4557-b6bc-85acaaac986e\"]</parameter></function></tool_call>",
+    "<tool_call><function=add_lesson_waypoint><parameter=cardIds>[\"card-f45b418d-3303-4c54-bc04-d1137e262184\"]</parameter><parameter=dependsOn>[\"w1\"]</parameter><parameter=objective\">Recognize 对不起 as the expression used to apologize.</parameter><parameter=explanation\">对不起 is the standard Mandarin phrase for expressing an apology. It is used when you have made a mistake, caused inconvenience, or need to express regret for an action.</parameter><parameter=exampleHanzi>对不起</parameter><parameter=exampleMeaning>sorry</parameter><parameter=sourceIds>[\"source-3ca99e20-172b-4557-b6bc-85acaaac986e\"]</parameter></function></tool_call>"
+  ]
+}

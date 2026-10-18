@@ -1,0 +1,233 @@
+import { openTool } from './navigation'
+import { expect, test, type Page } from '@playwright/test'
+import { defaultSettings } from '../../src/lib/settings'
+import type { Workspace } from '../../src/lib/domain/workspace'
+
+const base = 'https://model-fixture.example/v1', key = 'synthetic-model-key'
+async function ready(page: Page) { await page.goto('/'); await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible() }
+async function openModels(page: Page) {
+  if (!await page.locator('details.model-browser').evaluate(e => (e as HTMLDetailsElement).open)) {
+    await page.getByText('Choose another model', { exact: true }).click()
+  }
+}
+test('first-run mobile setup exposes the key and opens the selected provider key page in a new tab', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 568 })
+  await ready(page)
+  await expect(page.getByRole('textbox', { name: 'Message to Zheng' })).toBeInViewport({ ratio: 1 })
+  await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeInViewport({ ratio: 1 })
+  const connect = page.getByRole('button', { name: 'Connect Nebius', exact: true })
+  await connect.click()
+  await expect(page.getByRole('dialog', { name: 'AI connection', exact: true })).toBeVisible()
+  const key = page.getByLabel('Nebius API key', { exact: true })
+  await expect(key).toBeInViewport({ ratio: 1 })
+  await expect(page.locator('details.advanced')).not.toHaveAttribute('open', '')
+  await expect(page.locator('details.optional-search')).not.toHaveAttribute('open', '')
+  await key.fill('keep-this-unsaved-key')
+  const link = page.getByRole('link', { name: /Get your Nebius API key/ })
+  await expect(link).toHaveAttribute('href', 'https://tokenfactory.nebius.com/')
+  await expect(link).toHaveAttribute('target', '_blank')
+  await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+  await page.context().route('https://tokenfactory.nebius.com/', route => route.fulfill({ contentType: 'text/html', body: '<title>Nebius key-page fixture</title>' }))
+  const popup = page.waitForEvent('popup')
+  await link.click()
+  const providerPage = await popup
+  await expect(providerPage).toHaveURL('https://tokenfactory.nebius.com/')
+  await providerPage.close()
+  await expect(key).toHaveValue('keep-this-unsaved-key')
+  let rejected = false
+  await page.route('https://api.tokenfactory.nebius.com/v1/models', route => rejected
+    ? route.fulfill({ status: 401, json: { error: { message: 'Invalid key' } } })
+    : route.fulfill({ json: { data: [{ id: 'deepseek-ai/DeepSeek-V4-Flash-0731' }] } }))
+  await openModels(page)
+  await page.getByRole('button', { name: 'Load provider models', exact: true }).click()
+  await expect(page.getByLabel('Available models')).toBeFocused()
+  rejected = true
+  await page.getByRole('button', { name: 'Load provider models', exact: true }).click()
+  await expect(key).toBeFocused()
+  await expect(page.getByRole('alert')).toContainText('valid API key')
+  await expect(page.getByLabel('Available models')).toHaveCount(0)
+  await page.getByLabel('Provider', { exact: true }).selectOption('minimax')
+  await expect(page.getByRole('link', { name: /Get your MiniMax API key/ })).toHaveAttribute('href', 'https://platform.minimax.io/console/access')
+  await expect(page.getByLabel('MiniMax API key', { exact: true })).toHaveValue('')
+  await page.keyboard.press('Escape')
+  await expect(connect).toBeFocused()
+  expect(await page.evaluate(() => localStorage.getItem('vl-settings-v2'))).toBeNull()
+})
+test('fresh provider setup defaults to Nebius and keeps built-in provider keys isolated', async ({ page }) => {
+  await ready(page)
+  await openTool(page, 'AI connection')
+  const provider = page.getByRole('combobox', { name: 'Provider', exact: true })
+  await expect(provider).toHaveValue('nebius')
+  await expect(provider.locator('option')).toHaveText(['Nebius', 'Featherless', 'OpenAI', 'Anthropic Claude', 'Google Gemini', 'Alibaba Cloud', 'MiniMax', 'OpenRouter', 'Custom endpoint'])
+  await expect(page.getByLabel('Model ID', { exact: true })).toHaveValue('deepseek-ai/DeepSeek-V4-Flash-0731')
+  await page.getByLabel('Nebius API key', { exact: true }).fill('nebius-fixture-key')
+  await provider.selectOption('minimax')
+  await expect(page.getByLabel('MiniMax API key', { exact: true })).toHaveValue('')
+  await page.getByLabel('MiniMax API key', { exact: true }).fill('minimax-fixture-key')
+  await expect(page.getByLabel('API endpoint')).toHaveValue('https://api.minimax.io/v1')
+  await page.route('https://api.minimax.io/v1/chat/completions', async route => {
+    expect(route.request().headers().authorization).toBe('Bearer minimax-fixture-key')
+    expect(route.request().postDataJSON()).toMatchObject({ model: 'MiniMax-M2.7', reasoning_split: true })
+    await route.fulfill({ contentType: 'text/event-stream', body: frame('你好 — hello.', 'MiniMax-M2.7', 'stop') + 'data: [DONE]\n\n' })
+  })
+  await page.getByRole('button', { name: 'Test connection', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('status')).toContainText('Connected to MiniMax')
+  await provider.selectOption('nebius')
+  await expect(page.getByLabel('Nebius API key', { exact: true })).toHaveValue('nebius-fixture-key')
+  await provider.selectOption('minimax')
+  await page.getByRole('button', { name: 'Save connection', exact: true }).click()
+  await page.reload()
+  await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
+  await openTool(page, 'AI connection')
+  await expect(provider).toHaveValue('minimax')
+  await expect(page.getByLabel('MiniMax API key', { exact: true })).toHaveValue('minimax-fixture-key')
+})
+async function settings(page: Page, model = '') {
+  await openTool(page, 'AI connection')
+  await page.getByRole('combobox', { name: 'Provider', exact: true }).selectOption('custom')
+  await page.getByLabel('API endpoint').fill(base)
+  await page.getByLabel('Model ID', { exact: true }).fill(model)
+  await page.getByLabel('Custom endpoint API key').fill(key)
+}
+async function backup(page: Page): Promise<Workspace> {
+  await openTool(page, 'Backup & restore')
+  const pending = page.waitForEvent('download'); await page.getByRole('button', { name: 'Download full backup' }).click()
+  const stream = await (await pending).createReadStream(), chunks: Buffer[] = []
+  for await (const chunk of stream!) chunks.push(Buffer.from(chunk))
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  const text = Buffer.concat(chunks).toString(); expect(text).not.toContain(key)
+  return JSON.parse(text).data
+}
+const frame = (text: string, model = 'reported-fixture', finish: string | null = null) => `data: ${JSON.stringify({ model, choices: [{ index: 0, delta: { content: text }, finish_reason: finish }] })}\n\n`
+
+test('provider IDs are chosen explicitly and bad test replies do not masquerade as a successful model check', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 568 })
+  const requests: string[] = []
+  page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:4173')) requests.push(request.url()) })
+  await page.route(`${base}/models`, async route => {
+    expect(route.request().method()).toBe('GET')
+    expect(route.request().headers().authorization).toBe(`Bearer ${key}`)
+    expect(route.request().postData()).toBeNull()
+    await route.fulfill({ json: { data: [{ id: 'qwen3.8-max', baseUrl: 'https://must-not-follow.example', apiKey: 'not-authority' }, { id: 'qwen3.8-flash' }, { id: key }] } })
+  })
+  await page.route(`${base}/chat/completions`, route => route.fulfill({ contentType: 'text/event-stream', body: frame('!'.repeat(48), 'bad-probe', 'stop') + 'data: [DONE]\n\n' }))
+  await ready(page); await settings(page)
+  expect(requests).toEqual([])
+  await openModels(page)
+  await page.getByRole('button', { name: 'Load provider models', exact: true }).click()
+  await expect(page.getByLabel('Available models')).toBeVisible()
+  await page.getByLabel('Model search').fill('qwen3.8')
+  await expect(page.getByLabel('Model ID', { exact: true })).toHaveValue('')
+  await page.getByLabel('Available models').selectOption('qwen3.8-max')
+  await expect(page.getByLabel('Model ID', { exact: true })).toHaveValue('qwen3.8-max')
+  expect(await page.evaluate(() => localStorage.getItem('vl-settings-v2'))).toBeNull()
+  expect(requests).toEqual([`${base}/models`])
+  await expect(page.getByRole('button', { name: 'Save connection', exact: true })).toBeInViewport({ ratio: 1 })
+  await page.screenshot({ path: 'test-results/provider-model-picker-mobile.png', fullPage: true })
+  await page.getByRole('button', { name: 'Test connection', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('status')).toContainText('reply was not usable')
+  await expect(page.getByRole('dialog').getByRole('status')).not.toContainText('Connected to')
+  await expect(page.getByRole('region', { name: 'Model test reply' })).toContainText('!'.repeat(48))
+  await page.getByRole('button', { name: 'Save connection', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  const saved = await backup(page)
+  expect(saved.preferences.profiles.custom).toMatchObject({ baseUrl: base, model: 'qwen3.8-max' })
+  expect(saved.nodes).toHaveLength(1); expect(saved.drafts).toHaveLength(0); expect(saved.events).toHaveLength(0)
+  expect(requests).toEqual([`${base}/models`, `${base}/chat/completions`])
+})
+
+test('the older saved starter changes only after an explicit choice and save', async ({ page }) => {
+  await ready(page)
+  const old = defaultSettings(); old.selected = 'featherless'; old.profiles.featherless.model = 'Qwen/Qwen3-32B'; delete old.profiles.featherless.compatibility
+  old.profiles.featherless.apiKey = 'old-profile-fixture-key'; old.profiles.featherless.keyOrigin = 'https://api.featherless.ai'
+  await page.evaluate(value => localStorage.setItem('vl-settings-v2', JSON.stringify(value)), old)
+  await page.reload(); await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
+  await openTool(page, 'AI connection')
+  await expect(page.getByLabel('Model ID', { exact: true })).toHaveValue('Qwen/Qwen3-32B')
+  await page.getByRole('button', { name: 'Use current Featherless starter', exact: true }).click()
+  await expect(page.getByLabel('Model ID', { exact: true })).toHaveValue('deepseek-ai/DeepSeek-V4-Flash-0731')
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('vl-settings-v2')!))).toEqual(old)
+  await openTool(page, 'AI connection')
+  await page.getByRole('button', { name: 'Use current Featherless starter', exact: true }).click()
+  await page.getByRole('button', { name: 'Save connection', exact: true }).click()
+  await openTool(page, 'AI connection')
+  await expect(page.getByLabel('API compatibility')).toHaveValue('featherless')
+  await page.route('https://api.featherless.ai/v1/chat/completions', async route => {
+    expect(route.request().postDataJSON()).toMatchObject({ model: 'deepseek-ai/DeepSeek-V4-Flash-0731', chat_template_kwargs: { enable_thinking: false } })
+    expect(route.request().postDataJSON()).not.toHaveProperty('enable_thinking')
+    await route.fulfill({ contentType: 'text/event-stream', body: frame('你好 — hello.', 'deepseek-ai/DeepSeek-V4-Flash-0731', 'stop') + 'data: [DONE]\n\n' })
+  })
+  await page.getByRole('button', { name: 'Test connection', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('status')).toContainText('Connected to Featherless')
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  expect((await backup(page)).preferences.profiles.featherless).toMatchObject({ model: 'deepseek-ai/DeepSeek-V4-Flash-0731', compatibility: 'featherless' })
+})
+
+test('a repetition loop stops as an error; explicit retry keeps the original prompt, raw reply, provenance and unsent draft', async ({ page }) => {
+  const calls: { messages: { role: string; content: string }[] }[] = [], errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.route(`${base}/chat/completions`, async route => {
+    calls.push(route.request().postDataJSON())
+    const body = calls.length === 1 ? frame('!'.repeat(32), 'actual-bad-model') + frame('!'.repeat(32), 'actual-bad-model') + frame('This tail must not be consumed.', 'actual-bad-model', 'stop') : frame('你好！Hello. Let’s practice a greeting.', 'actual-good-model', 'stop')
+    await route.fulfill({ contentType: 'text/event-stream', body: body + 'data: [DONE]\n\n' })
+  })
+  await ready(page); await settings(page, 'requested-model')
+  await page.getByRole('button', { name: 'Save connection', exact: true }).click()
+  // Fill can target an inert textarea while the async settings dialog is still
+  // closing; wait for the same editable state an actual learner would see.
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.getByRole('textbox', { name: 'Message to Zheng' }).fill('Teach me a useful greeting.')
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
+  const original = page.locator('.svelte-flow__node-assistant').first()
+  await expect(original.locator('.error')).toContainText('repeated symbols')
+  await expect(original.locator('.model-info')).toContainText('actual-bad-model')
+  await expect(original).not.toContainText('This tail must not be consumed')
+  await original.locator('.configuration > summary').click()
+  await expect(original.getByRole('button', { name: 'Retry response', exact: true })).toBeEnabled()
+  expect(calls).toHaveLength(1)
+  await page.getByRole('textbox', { name: 'Message to Zheng' }).fill('Keep this unrelated draft.')
+  await original.getByRole('button', { name: 'Retry response', exact: true }).click()
+  await expect(page.locator('.svelte-flow__node-assistant').last()).toContainText('actual-good-model')
+  await expect(page.getByRole('textbox', { name: 'Message to Zheng' })).toHaveValue('Keep this unrelated draft.')
+  expect(calls).toHaveLength(2)
+  expect(calls[1]!.messages.filter(message => message.role === 'user').map(message => message.content)).toEqual(['Teach me a useful greeting.'])
+  expect(JSON.stringify(calls[1])).not.toContain('!'.repeat(32))
+  const saved = await backup(page), replies = saved.nodes.filter(node => node.type === 'assistant')
+  expect(saved.nodes.filter(node => node.type === 'user')).toHaveLength(1)
+  expect(replies).toHaveLength(2)
+  expect(replies[0]!.data).toMatchObject({ text: '!'.repeat(64), model: 'actual-bad-model', state: 'error' })
+  expect(replies[1]!.data).toMatchObject({ model: 'actual-good-model', state: 'complete', regeneratedFrom: replies[0]!.id })
+  expect(saved.view.composerDraft).toBe('Keep this unrelated draft.')
+  expect(saved.events).toHaveLength(0); expect(saved.cards).toHaveLength(0)
+  await page.reload(); await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
+  await expect(page.locator('.svelte-flow__node-assistant').first().locator('.error')).toContainText('repeated symbols')
+  expect(calls).toHaveLength(2); expect(errors).toEqual([])
+})
+
+test('closing model discovery ignores late results and an unsupported list still permits manual setup', async ({ page }) => {
+  let release: () => void = () => {}, requested = false
+  await page.route(`${base}/models`, async route => {
+    requested = true
+    await new Promise<void>(resolve => { release = resolve })
+    await route.fulfill({ json: { data: [{ id: 'late-model' }] } }).catch(() => {})
+  })
+  await ready(page); await settings(page)
+  await openModels(page)
+  await page.getByRole('button', { name: 'Load provider models', exact: true }).click()
+  await expect.poll(() => requested).toBe(true)
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  release()
+  expect(await page.evaluate(() => localStorage.getItem('vl-settings-v2'))).toBeNull()
+  await page.unroute(`${base}/models`)
+  await page.route(`${base}/models`, route => route.fulfill({ status: 404, body: key }))
+  await settings(page)
+  await openModels(page)
+  await page.getByRole('button', { name: 'Load provider models', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('status')).toContainText('manually')
+  await expect(page.getByRole('dialog').getByRole('status')).not.toContainText(key)
+  await page.getByLabel('Model ID', { exact: true }).fill('manual-model')
+  await page.getByRole('button', { name: 'Save connection', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  expect((await backup(page)).preferences.profiles.custom.model).toBe('manual-model')
+})

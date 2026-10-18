@@ -1,0 +1,35 @@
+{
+  "format": "visual-language-focused-stage-cases",
+  "version": 1,
+  "status": "finished",
+  "description": "Frozen authored lesson context; no credentials or learner workspace data.",
+  "results": [
+    {
+      "caseId": "topic-meaningHanzi",
+      "calls": [
+        {
+          "mode": "verify_lesson_graph",
+          "repair": false,
+          "request": {
+            "generationTrace": {
+              "stage": "reviewGraph"
+            },
+            "messages": [
+              {
+                "role": "user",
+                "content": "{\"generationMode\":\"verify_lesson_graph\",\"kind\":\"topic\",\"settings\":{\"quizLevel\":\"meaningHanzi\",\"complexity\":\"phrases\",\"scope\":\"everyday\",\"focus\":\"characters\",\"topic\":\"Courtesy\"},\"objective\":\"Distinguish thanking someone from apologizing.\",\"conversationContext\":\"Zheng: 谢谢！对不起。\\nThank you! Sorry.\",\"targets\":[{\"cardId\":\"card-d255687a-8691-435f-9834-170ad4841625\",\"hanzi\":\"谢谢\",\"meaning\":\"thank you\"},{\"cardId\":\"card-bb60c295-6c97-45e5-8b4c-c35c24886501\",\"hanzi\":\"对不起\",\"meaning\":\"sorry\"}],\"sources\":[{\"id\":\"source-2cffb4c2-a26a-4686-a0b9-f44fcb868aff\",\"title\":\"谢谢 — learning card\",\"excerpt\":\"谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition.\"},{\"id\":\"source-f5031b20-2ec5-4d89-af2b-8747854e8b90\",\"title\":\"对不起 — learning card\",\"excerpt\":\"对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition.\"}],\"graph\":{\"overview\":\"Recognize 谢谢 as the everyday Mandarin expression for thanking someone.\",\"waypoints\":[{\"id\":\"w1\",\"cardIds\":[\"card-d255687a-8691-435f-9834-170ad4841625\"],\"dependsOn\":[],\"objective\":\"Recognize 谢谢 as the everyday Mandarin expression for thanking someone.\",\"explanation\":\"谢谢 is the standard, everyday way to say “thank you” in Mandarin. You use it to express gratitude when someone helps you, gives you something, or does a kind thing. It is a polite, all-purpose thanks that works in most casual and formal situations.\",\"exampleHanzi\":\"谢谢\",\"exampleMeaning\":\"Thank you.\",\"sourceIds\":[\"source-2cffb4c2-a26a-4686-a0b9-f44fcb868aff\"]}]}}\n\nTool call:\nverify_lesson_graph(decision: \"accept\" | \"revise\" | \"reject\", reason: string, waypointId?: string)\nSubmit exactly one native tool call."
+              }
+            ],
+            "tools": [
+              {
+                "function": {
+                  "name": "verify_lesson_graph"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

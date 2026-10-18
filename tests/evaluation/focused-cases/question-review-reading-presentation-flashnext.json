@@ -1,0 +1,186 @@
+{
+  "provenance": {
+    "source": "eval-results/reading-review-presentation-conflict-v21-flashnext-source-2026-10-15.json",
+    "trialSha256": "5516fd1f010df2ceea0217b4b0e42f6d66cc7a5847330cb905926fadcf9ef7c9",
+    "callIndex": 16,
+    "requestHash": "9ace141db7ecc9a30a4c4816f08942451e838cfacae4c412472cbca9f47e0bff"
+  },
+  "context": {
+    "kind": "reading",
+    "settings": {
+      "quizLevel": "meaningPinyin",
+      "complexity": "connected",
+      "scope": "specialist",
+      "focus": "specificity",
+      "topic": "Recycling at an exhibition"
+    },
+    "objective": "Understand instructions about sorting waste and recycling at an exhibition.",
+    "conversationContext": "Authored reading snapshot, not a current news claim.",
+    "sourceMaterial": {
+      "draftId": "evaluation-source-draft",
+      "passageHanzi": "展览结束后，请分类投放垃圾。纸张可以回收利用，所以请放进回收箱。",
+      "passageMeaning": "After the exhibition, please sort the waste into the appropriate bins. Paper can be recycled, so please put it in the recycling bin.",
+      "scenario": null
+    },
+    "targets": [
+      {
+        "cardId": "evaluation-card-1",
+        "hanzi": "分类投放",
+        "meaning": "sort and put into the appropriate bins"
+      },
+      {
+        "cardId": "evaluation-card-2",
+        "hanzi": "回收利用",
+        "meaning": "recycle and reuse"
+      }
+    ],
+    "sources": [
+      {
+        "id": "evaluation-card-source-1",
+        "title": "分类投放 — learning card",
+        "excerpt": "分类投放 (fēn lèi tóu fàng) — sort and put into the appropriate bins. Sense: sort and put into the appropriate bins. Assessed skill: recognition."
+      },
+      {
+        "id": "evaluation-card-source-2",
+        "title": "回收利用 — learning card",
+        "excerpt": "回收利用 (huí shōu lì yòng) — recycle and reuse. Sense: recycle and reuse. Assessed skill: recognition."
+      },
+      {
+        "id": "authored-source",
+        "title": "Authored evaluation snapshot (not retrieved)",
+        "excerpt": "展览结束后，请分类投放垃圾。纸张可以回收利用，所以请放进回收箱。\nAfter the exhibition, please sort the waste into the appropriate bins. Paper can be recycled, so please put it in the recycling bin."
+      }
+    ],
+    "graph": {
+      "overview": "Recognize 分类投放 as the instruction to sort waste and put it into the appropriate bins. Understand 回收利用 as \"recycle and reuse\" and see how 所以 links paper's recyclability to the instruction to put it in the recycling bin.",
+      "waypoints": [
+        {
+          "id": "w1",
+          "cardIds": [
+            "evaluation-card-1"
+          ],
+          "dependsOn": [],
+          "objective": "Recognize 分类投放 as the instruction to sort waste and put it into the appropriate bins.",
+          "explanation": "分类 means \"sort into categories\" and 投放 means \"put/deliver (something) into a place.\" Together, 分类投放垃圾 is the instruction to sort the waste and place each type in the correct bin. In the passage this instruction is given for after the exhibition ends, so it is a required action, not a suggestion about one item only.",
+          "exampleHanzi": "展览结束后，请分类投放垃圾。",
+          "exampleMeaning": "After the exhibition, please sort the waste into the appropriate bins.",
+          "sourceIds": [
+            "evaluation-card-source-1",
+            "authored-source"
+          ]
+        },
+        {
+          "id": "w2",
+          "cardIds": [
+            "evaluation-card-2"
+          ],
+          "dependsOn": [
+            "w1"
+          ],
+          "objective": "Understand 回收利用 as \"recycle and reuse\" and see how 所以 links paper's recyclability to the instruction to put it in the recycling bin.",
+          "explanation": "回收 means \"collect back / recover\" and 利用 means \"make use of,\" so 回收利用 is \"recycle and reuse.\" In the passage it describes a property of one material: 纸张可以回收利用 — paper can be recycled. The word 所以 (\"so\") then turns that property into a specific instruction: 请放进回收箱 — put it in the recycling bin (回收箱 is the bin for recyclables). This is narrower than w1's general instruction 分类投放垃圾: the first sentence tells you to sort all waste, while this sentence tells you where paper specifically goes, and why.",
+          "exampleHanzi": "纸张可以回收利用，所以请放进回收箱。",
+          "exampleMeaning": "Paper can be recycled, so please put it in the recycling bin.",
+          "sourceIds": [
+            "evaluation-card-source-2",
+            "authored-source"
+          ]
+        }
+      ]
+    },
+    "phase": "practice",
+    "remainingWaypointIds": [
+      "w2"
+    ],
+    "currentQuestions": [
+      {
+        "id": "q1",
+        "cardId": "evaluation-card-1",
+        "stem": "What does the highlighted instruction require people to do?",
+        "passage": "展览结束后，请分类投放垃圾。"
+      }
+    ],
+    "coverage": [
+      {
+        "waypointId": "w1",
+        "questionIds": [
+          "q1"
+        ]
+      }
+    ],
+    "rejectedDirections": [
+      {
+        "gap": {
+          "waypointIds": [
+            "w2"
+          ],
+          "cardId": "evaluation-card-2",
+          "intent": "Recognize 回收利用 as a property of paper (recyclable and reusable) that motivates putting it in the recycling bin, distinct from the general sorting instruction.",
+          "whyMissing": "The only current question covered the general 分类投放 instruction; nothing yet tests that 回收利用 describes paper's recyclability and links via 所以 to the recycling bin."
+        },
+        "reason": "build_question_answers correction budget exhausted: Candidate: Lesson instructions must be in English; place Mandarin in the passage or choices."
+      }
+    ],
+    "proposedDirections": "1. (w2, evaluation-card-2) Missing: that 回收利用 states a property of paper — it can be recycled and reused — rather than being the general sorting instruction already tested in q1 (w1). Ask the learner to interpret 回收利用 as it appears in 纸张可以回收利用 and choose what it says about 纸张. Keep the stem in English and put the Mandarin excerpt only in the passage/choices, per the earlier rejection reason.\n\n2. (w2, evaluation-card-2) Missing: the causal link marked by 所以 — why the passage tells people to put paper in the 回收箱. Present the two-clause sentence 纸张可以回收利用，所以请放进回收箱 and ask which part is the reason and which is the resulting instruction, contrasting it with the all-waste instruction 分类投放垃圾 from w1.\n\n3. (w2, evaluation-card-2) Missing: scope discrimination — that the recycling-bin instruction applies specifically to 纸张, while 分类投放垃圾 covers all 垃圾 after the exhibition. Use a clearly hypothetical situation (e.g., an item left behind after the exhibition) so the learner applies the taught distinction without adding new claims about the source.",
+    "gap": {
+      "waypointIds": [
+        "w2"
+      ],
+      "cardId": "evaluation-card-2",
+      "intent": "Recognize 回收利用 as a stated property of paper — it can be recycled and reused — which motivates putting it in the recycling bin, distinct from the general sorting instruction.",
+      "whyMissing": "The only current question tested the general sorting instruction; nothing yet checks that the recycling-and-reuse expression describes paper's property and links to the recycling bin."
+    },
+    "target": {
+      "cardId": "evaluation-card-2",
+      "hanzi": "回收利用",
+      "meaning": "recycle and reuse"
+    },
+    "waypoints": [
+      {
+        "id": "w1",
+        "cardIds": [
+          "evaluation-card-1"
+        ],
+        "dependsOn": [],
+        "objective": "Recognize 分类投放 as the instruction to sort waste and put it into the appropriate bins.",
+        "explanation": "分类 means \"sort into categories\" and 投放 means \"put/deliver (something) into a place.\" Together, 分类投放垃圾 is the instruction to sort the waste and place each type in the correct bin. In the passage this instruction is given for after the exhibition ends, so it is a required action, not a suggestion about one item only.",
+        "exampleHanzi": "展览结束后，请分类投放垃圾。",
+        "exampleMeaning": "After the exhibition, please sort the waste into the appropriate bins.",
+        "sourceIds": [
+          "evaluation-card-source-1",
+          "authored-source"
+        ]
+      },
+      {
+        "id": "w2",
+        "cardIds": [
+          "evaluation-card-2"
+        ],
+        "dependsOn": [
+          "w1"
+        ],
+        "objective": "Understand 回收利用 as \"recycle and reuse\" and see how 所以 links paper's recyclability to the instruction to put it in the recycling bin.",
+        "explanation": "回收 means \"collect back / recover\" and 利用 means \"make use of,\" so 回收利用 is \"recycle and reuse.\" In the passage it describes a property of one material: 纸张可以回收利用 — paper can be recycled. The word 所以 (\"so\") then turns that property into a specific instruction: 请放进回收箱 — put it in the recycling bin (回收箱 is the bin for recyclables). This is narrower than w1's general instruction 分类投放垃圾: the first sentence tells you to sort all waste, while this sentence tells you where paper specifically goes, and why.",
+        "exampleHanzi": "纸张可以回收利用，所以请放进回收箱。",
+        "exampleMeaning": "Paper can be recycled, so please put it in the recycling bin.",
+        "sourceIds": [
+          "evaluation-card-source-2",
+          "authored-source"
+        ]
+      }
+    ],
+    "candidate": {
+      "stem": "What does the expression in the passage say about paper?",
+      "passage": "纸张可以回收利用，所以请放进回收箱。",
+      "answerA": "It can be collected back and used again, so it belongs in the bin for recyclables.",
+      "answerB": "It must be sorted into categories along with all the other waste before being thrown away.",
+      "answerC": "It cannot be used again and has to be thrown away after the exhibition ends.",
+      "answerD": "It should be handed back to the exhibition staff instead of being placed in any bin.",
+      "correct": "A",
+      "feedback": "The expression means \"recycle and reuse\": the material is collected back and made use of again, which is the reason given for putting it in the recycling bin. The option about sorting into categories describes the earlier general instruction covering all waste, not this statement about one material. The option saying it cannot be used again reverses the meaning, and the option about handing it to staff adds an action the passage never mentions."
+    },
+    "generationMode": "verify_correct_question"
+  },
+  "expected": {},
+  "scope": "Captured reviewer context. No semantic verdict gold label; inspect proposed corrections for compatibility with English-only stems and plain passage rendering."
+}

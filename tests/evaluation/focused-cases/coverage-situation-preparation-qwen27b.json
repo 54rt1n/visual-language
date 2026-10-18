@@ -1,0 +1,353 @@
+{
+  "sourceReport": "eval-results/harness-qwen27b-v10-fixedrefs-full-matrix-live-2026-10-14.json",
+  "caseId": "topic-meaningHanzi",
+  "repetition": 2,
+  "preparation": {
+    "input": {
+      "kind": "topic",
+      "settings": {
+        "quizLevel": "meaningHanzi",
+        "complexity": "phrases",
+        "scope": "everyday",
+        "focus": "characters",
+        "topic": "Courtesy"
+      },
+      "objective": "Distinguish thanking someone from apologizing.",
+      "conversationContext": "Zheng: 谢谢！对不起。\nThank you! Sorry.",
+      "targets": [
+        {
+          "cardId": "evaluation-card-1",
+          "hanzi": "谢谢",
+          "meaning": "thank you"
+        },
+        {
+          "cardId": "evaluation-card-2",
+          "hanzi": "对不起",
+          "meaning": "sorry"
+        }
+      ],
+      "sources": [
+        {
+          "id": "evaluation-card-source-1",
+          "title": "谢谢 — learning card",
+          "excerpt": "谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition."
+        },
+        {
+          "id": "evaluation-card-source-2",
+          "title": "对不起 — learning card",
+          "excerpt": "对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition."
+        }
+      ]
+    },
+    "lesson": {
+      "graph": {
+        "overview": "Recognize 谢谢 as the expression used to thank someone. Recognize 对不起 as the expression used to apologize for a mistake or inconvenience.",
+        "waypoints": [
+          {
+            "id": "w1",
+            "cardIds": [
+              "evaluation-card-1"
+            ],
+            "dependsOn": [],
+            "objective": "Recognize 谢谢 as the expression used to thank someone.",
+            "explanation": "谢谢 is the standard Mandarin phrase for expressing gratitude. It is used when someone has helped you, given you something, or done a kind act. In the conversation, Zheng uses it to acknowledge a favor or kindness.",
+            "exampleHanzi": "谢谢",
+            "exampleMeaning": "Thank you",
+            "sourceIds": [
+              "evaluation-card-source-1"
+            ]
+          },
+          {
+            "id": "w2",
+            "cardIds": [
+              "evaluation-card-2"
+            ],
+            "dependsOn": [
+              "w1"
+            ],
+            "objective": "Recognize 对不起 as the expression used to apologize for a mistake or inconvenience.",
+            "explanation": "对不起 is the standard Mandarin phrase for expressing an apology. It is used when you have made a mistake, caused an inconvenience, or need to acknowledge a fault. In the conversation, Zheng uses it to express regret or take responsibility, contrasting with 谢谢 which expresses gratitude.",
+            "exampleHanzi": "对不起",
+            "exampleMeaning": "Sorry",
+            "sourceIds": [
+              "evaluation-card-source-2"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "decision": "accept",
+        "reason": "The lesson successfully teaches the distinction between thanking (谢谢) and apologizing (对不起) as required by the objective. Waypoint w1 establishes the meaning of 谢谢, and w2 builds on it to introduce 对不起, explicitly contrasting the two expressions. The scope is maintained, the language ceiling is respected, and the provided sources support the content. No further additions or revisions are needed.",
+        "model": "Qwen/Qwen3.8-27B"
+      }
+    },
+    "practice": {
+      "lessonHash": "64a73643526cd1d4687aafc3672c1a9c8ff621dd19b8eeb58c0f58944f1dbdf0",
+      "phase": "practice",
+      "questions": [
+        {
+          "id": "q1",
+          "gap": {
+            "waypointIds": [
+              "w2"
+            ],
+            "cardId": "evaluation-card-2",
+            "intent": "Recognize 对不起 as the expression used to apologize for a mistake or inconvenience.",
+            "whyMissing": "The learner needs to distinguish the apology expression from gratitude or other social pleas in a fresh context."
+          },
+          "question": {
+            "cardId": "evaluation-card-2",
+            "stem": "What is the meaning of the Mandarin expression shown below?",
+            "passage": "对不起",
+            "options": [
+              {
+                "id": "A",
+                "text": "I am expressing gratitude for a favor you did for me."
+              },
+              {
+                "id": "B",
+                "text": "I am apologizing for an inconvenience or mistake I caused."
+              },
+              {
+                "id": "C",
+                "text": "I am asking for your attention to get past a crowd."
+              },
+              {
+                "id": "D",
+                "text": "I am greeting you politely when we meet for the first time."
+              }
+            ],
+            "quizLevel": "meaningHanzi",
+            "correctOptionId": "B",
+            "explanation": "The expression \"对不起\" is used to apologize. It conveys regret or takes responsibility for a fault, such as accidentally bumping into someone or causing an inconvenience. This contrasts with \"谢谢,\" which expresses thanks, and \"借过,\" which is used to ask for passage. The correct choice describes the intention of apologizing for a mistake or inconvenience.",
+            "distractorFeedback": [
+              {
+                "optionId": "A",
+                "explanation": "The expression \"对不起\" is used to apologize. It conveys regret or takes responsibility for a fault, such as accidentally bumping into someone or causing an inconvenience. This contrasts with \"谢谢,\" which expresses thanks, and \"借过,\" which is used to ask for passage. The correct choice describes the intention of apologizing for a mistake or inconvenience."
+              },
+              {
+                "optionId": "C",
+                "explanation": "The expression \"对不起\" is used to apologize. It conveys regret or takes responsibility for a fault, such as accidentally bumping into someone or causing an inconvenience. This contrasts with \"谢谢,\" which expresses thanks, and \"借过,\" which is used to ask for passage. The correct choice describes the intention of apologizing for a mistake or inconvenience."
+              },
+              {
+                "optionId": "D",
+                "explanation": "The expression \"对不起\" is used to apologize. It conveys regret or takes responsibility for a fault, such as accidentally bumping into someone or causing an inconvenience. This contrasts with \"谢谢,\" which expresses thanks, and \"借过,\" which is used to ask for passage. The correct choice describes the intention of apologizing for a mistake or inconvenience."
+              }
+            ],
+            "sourceIds": [
+              "evaluation-card-source-1",
+              "evaluation-card-source-2"
+            ],
+            "objective": "Recognize 对不起 as the expression used to apologize for a mistake or inconvenience.",
+            "workedExample": {
+              "hanzi": "对不起",
+              "meaning": "Sorry",
+              "explanation": "对不起 is the standard Mandarin phrase for expressing an apology. It is used when you have made a mistake, caused an inconvenience, or need to acknowledge a fault. In the conversation, Zheng uses it to express regret or take responsibility, contrasting with 谢谢 which expresses gratitude."
+            }
+          },
+          "coverageReview": {
+            "questionHash": "1200905ae08495e1e6d0ffb18bb224ae39ed7859841314257b75f00090b957fe",
+            "waypointIds": [
+              "w2"
+            ],
+            "assessment": "The question displays 对不起 and asks the learner to select its meaning from four English interpretations. The correct answer (B) identifies it as an apology for an inconvenience or mistake, which is exactly the understanding w2 assesses. The distractors (gratitude, getting past a crowd, greeting) are plausible everyday courtesy functions but none match the apology sense, so choosing B genuinely requires recognizing 对不起 as the apology expression. No other Mandarin expression is shown, so w1 (谢谢) is not assessed despite the gratitude distractor."
+          },
+          "review": {
+            "decision": "accept",
+            "reason": "The candidate correctly targets the gap for recognizing 对不起 as an apology. It follows proposed direction 2 (practice w2). The stem and passage are minimal and compliant with the language ceiling. The English choices are distinct: A is gratitude (谢谢), B is apology (对不起), C is asking to pass (借过), and D is greeting. Choice B is the only defensible answer for 对不起. The feedback is faithful to the source and provides useful contrast. The question tests the intended distinction between apology and other social expressions without revealing the answer in the stem.",
+            "model": "Qwen/Qwen3.8-27B"
+          }
+        },
+        {
+          "id": "q2",
+          "gap": {
+            "waypointIds": [
+              "w1"
+            ],
+            "cardId": "evaluation-card-1",
+            "intent": "Recognize 谢谢 as the expression used to thank someone, contrasting it with apology and attention-getting expressions.",
+            "whyMissing": "The current question only covers 对不起 (w2); the gratitude expression 谢谢 (w1) has no practice question yet."
+          },
+          "question": {
+            "cardId": "evaluation-card-1",
+            "stem": "What is the meaning of the Mandarin expression shown below?",
+            "passage": "谢谢",
+            "options": [
+              {
+                "id": "A",
+                "text": "Thank you"
+              },
+              {
+                "id": "B",
+                "text": "Sorry"
+              },
+              {
+                "id": "C",
+                "text": "Excuse me"
+              },
+              {
+                "id": "D",
+                "text": "You're welcome"
+              }
+            ],
+            "quizLevel": "meaningHanzi",
+            "correctOptionId": "A",
+            "explanation": "This expression is the standard Mandarin phrase for expressing gratitude, used when someone has helped you or done a kind act. It differs from \"Sorry,\" which is an apology for a mistake or inconvenience, and from \"Excuse me,\" which politely gets attention or asks to pass. \"You're welcome\" is the reply to thanks, not the thanks itself.",
+            "distractorFeedback": [
+              {
+                "optionId": "B",
+                "explanation": "This expression is the standard Mandarin phrase for expressing gratitude, used when someone has helped you or done a kind act. It differs from \"Sorry,\" which is an apology for a mistake or inconvenience, and from \"Excuse me,\" which politely gets attention or asks to pass. \"You're welcome\" is the reply to thanks, not the thanks itself."
+              },
+              {
+                "optionId": "C",
+                "explanation": "This expression is the standard Mandarin phrase for expressing gratitude, used when someone has helped you or done a kind act. It differs from \"Sorry,\" which is an apology for a mistake or inconvenience, and from \"Excuse me,\" which politely gets attention or asks to pass. \"You're welcome\" is the reply to thanks, not the thanks itself."
+              },
+              {
+                "optionId": "D",
+                "explanation": "This expression is the standard Mandarin phrase for expressing gratitude, used when someone has helped you or done a kind act. It differs from \"Sorry,\" which is an apology for a mistake or inconvenience, and from \"Excuse me,\" which politely gets attention or asks to pass. \"You're welcome\" is the reply to thanks, not the thanks itself."
+              }
+            ],
+            "sourceIds": [
+              "evaluation-card-source-1"
+            ],
+            "objective": "Recognize 谢谢 as the expression used to thank someone, contrasting it with apology and attention-getting expressions.",
+            "workedExample": {
+              "hanzi": "谢谢",
+              "meaning": "Thank you",
+              "explanation": "谢谢 is the standard Mandarin phrase for expressing gratitude. It is used when someone has helped you, given you something, or done a kind act. In the conversation, Zheng uses it to acknowledge a favor or kindness."
+            }
+          },
+          "coverageReview": {
+            "questionHash": "257c1c260ea1d5c0751b587e112ce19bd4c61fc31bb660b3f328a78e843cf536",
+            "waypointIds": [
+              "w1"
+            ],
+            "assessment": "The question displays the Mandarin expression 谢谢 and asks the learner to select its meaning from English choices. The correct answer is \"Thank you,\" which directly tests recognition of 谢谢 as the expression for gratitude (w1). The distractors include \"Sorry\" (the meaning of 对不起), \"Excuse me,\" and \"You're welcome.\" While the presence of \"Sorry\" as a distractor relates to the contrast with 对不起, the learner only needs to recognize 谢谢 to select the correct answer; they do not need to actively recognize the Mandarin expression 对不起 since it is not displayed in the question. Therefore, only w1 is genuinely assessed."
+          },
+          "review": {
+            "decision": "accept",
+            "reason": "The candidate correctly targets the missing gap for 谢谢 (w1) and follows proposed direction 1. It presents the standalone expression 谢谢 and asks for its meaning, which aligns with the assessment format. The correct answer \"Thank you\" is defensible and supported by the source. The distractors are appropriate: \"Sorry\" contrasts with the apology expression 对不起 (w2), \"Excuse me\" is a common courtesy phrase, and \"You're welcome\" is a related but distinct response. The feedback accurately explains the distinction between gratitude, apology, and attention-getting. The question does not duplicate the current question about 对不起. The English stem and choices do not reveal the answer; the learner must recognize the Mandarin expression. The language ceiling is respected, using only the taught expression without surrounding dialogue. The question is natural, faithful to the source, and appropriate for the learner's level.",
+            "model": "Qwen/Qwen3.8-27B"
+          }
+        }
+      ],
+      "complete": true,
+      "coverageReason": "Every lesson understanding has evidence from evaluated question choices.",
+      "coverage": [
+        {
+          "waypointId": "w2",
+          "questionIds": [
+            "q1"
+          ],
+          "assessment": "The question displays 对不起 and asks the learner to select its meaning from four English interpretations. The correct answer (B) identifies it as an apology for an inconvenience or mistake, which is exactly the understanding w2 assesses. The distractors (gratitude, getting past a crowd, greeting) are plausible everyday courtesy functions but none match the apology sense, so choosing B genuinely requires recognizing 对不起 as the apology expression. No other Mandarin expression is shown, so w1 (谢谢) is not assessed despite the gratitude distractor."
+        },
+        {
+          "waypointId": "w1",
+          "questionIds": [
+            "q2"
+          ],
+          "assessment": "The question displays the Mandarin expression 谢谢 and asks the learner to select its meaning from English choices. The correct answer is \"Thank you,\" which directly tests recognition of 谢谢 as the expression for gratitude (w1). The distractors include \"Sorry\" (the meaning of 对不起), \"Excuse me,\" and \"You're welcome.\" While the presence of \"Sorry\" as a distractor relates to the contrast with 对不起, the learner only needs to recognize 谢谢 to select the correct answer; they do not need to actively recognize the Mandarin expression 对不起 since it is not displayed in the question. Therefore, only w1 is genuinely assessed."
+        }
+      ]
+    },
+    "check": {
+      "lessonHash": "64a73643526cd1d4687aafc3672c1a9c8ff621dd19b8eeb58c0f58944f1dbdf0",
+      "phase": "check",
+      "questions": [
+        {
+          "id": "q1",
+          "gap": {
+            "waypointIds": [
+              "w1",
+              "w2"
+            ],
+            "cardId": "evaluation-card-1",
+            "intent": "Distinguish 谢谢 from 对不起 in a fresh scenario where gratitude is appropriate.",
+            "whyMissing": "Practice asked for the direct meaning of the expression; this check applies the understanding to a specific situation involving gratitude."
+          },
+          "question": {
+            "cardId": "evaluation-card-1",
+            "stem": "Which situation fits this expression?",
+            "passage": "谢谢",
+            "options": [
+              {
+                "id": "A",
+                "text": "A friend hands you a gift, and you want to express gratitude for their kindness."
+              },
+              {
+                "id": "B",
+                "text": "You accidentally bump into someone on the street and want to apologize for the inconvenience."
+              },
+              {
+                "id": "C",
+                "text": "You are late for a meeting and want to acknowledge your fault to your colleagues."
+              },
+              {
+                "id": "D",
+                "text": "You need to get someone's attention to ask a question in a quiet room."
+              }
+            ],
+            "quizLevel": "meaningHanzi",
+            "correctOptionId": "A",
+            "explanation": "This expression conveys gratitude and is used when someone has helped you, given you something, or done a kind act. The other options describe situations requiring an apology for a mistake or a polite interruption, which use different expressions.",
+            "distractorFeedback": [
+              {
+                "optionId": "B",
+                "explanation": "This expression conveys gratitude and is used when someone has helped you, given you something, or done a kind act. The other options describe situations requiring an apology for a mistake or a polite interruption, which use different expressions."
+              },
+              {
+                "optionId": "C",
+                "explanation": "This expression conveys gratitude and is used when someone has helped you, given you something, or done a kind act. The other options describe situations requiring an apology for a mistake or a polite interruption, which use different expressions."
+              },
+              {
+                "optionId": "D",
+                "explanation": "This expression conveys gratitude and is used when someone has helped you, given you something, or done a kind act. The other options describe situations requiring an apology for a mistake or a polite interruption, which use different expressions."
+              }
+            ],
+            "sourceIds": [
+              "evaluation-card-source-1",
+              "evaluation-card-source-2"
+            ],
+            "objective": "Distinguish 谢谢 from 对不起 in a fresh scenario where gratitude is appropriate.",
+            "workedExample": {
+              "hanzi": "谢谢",
+              "meaning": "Thank you",
+              "explanation": "谢谢 is the standard Mandarin phrase for expressing gratitude. It is used when someone has helped you, given you something, or done a kind act. In the conversation, Zheng uses it to acknowledge a favor or kindness."
+            }
+          },
+          "coverageReview": {
+            "questionHash": "d9046bec37d843009f6b86a55d20ea58b37d298ec131374f47cf6fe97364b1b5",
+            "waypointIds": [
+              "w1",
+              "w2"
+            ],
+            "assessment": "The question displays the Mandarin expression 谢谢 and asks the learner to select the situation that fits it. Option A describes expressing gratitude for a gift, which aligns with the meaning of 谢谢. Options B and C describe apologizing for a bump or lateness, which align with the meaning of 对不起. Option D describes getting attention, which is unrelated. To correctly select A, the learner must recognize 谢谢 as the expression for gratitude and distinguish it from the apology context of 对不起. Therefore, the question assesses recognition of 谢谢 (w1) and the contrast with 对不起 (w2)."
+          },
+          "review": {
+            "decision": "accept",
+            "reason": "The candidate correctly applies the check phase by asking the learner to identify the situation fitting 谢谢, distinguishing it from apology contexts. The stem is neutral, the Mandarin passage is isolated, and the English choices clearly separate gratitude (A) from apology (B, C) and unrelated interruption (D). The key is defensible, the feedback is accurate, and the question aligns with the proposed direction and gap. It does not repeat the practice questions' format (direct meaning) but tests situational application as intended.",
+            "model": "Qwen/Qwen3.8-27B"
+          }
+        }
+      ],
+      "complete": true,
+      "coverageReason": "Every lesson understanding has evidence from evaluated question choices.",
+      "coverage": [
+        {
+          "waypointId": "w1",
+          "questionIds": [
+            "q1"
+          ],
+          "assessment": "The question displays the Mandarin expression 谢谢 and asks the learner to select the situation that fits it. Option A describes expressing gratitude for a gift, which aligns with the meaning of 谢谢. Options B and C describe apologizing for a bump or lateness, which align with the meaning of 对不起. Option D describes getting attention, which is unrelated. To correctly select A, the learner must recognize 谢谢 as the expression for gratitude and distinguish it from the apology context of 对不起. Therefore, the question assesses recognition of 谢谢 (w1) and the contrast with 对不起 (w2)."
+        },
+        {
+          "waypointId": "w2",
+          "questionIds": [
+            "q1"
+          ],
+          "assessment": "The question displays the Mandarin expression 谢谢 and asks the learner to select the situation that fits it. Option A describes expressing gratitude for a gift, which aligns with the meaning of 谢谢. Options B and C describe apologizing for a bump or lateness, which align with the meaning of 对不起. Option D describes getting attention, which is unrelated. To correctly select A, the learner must recognize 谢谢 as the expression for gratitude and distinguish it from the apology context of 对不起. Therefore, the question assesses recognition of 谢谢 (w1) and the contrast with 对不起 (w2)."
+        }
+      ]
+    }
+  }
+}

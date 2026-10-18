@@ -1,0 +1,19 @@
+{
+  "version": "lesson-pronunciation-v1",
+  "annotationStatus": "project-authored-provisional",
+  "scope": "Marked-character pronunciation at word boundaries observed during lesson evaluation, plus contrastive controls. These examples must not become a production replacement dictionary.",
+  "cases": [
+    { "id": "lesson-exit-place", "tag": "lesson-boundaries", "marked": "请在出口▁处▁分类投放垃圾。", "expected": "chu4" },
+    { "id": "lesson-exit-sort", "tag": "lesson-boundaries", "marked": "请在出口处▁分▁类投放垃圾。", "expected": "fen1" },
+    { "id": "lesson-yesterday-sort", "tag": "lesson-boundaries", "marked": "昨天▁分▁类投放垃圾。", "expected": "fen1" },
+    { "id": "lesson-entrance-place", "tag": "lesson-boundaries", "marked": "请在入口▁处▁分类。", "expected": "chu4" },
+    { "id": "lesson-entrance-sort", "tag": "lesson-boundaries", "marked": "请在入口处▁分▁类。", "expected": "fen1" },
+    { "id": "control-punishment-chu", "tag": "boundary-controls", "marked": "他受到了▁处▁分。", "expected": "chu3" },
+    { "id": "control-punishment-fen", "tag": "boundary-controls", "marked": "他受到了处▁分▁。", "expected": "fen4" },
+    { "id": "control-particle-le", "tag": "boundary-controls", "marked": "他受到▁了▁处分。", "expected": "le5" },
+    { "id": "control-talent", "tag": "boundary-controls", "marked": "他很有天▁分▁。", "expected": "fen4" },
+    { "id": "control-cup-sandhi", "tag": "boundary-controls", "marked": "请给我▁一▁杯茶，不要加糖。", "expected": "yi4" },
+    { "id": "control-negation-sandhi", "tag": "boundary-controls", "marked": "请给我一杯茶，▁不▁要加糖。", "expected": "bu2" },
+    { "id": "control-mixed-sort", "tag": "boundary-controls", "marked": "🙂 Please：请在出口处▁分▁类投放垃圾。", "expected": "fen1" }
+  ]
+}

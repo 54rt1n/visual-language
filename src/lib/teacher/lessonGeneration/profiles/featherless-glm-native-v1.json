@@ -1,0 +1,236 @@
+{
+  "id": "glm-featherless-native",
+  "version": "1.1",
+  "stages": {
+    "reviewQuestion": {
+      "nativeExamples": [
+        {
+          "context": {
+            "learnerRequest": "I am a student and I am learning Chinese.",
+            "exampleMaterial": "Separate worked example, not the current lesson.",
+            "phase": "practice",
+            "waypoints": [
+              {
+                "id": "demo-w1",
+                "objective": "Recognize a greeting.",
+                "explanation": "你好 means Hello. 再见 means Goodbye. 谢谢 means Thank you. 对不起 means Sorry."
+              }
+            ],
+            "candidate": {
+              "stem": "What does this expression mean?",
+              "passage": "你好。",
+              "answerA": "Hello.",
+              "answerB": "Goodbye.",
+              "answerC": "Thank you.",
+              "answerD": "Sorry.",
+              "correct": "A",
+              "feedback": "你好 greets someone; 再见 says goodbye, 谢谢 thanks someone and 对不起 apologizes."
+            },
+            "visibleQuestion": {
+              "prompt": "你好。\n\nWhat does this expression mean?",
+              "choices": [
+                {
+                  "id": "A",
+                  "text": "Hello."
+                },
+                {
+                  "id": "B",
+                  "text": "Goodbye."
+                },
+                {
+                  "id": "C",
+                  "text": "Thank you."
+                },
+                {
+                  "id": "D",
+                  "text": "Sorry."
+                }
+              ]
+            },
+            "currentQuestions": []
+          },
+          "arguments": {
+            "decision": "accept",
+            "reason": "你好 means Hello, so only A fits. The key and feedback match the taught greeting."
+          }
+        },
+        {
+          "context": {
+            "learnerRequest": "I am a student and I am learning Chinese.",
+            "exampleMaterial": "Separate worked example, not the current lesson.",
+            "phase": "practice",
+            "waypoints": [
+              {
+                "id": "demo-w1",
+                "objective": "Recognize a greeting.",
+                "explanation": "你好 means Hello. 再见 means Goodbye. 谢谢 means Thank you. 对不起 means Sorry."
+              }
+            ],
+            "candidate": {
+              "stem": "What does this expression mean?",
+              "passage": "你好。",
+              "answerA": "Hello.",
+              "answerB": "Goodbye.",
+              "answerC": "Thank you.",
+              "answerD": "Sorry.",
+              "correct": "B",
+              "feedback": "你好 greets someone; 再见 says goodbye, 谢谢 thanks someone and 对不起 apologizes."
+            },
+            "visibleQuestion": {
+              "prompt": "你好。\n\nWhat does this expression mean?",
+              "choices": [
+                {
+                  "id": "A",
+                  "text": "Hello."
+                },
+                {
+                  "id": "B",
+                  "text": "Goodbye."
+                },
+                {
+                  "id": "C",
+                  "text": "Thank you."
+                },
+                {
+                  "id": "D",
+                  "text": "Sorry."
+                }
+              ]
+            },
+            "currentQuestions": []
+          },
+          "arguments": {
+            "decision": "revise",
+            "reason": "Change the key to A: 你好 means Hello, while B means Goodbye."
+          }
+        }
+      ]
+    },
+    "buildWaypoint": {
+      "guidance": "Help me distinguish useful expressions through one teaching point. Explain their differences in English and demonstrate one selected expression in exampleHanzi with its faithful exampleMeaning. When nativeSubmissionIssue requests a correction, preserve the valid fields in candidateSubmission and replace the affected example fields.",
+      "nativeExamples": [
+        {
+          "context": {
+            "learnerRequest": "I am a student and I am learning Chinese.",
+            "exampleMaterial": "Separate worked example, not the current lesson.",
+            "kind": "topic",
+            "settings": {
+              "quizLevel": "responsePinyin",
+              "complexity": "phrases",
+              "scope": "everyday",
+              "focus": "characters",
+              "topic": "Greetings"
+            },
+            "objective": "Distinguish greeting someone from saying farewell.",
+            "targets": [
+              {
+                "cardId": "demo-hello",
+                "hanzi": "你好",
+                "meaning": "Hello."
+              },
+              {
+                "cardId": "demo-goodbye",
+                "hanzi": "再见",
+                "meaning": "Goodbye."
+              }
+            ],
+            "sources": [
+              {
+                "id": "demo-source",
+                "title": "Greetings",
+                "excerpt": "你好 means Hello when meeting someone. 再见 means Goodbye when leaving."
+              }
+            ],
+            "graph": {
+              "overview": "",
+              "waypoints": []
+            },
+            "nextWaypointId": "w1"
+          },
+          "arguments": {
+            "cardIds": [
+              "demo-hello",
+              "demo-goodbye"
+            ],
+            "dependsOn": [],
+            "objective": "Distinguish greeting someone from saying farewell.",
+            "explanation": "Use 你好 when meeting someone and 再见 when leaving. They fit different moments in a conversation.",
+            "exampleHanzi": "你好。",
+            "exampleMeaning": "Hello.",
+            "sourceIds": [
+              "demo-source"
+            ]
+          }
+        },
+        {
+          "context": {
+            "learnerRequest": "I am a student and I am learning Chinese.",
+            "exampleMaterial": "Separate worked example, not the current lesson.",
+            "kind": "topic",
+            "settings": {
+              "quizLevel": "responsePinyin",
+              "complexity": "phrases",
+              "scope": "everyday",
+              "focus": "characters",
+              "topic": "Greetings"
+            },
+            "objective": "Distinguish greeting someone from saying farewell.",
+            "targets": [
+              {
+                "cardId": "demo-hello",
+                "hanzi": "你好",
+                "meaning": "Hello."
+              },
+              {
+                "cardId": "demo-goodbye",
+                "hanzi": "再见",
+                "meaning": "Goodbye."
+              }
+            ],
+            "sources": [
+              {
+                "id": "demo-source",
+                "title": "Greetings",
+                "excerpt": "你好 means Hello when meeting someone. 再见 means Goodbye when leaving."
+              }
+            ],
+            "graph": {
+              "overview": "",
+              "waypoints": []
+            },
+            "nextWaypointId": "w1",
+            "candidateSubmission": {
+              "cardIds": [
+                "demo-hello",
+                "demo-goodbye"
+              ],
+              "dependsOn": [],
+              "objective": "Distinguish greeting someone from saying farewell.",
+              "explanation": "Use 你好 when meeting someone and 再见 when leaving. They fit different moments in a conversation.",
+              "exampleHanzi": "你好。再见。",
+              "exampleMeaning": "Hello. Goodbye.",
+              "sourceIds": [
+                "demo-source"
+              ]
+            },
+            "nativeSubmissionIssue": "Waypoint w1 exampleHanzi has 2 separate Mandarin sentences; phrases permits at most 1. Shorten the example itself, not just its punctuation."
+          },
+          "arguments": {
+            "cardIds": [
+              "demo-hello",
+              "demo-goodbye"
+            ],
+            "dependsOn": [],
+            "objective": "Distinguish greeting someone from saying farewell.",
+            "explanation": "Use 你好 when meeting someone and 再见 when leaving. They fit different moments in a conversation.",
+            "exampleHanzi": "你好。",
+            "exampleMeaning": "Hello.",
+            "sourceIds": [
+              "demo-source"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "format": "qwen-missing-function-angle-evidence",
+  "version": 1,
+  "rows": [
+    {
+      "rawContent": "<tool_call>\nfunction=solve_english_question><parameter=answerId>unknown</parameter><parameter=reason>The stem states \"You say the following phrase\" but does not provide the actual phrase or expression. Without the specific utterance, it is impossible to determine whether the speaker is ordering tea, coffee, or making a comment about sweetness. The omitted expression is required to select the correct option.</parameter></function></tool_call>",
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "solve_english_question",
+            "description": "Record what the English-only question determines, without the hidden expression or key.",
+            "parameters": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "answerId": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "unknown"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                }
+              },
+              "required": [
+                "answerId",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "expectedArguments": {
+        "answerId": "unknown",
+        "reason": "The stem states \"You say the following phrase\" but does not provide the actual phrase or expression. Without the specific utterance, it is impossible to determine whether the speaker is ordering tea, coffee, or making a comment about sweetness. The omitted expression is required to select the correct option."
+      },
+      "source": {
+        "report": "eval-results/harness-qwen27b-v21-p19-full-matrix-live-2026-10-14.json",
+        "caseId": "scenario-meaningHanzi",
+        "repetition": 2,
+        "completedTrialSha256": "d7754caa0ac8bc9dbd3bcba4ed50db6a9c1991408ee7cc55d89ddf11e6f7327a",
+        "callIndex": 11,
+        "callSha256": "5f4ac2d350b0c6eaa8164ccdc079dcd5a3624fe6847b494b44d980b971ed1d00",
+        "requestSha256": "b7f4de54245c7acfa044699a1f8f14528f7020afc9c769aba9ee5f27c43809bd"
+      }
+    },
+    {
+      "rawContent": "<tool_call>\nfunction=solve_english_question><parameter=answerId>unknown</parameter><parameter=reason>The stem states \"You say the following phrase\" but does not provide the actual phrase or quote. Without the specific spoken words, it is impossible to determine whether the speaker is ordering tea, coffee, or making a comment about sweetness. The English text alone is insufficient to select a unique answer.</parameter></function></tool_call>",
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "solve_english_question",
+            "description": "Record what the English-only question determines, without the hidden expression or key.",
+            "parameters": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "answerId": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "unknown"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                }
+              },
+              "required": [
+                "answerId",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "expectedArguments": {
+        "answerId": "unknown",
+        "reason": "The stem states \"You say the following phrase\" but does not provide the actual phrase or quote. Without the specific spoken words, it is impossible to determine whether the speaker is ordering tea, coffee, or making a comment about sweetness. The English text alone is insufficient to select a unique answer."
+      },
+      "source": {
+        "report": "eval-results/harness-qwen27b-v21-p19-full-matrix-live-2026-10-14.json",
+        "caseId": "scenario-meaningHanzi",
+        "repetition": 2,
+        "completedTrialSha256": "d7754caa0ac8bc9dbd3bcba4ed50db6a9c1991408ee7cc55d89ddf11e6f7327a",
+        "callIndex": 12,
+        "callSha256": "36820d79ea231b883f86d7f8af314ae9cce137b7187140a48966ff4d70d12f7f",
+        "requestSha256": "0bd2a9904e8836f49efa3df506ac5a85880b33599c9971e101ceb41fb1f825a5"
+      }
+    }
+  ]
+}

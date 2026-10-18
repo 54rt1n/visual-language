@@ -1,0 +1,148 @@
+{
+  "provenance": {
+    "sourceReport": "eval-results/harness-qwen27b-v21-p19-full-matrix-live-2026-10-14.json",
+    "completedTrialSha256": "d1b1f778508597ab7b5a2d826d1649b2c8c146644fafc922d1fcc3146dc3e76f",
+    "callIndex": 25,
+    "requestHash": "245ca1c0a15deff093364874355da3f56011bade20f7d83c69eefeb92d1c1e13"
+  },
+  "context": {
+    "kind": "scenario",
+    "settings": {
+      "quizLevel": "responseHanzi",
+      "complexity": "simple",
+      "scope": "topic",
+      "focus": "complexity",
+      "topic": "Ordering tea"
+    },
+    "objective": "Order tea politely and request no sugar in a simulated café.",
+    "conversationContext": "Authored café simulation; no real menu claims.",
+    "sourceMaterial": {
+      "draftId": "evaluation-source-draft",
+      "passageHanzi": "请给我一杯茶。不要加糖。",
+      "passageMeaning": "Please give me a cup of tea. Do not add sugar.",
+      "scenario": {
+        "situation": "A simulated café order.",
+        "teacherRole": "Server",
+        "learnerRole": "Customer",
+        "openingHanzi": "您想喝什么？",
+        "openingMeaning": "What would you like to drink?",
+        "objective": "Order tea politely and request no sugar."
+      }
+    },
+    "targets": [
+      {
+        "cardId": "evaluation-card-1",
+        "hanzi": "请给我一杯茶",
+        "meaning": "please give me a cup of tea"
+      },
+      {
+        "cardId": "evaluation-card-2",
+        "hanzi": "不要加糖",
+        "meaning": "do not add sugar"
+      }
+    ],
+    "sources": [
+      {
+        "id": "evaluation-card-source-1",
+        "title": "请给我一杯茶 — learning card",
+        "excerpt": "请给我一杯茶 (qǐng gěi wǒ yì bēi chá) — please give me a cup of tea. Sense: please give me a cup of tea. Assessed skill: recognition."
+      },
+      {
+        "id": "evaluation-card-source-2",
+        "title": "不要加糖 — learning card",
+        "excerpt": "不要加糖 (bú yào jiā táng) — do not add sugar. Sense: do not add sugar. Assessed skill: recognition."
+      },
+      {
+        "id": "authored-source",
+        "title": "Authored evaluation snapshot (not retrieved)",
+        "excerpt": "请给我一杯茶。不要加糖。\nPlease give me a cup of tea. Do not add sugar."
+      }
+    ],
+    "graph": {
+      "overview": "Recognize and use the polite request 请给我一杯茶 to order a cup of tea in a café setting. Recognize and use the negative request 不要加糖 to specify no sugar when ordering tea.",
+      "waypoints": [
+        {
+          "id": "w1",
+          "cardIds": [
+            "evaluation-card-1"
+          ],
+          "dependsOn": [],
+          "objective": "Recognize and use the polite request 请给我一杯茶 to order a cup of tea in a café setting.",
+          "explanation": "The phrase 请给我一杯茶 is a standard, polite way to order a single cup of tea. It combines the polite marker 请 (please), the verb 给 (give), the object 我 (me), and the measure phrase 一杯茶 (a cup of tea). In the café scenario, the learner uses this exact clause to respond to the server's question 您想喝什么？ (What would you like to drink?). This establishes the core ordering action before adding any modifications.",
+          "exampleHanzi": "请给我一杯茶。",
+          "exampleMeaning": "Please give me a cup of tea.",
+          "sourceIds": [
+            "evaluation-card-source-1",
+            "authored-source"
+          ]
+        },
+        {
+          "id": "w2",
+          "cardIds": [
+            "evaluation-card-2"
+          ],
+          "dependsOn": [
+            "w1"
+          ],
+          "objective": "Recognize and use the negative request 不要加糖 to specify no sugar when ordering tea.",
+          "explanation": "The phrase 不要加糖 is a direct, common way to request that no sugar be added to a drink. It uses the negative construction 不要 (do not) followed by the verb 加 (add) and the object 糖 (sugar). In the café scenario, the learner uses this clause to modify the tea order, ensuring the drink is prepared without sugar. This completes the full polite order by adding a specific preference to the initial request.",
+          "exampleHanzi": "不要加糖。",
+          "exampleMeaning": "Do not add sugar.",
+          "sourceIds": [
+            "evaluation-card-source-2",
+            "authored-source"
+          ]
+        }
+      ]
+    },
+    "phase": "check",
+    "remainingWaypointIds": [
+      "w2"
+    ],
+    "currentQuestions": [
+      {
+        "id": "q1",
+        "cardId": "evaluation-card-1",
+        "stem": "You are at a café counter. The server does not ask a question but gestures toward the menu and waits for you to speak. Select the correct Mandarin reply to initiate your order for a cup of tea politely."
+      }
+    ],
+    "coverage": [
+      {
+        "waypointId": "w1",
+        "questionIds": [
+          "q1"
+        ]
+      }
+    ],
+    "rejectedDirections": [
+      {
+        "gap": {
+          "waypointIds": [
+            "w1"
+          ],
+          "cardId": "evaluation-card-1",
+          "intent": "Check the learner's ability to recognize and use the polite request 请给我一杯茶 to order a cup of tea in a café setting.",
+          "whyMissing": "The practice question q1 already covers the basic ordering scenario. This check reinforces the recognition of the specific polite phrase 请给我一杯茶 as the correct response to the server's initial question, distinguishing it from other plausible but incorrect replies like requesting a different drink or making a modification."
+        },
+        "reason": "The candidate stem and passage are identical to practice question q1 (\"You are at a café. The server asks, 'What would you like to drink?'\" / \"您想喝什么？\"). The lesson check requires a fresh application of the target's taught understanding compared with its practice task; changing only wording or context details without altering the core scenario structure does not constitute a new application. The proposed direction suggests a \"hurry\" context, but the candidate fails to implement this distinct circumstance, resulting in a duplicate of the practice question. To be valid, the check must present a different supported situation or conversational circumstance (e.g., a different server prompt or context) that still tests the same single-clause reply 请给我一杯茶, rather than repeating the exact same stem and passage as q1."
+      }
+    ],
+    "practiceQuestions": [
+      {
+        "id": "q1",
+        "cardId": "evaluation-card-1",
+        "stem": "You are at a café. The server asks, \"What would you like to drink?\" Select the correct Mandarin reply to order a cup of tea politely.",
+        "passage": "您想喝什么？"
+      },
+      {
+        "id": "q2",
+        "cardId": "evaluation-card-2",
+        "stem": "You are at a café. You have just ordered a cup of tea. The server asks, \"Do you want sugar?\" Select the appropriate Mandarin reply to decline sugar.",
+        "passage": "要加糖吗？"
+      }
+    ],
+    "generationMode": "list_missing_questions"
+  },
+  "expected": {},
+  "scope": "Actual planner request immediately preceding the repeated sugar-exchange author input. No semantic gold direction labels."
+}

@@ -1,0 +1,163 @@
+{
+  "provenance": {
+    "sourceReport": "eval-results/harness-qwen27b-v24-p20-f6-full-matrix-live-2026-10-15.json",
+    "parentStatusAtCapture": "running",
+    "completedTrialSha256": "c4df980a87d58645bc687e8a1e2105542df1d8612f20941e4bad4cbbe00aff71",
+    "caseId": "topic-meaningHanzi",
+    "repetition": 2,
+    "callIndexZeroBased": 13,
+    "requestHash": "8f692bbe7823db932b7d504df98cdc13a0f46257b6798e29658ee14f7064df9c",
+    "explanatoryReviewCallIndexZeroBased": 14
+  },
+  "context": {
+    "kind": "topic",
+    "settings": {
+      "quizLevel": "meaningHanzi",
+      "complexity": "phrases",
+      "scope": "everyday",
+      "focus": "characters",
+      "topic": "Courtesy"
+    },
+    "objective": "Distinguish thanking someone from apologizing.",
+    "conversationContext": "Zheng: 谢谢！对不起。\nThank you! Sorry.",
+    "targets": [
+      {
+        "cardId": "evaluation-card-1",
+        "hanzi": "谢谢",
+        "meaning": "thank you"
+      },
+      {
+        "cardId": "evaluation-card-2",
+        "hanzi": "对不起",
+        "meaning": "sorry"
+      }
+    ],
+    "sources": [
+      {
+        "id": "evaluation-card-source-1",
+        "title": "谢谢 — learning card",
+        "excerpt": "谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition."
+      },
+      {
+        "id": "evaluation-card-source-2",
+        "title": "对不起 — learning card",
+        "excerpt": "对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition."
+      }
+    ],
+    "graph": {
+      "overview": "Recognize 谢谢 as the Mandarin expression used to express gratitude. Recognize 对不起 as the Mandarin expression used to apologize or express regret.",
+      "waypoints": [
+        {
+          "id": "w1",
+          "cardIds": [
+            "evaluation-card-1"
+          ],
+          "dependsOn": [],
+          "objective": "Recognize 谢谢 as the Mandarin expression used to express gratitude.",
+          "explanation": "The phrase 谢谢 is used when you want to thank someone for a favor, help, or gift. It signals appreciation rather than regret. In everyday Mandarin, it is the standard way to say \"thank you.\"",
+          "exampleHanzi": "谢谢",
+          "exampleMeaning": "thank you",
+          "sourceIds": [
+            "evaluation-card-source-1"
+          ]
+        },
+        {
+          "id": "w2",
+          "cardIds": [
+            "evaluation-card-2"
+          ],
+          "dependsOn": [
+            "w1"
+          ],
+          "objective": "Recognize 对不起 as the Mandarin expression used to apologize or express regret.",
+          "explanation": "The phrase 对不起 is used when you want to apologize for a mistake, inconvenience, or offense. It signals regret rather than appreciation. In everyday Mandarin, it is the standard way to say \"sorry.\" Understanding this phrase allows you to distinguish it from 谢谢, which expresses gratitude.",
+          "exampleHanzi": "对不起",
+          "exampleMeaning": "sorry",
+          "sourceIds": [
+            "evaluation-card-source-2"
+          ]
+        }
+      ]
+    },
+    "phase": "practice",
+    "remainingWaypointIds": [
+      "w2"
+    ],
+    "currentQuestions": [
+      {
+        "id": "q1",
+        "cardId": "evaluation-card-1",
+        "stem": "What is the primary intention behind this Mandarin expression?",
+        "passage": "谢谢"
+      }
+    ],
+    "coverage": [
+      {
+        "waypointId": "w1",
+        "questionIds": [
+          "q1"
+        ]
+      }
+    ],
+    "proposedDirections": "1. [Practice] Identify the speaker's intention when they say 对不起 after accidentally bumping into someone. (w2, w1)\n2. [Check] Determine the meaning of 对不起 in a scenario where a person is late for a meeting and expresses regret to their colleague. (w2, w1)",
+    "gap": {
+      "waypointIds": [
+        "w2",
+        "w1"
+      ],
+      "cardId": "evaluation-card-2",
+      "intent": "Recognize the expression as an apology or expression of regret, distinguishing it from gratitude.",
+      "whyMissing": "The learner has practiced recognizing the gratitude expression but has not yet demonstrated recognition of the apology expression in a fresh context."
+    },
+    "target": {
+      "cardId": "evaluation-card-2",
+      "hanzi": "对不起",
+      "meaning": "sorry"
+    },
+    "waypoints": [
+      {
+        "id": "w1",
+        "cardIds": [
+          "evaluation-card-1"
+        ],
+        "dependsOn": [],
+        "objective": "Recognize 谢谢 as the Mandarin expression used to express gratitude.",
+        "explanation": "The phrase 谢谢 is used when you want to thank someone for a favor, help, or gift. It signals appreciation rather than regret. In everyday Mandarin, it is the standard way to say \"thank you.\"",
+        "exampleHanzi": "谢谢",
+        "exampleMeaning": "thank you",
+        "sourceIds": [
+          "evaluation-card-source-1"
+        ]
+      },
+      {
+        "id": "w2",
+        "cardIds": [
+          "evaluation-card-2"
+        ],
+        "dependsOn": [
+          "w1"
+        ],
+        "objective": "Recognize 对不起 as the Mandarin expression used to apologize or express regret.",
+        "explanation": "The phrase 对不起 is used when you want to apologize for a mistake, inconvenience, or offense. It signals regret rather than appreciation. In everyday Mandarin, it is the standard way to say \"sorry.\" Understanding this phrase allows you to distinguish it from 谢谢, which expresses gratitude.",
+        "exampleHanzi": "对不起",
+        "exampleMeaning": "sorry",
+        "sourceIds": [
+          "evaluation-card-source-2"
+        ]
+      }
+    ],
+    "candidate": {
+      "stem": "What is the primary intention behind this Mandarin expression?",
+      "passage": "对不起",
+      "answerA": "To express gratitude for a favor or help received",
+      "answerB": "To apologize for a mistake or express regret",
+      "answerC": "To greet someone politely upon meeting them",
+      "answerD": "To request permission to leave a conversation",
+      "correct": "B",
+      "feedback": "This expression conveys an apology or regret, typically used when acknowledging a mistake or inconvenience. It contrasts with expressions of gratitude, which signal appreciation rather than remorse. The other options describe greetings, requests, or thanks, which have different social functions."
+    },
+    "generationMode": "verify_correct_question"
+  },
+  "expected": {},
+  "scope": "Original review input with identical neutral stem and a different expression. First response omitted reason; correction then incorrectly called the neutral stem duplicate and the English meanings a clue. Unlabeled control; full quality remains independently unreviewed."
+}

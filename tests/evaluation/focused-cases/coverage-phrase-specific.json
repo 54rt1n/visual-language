@@ -1,0 +1,57 @@
+{
+  "format": "visual-language-focused-stage-cases",
+  "version": 1,
+  "status": "finished",
+  "description": "Frozen authored lesson context; no credentials or learner workspace data.",
+  "results": [
+    {
+      "caseId": "topic-meaningHanzi",
+      "calls": [
+        {
+          "mode": "evaluate_question_coverage",
+          "repair": false,
+          "request": {
+            "generationTrace": {
+              "stage": "evaluateCoverage"
+            },
+            "messages": [
+              {
+                "role": "user",
+                "content": "{\"generationMode\":\"evaluate_question_coverage\",\"kind\":\"topic\",\"settings\":{\"quizLevel\":\"meaningHanzi\",\"complexity\":\"phrases\",\"scope\":\"everyday\",\"focus\":\"characters\",\"topic\":\"Courtesy\"},\"objective\":\"Distinguish thanking someone from apologizing.\",\"conversationContext\":\"Zheng: 谢谢！对不起。\\nThank you! Sorry.\",\"targets\":[{\"cardId\":\"card-cbd89f3d-a217-4d85-b05b-243d8e3cb5bb\",\"hanzi\":\"谢谢\",\"meaning\":\"thank you\"},{\"cardId\":\"card-3aa1424a-016a-452c-85ab-576e16f88048\",\"hanzi\":\"对不起\",\"meaning\":\"sorry\"}],\"sources\":[{\"id\":\"source-57a3cb2d-9f87-49f3-95be-b36a3b0abd00\",\"title\":\"谢谢 — learning card\",\"excerpt\":\"谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition.\"},{\"id\":\"source-d5219369-3079-4c38-a176-3637834f3879\",\"title\":\"对不起 — learning card\",\"excerpt\":\"对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition.\"}],\"graph\":{\"overview\":\"Recognize that 谢谢 expresses gratitude — thanking someone — rather than an apology. Recognize that 对不起 expresses an apology — saying sorry — rather than thanks, and so contrast it with 谢谢.\",\"waypoints\":[{\"id\":\"w1\",\"cardIds\":[\"card-cbd89f3d-a217-4d85-b05b-243d8e3cb5bb\"],\"dependsOn\":[],\"objective\":\"Recognize that 谢谢 expresses gratitude — thanking someone — rather than an apology.\",\"explanation\":\"谢谢 is used to thank someone, expressing gratitude for something received or done. It is not used to apologize; it points to a good thing, not a fault.\",\"exampleHanzi\":\"谢谢！\",\"exampleMeaning\":\"Thank you!\",\"sourceIds\":[\"source-57a3cb2d-9f87-49f3-95be-b36a3b0abd00\"]},{\"id\":\"w2\",\"cardIds\":[\"card-3aa1424a-016a-452c-85ab-576e16f88048\"],\"dependsOn\":[\"w1\"],\"objective\":\"Recognize that 对不起 expresses an apology — saying sorry — rather than thanks, and so contrast it with 谢谢.\",\"explanation\":\"对不起 is used to apologize, acknowledging a fault or trouble caused. It is not used to thank someone; it points to something wrong, while 谢谢 points to something good received. So 谢谢 means \\\"thank you\\\" and 对不起 means \\\"sorry\\\".\",\"exampleHanzi\":\"对不起！\",\"exampleMeaning\":\"Sorry!\",\"sourceIds\":[\"source-d5219369-3079-4c38-a176-3637834f3879\"]}]},\"phase\":\"practice\",\"currentQuestions\":[{\"id\":\"q1\",\"cardId\":\"card-3aa1424a-016a-452c-85ab-576e16f88048\",\"stem\":\"What does this expression mean?\",\"passage\":\"对不起！\"}],\"coverage\":[],\"question\":{\"id\":\"q1\",\"stem\":\"What does this expression mean?\",\"passage\":\"对不起！\",\"options\":[{\"id\":\"A\",\"text\":\"Saying sorry for a fault or trouble caused\"},{\"id\":\"B\",\"text\":\"Thanking someone for something received or done\"},{\"id\":\"C\",\"text\":\"Greeting someone you have just met\"},{\"id\":\"D\",\"text\":\"Saying goodbye when leaving\"}]}}\n\nTool call:\nevaluate_question_coverage(waypointIds: Array<string>, assessment: string)\nSubmit exactly one native tool call."
+              }
+            ],
+            "tools": [
+              {
+                "function": {
+                  "name": "evaluate_question_coverage"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "mode": "evaluate_question_coverage",
+          "repair": false,
+          "request": {
+            "generationTrace": {
+              "stage": "evaluateCoverage"
+            },
+            "messages": [
+              {
+                "role": "user",
+                "content": "{\"generationMode\":\"evaluate_question_coverage\",\"kind\":\"topic\",\"settings\":{\"quizLevel\":\"meaningHanzi\",\"complexity\":\"phrases\",\"scope\":\"everyday\",\"focus\":\"characters\",\"topic\":\"Courtesy\"},\"objective\":\"Distinguish thanking someone from apologizing.\",\"conversationContext\":\"Zheng: 谢谢！对不起。\\nThank you! Sorry.\",\"targets\":[{\"cardId\":\"card-cbd89f3d-a217-4d85-b05b-243d8e3cb5bb\",\"hanzi\":\"谢谢\",\"meaning\":\"thank you\"},{\"cardId\":\"card-3aa1424a-016a-452c-85ab-576e16f88048\",\"hanzi\":\"对不起\",\"meaning\":\"sorry\"}],\"sources\":[{\"id\":\"source-57a3cb2d-9f87-49f3-95be-b36a3b0abd00\",\"title\":\"谢谢 — learning card\",\"excerpt\":\"谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition.\"},{\"id\":\"source-d5219369-3079-4c38-a176-3637834f3879\",\"title\":\"对不起 — learning card\",\"excerpt\":\"对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition.\"}],\"graph\":{\"overview\":\"Recognize that 谢谢 expresses gratitude — thanking someone — rather than an apology. Recognize that 对不起 expresses an apology — saying sorry — rather than thanks, and so contrast it with 谢谢.\",\"waypoints\":[{\"id\":\"w1\",\"cardIds\":[\"card-cbd89f3d-a217-4d85-b05b-243d8e3cb5bb\"],\"dependsOn\":[],\"objective\":\"Recognize that 谢谢 expresses gratitude — thanking someone — rather than an apology.\",\"explanation\":\"谢谢 is used to thank someone, expressing gratitude for something received or done. It is not used to apologize; it points to a good thing, not a fault.\",\"exampleHanzi\":\"谢谢！\",\"exampleMeaning\":\"Thank you!\",\"sourceIds\":[\"source-57a3cb2d-9f87-49f3-95be-b36a3b0abd00\"]},{\"id\":\"w2\",\"cardIds\":[\"card-3aa1424a-016a-452c-85ab-576e16f88048\"],\"dependsOn\":[\"w1\"],\"objective\":\"Recognize that 对不起 expresses an apology — saying sorry — rather than thanks, and so contrast it with 谢谢.\",\"explanation\":\"对不起 is used to apologize, acknowledging a fault or trouble caused. It is not used to thank someone; it points to something wrong, while 谢谢 points to something good received. So 谢谢 means \\\"thank you\\\" and 对不起 means \\\"sorry\\\".\",\"exampleHanzi\":\"对不起！\",\"exampleMeaning\":\"Sorry!\",\"sourceIds\":[\"source-d5219369-3079-4c38-a176-3637834f3879\"]}]},\"phase\":\"check\",\"currentQuestions\":[{\"id\":\"q1\",\"cardId\":\"card-cbd89f3d-a217-4d85-b05b-243d8e3cb5bb\",\"stem\":\"Which situation fits this expression?\",\"passage\":\"谢谢！\"}],\"coverage\":[],\"practiceQuestions\":[{\"id\":\"q1\",\"cardId\":\"card-3aa1424a-016a-452c-85ab-576e16f88048\",\"stem\":\"What does this expression mean?\",\"passage\":\"对不起！\"}],\"question\":{\"id\":\"q1\",\"stem\":\"Which situation fits this expression?\",\"passage\":\"谢谢！\",\"options\":[{\"id\":\"A\",\"text\":\"Someone has just done you a favor, and you want to show you are grateful.\"},{\"id\":\"B\",\"text\":\"You have made a mistake and want to acknowledge that it was your fault.\"},{\"id\":\"C\",\"text\":\"You are greeting a friend you have not seen for a long time.\"},{\"id\":\"D\",\"text\":\"You are saying goodbye to someone who is leaving.\"}]}}\n\nTool call:\nevaluate_question_coverage(waypointIds: Array<string>, assessment: string)\nSubmit exactly one native tool call."
+              }
+            ],
+            "tools": [
+              {
+                "function": {
+                  "name": "evaluate_question_coverage"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
