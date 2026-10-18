@@ -1,0 +1,233 @@
+{
+  "format": "visual-language-authoring-worked-examples",
+  "version": 1,
+  "scope": "Authored reply-selection demonstrations, not qualified Mandarin quality gold. The learner sees an English communicative goal and Mandarin choices; passage is unnecessary in these examples.",
+  "examples": [
+    {
+      "context": {
+        "kind": "scenario",
+        "settings": {
+          "quizLevel": "responseHanzi",
+          "complexity": "phrases",
+          "scope": "topic",
+          "focus": "complexity",
+          "topic": "Recognize the direction for going left."
+        },
+        "objective": "Recognize the direction for going left.",
+        "conversationContext": "Authored worked example.",
+        "targets": [
+          {
+            "cardId": "demo-left",
+            "hanzi": "往左",
+            "meaning": "Go left."
+          }
+        ],
+        "sources": [
+          {
+            "id": "demo-source-demo-left",
+            "title": "Authored worked example",
+            "excerpt": "往左。 — Go left."
+          }
+        ],
+        "graph": {
+          "overview": "Recognize the direction for going left.",
+          "waypoints": [
+            {
+              "id": "w1",
+              "cardIds": [
+                "demo-left"
+              ],
+              "dependsOn": [],
+              "objective": "Recognize the direction for going left.",
+              "explanation": "Go left.",
+              "exampleHanzi": "往左。",
+              "exampleMeaning": "Go left.",
+              "sourceIds": [
+                "demo-source-demo-left"
+              ]
+            }
+          ]
+        },
+        "phase": "practice",
+        "currentQuestions": [],
+        "proposedDirections": "Assess w1: Recognize the direction for going left.",
+        "sourceMaterial": {
+          "draftId": "demo-source-material-demo-left",
+          "passageHanzi": "往左。",
+          "passageMeaning": "Go left.",
+          "scenario": {
+            "situation": "Giving directions to a visitor.",
+            "teacherRole": "Visitor",
+            "learnerRole": "Guide",
+            "openingHanzi": "请问，怎么走？",
+            "openingMeaning": "Excuse me, which way should I go?",
+            "objective": "Tell the visitor to go left."
+          }
+        },
+        "gap": {
+          "waypointIds": [
+            "w1"
+          ],
+          "cardId": "demo-left",
+          "intent": "Recognize the direction for going left.",
+          "whyMissing": "No current question assesses this understanding."
+        }
+      },
+      "promptContext": {
+        "kind": "scenario",
+        "phase": "practice",
+        "settings": {
+          "quizLevel": "responseHanzi",
+          "complexity": "phrases"
+        },
+        "targets": [
+          {
+            "cardId": "demo-left",
+            "hanzi": "往左",
+            "meaning": "Go left."
+          }
+        ],
+        "sourceMaterial": {
+          "passageHanzi": "往左。",
+          "passageMeaning": "Go left.",
+          "scenario": {
+            "teacherRole": "Visitor",
+            "learnerRole": "Guide",
+            "objective": "Tell the visitor to go left."
+          }
+        },
+        "graph": {
+          "waypoints": [
+            {
+              "id": "w1",
+              "cardIds": [
+                "demo-left"
+              ],
+              "objective": "Recognize the direction for going left.",
+              "exampleHanzi": "往左。",
+              "exampleMeaning": "Go left."
+            }
+          ]
+        },
+        "currentQuestions": [],
+        "proposedDirections": "Assess w1: Recognize the direction for going left."
+      },
+      "arguments": {
+        "stem": "You are giving directions. A visitor needs to go left. Which reply gives that direction?",
+        "answerA": "往左",
+        "answerB": "往右",
+        "answerC": "直走",
+        "answerD": "往回",
+        "correct": "A",
+        "feedback": "往左 directs someone left. The other replies direct them right, straight ahead or back."
+      }
+    },
+    {
+      "context": {
+        "kind": "reading",
+        "settings": {
+          "quizLevel": "responseHanzi",
+          "complexity": "connected",
+          "scope": "topic",
+          "focus": "complexity",
+          "topic": "Explain a plan using the stated shop closing time."
+        },
+        "objective": "Explain a plan using the stated shop closing time.",
+        "conversationContext": "Authored worked example.",
+        "targets": [
+          {
+            "cardId": "demo-close",
+            "hanzi": "关门",
+            "meaning": "Close for the day."
+          }
+        ],
+        "sources": [
+          {
+            "id": "demo-source-demo-close",
+            "title": "Authored worked example",
+            "excerpt": "商店六点关门，所以我们五点去。 — The shop closes at six, so we will go at five."
+          }
+        ],
+        "graph": {
+          "overview": "Explain a plan using the stated shop closing time.",
+          "waypoints": [
+            {
+              "id": "w1",
+              "cardIds": [
+                "demo-close"
+              ],
+              "dependsOn": [],
+              "objective": "Explain a plan using the stated shop closing time.",
+              "explanation": "Close for the day.",
+              "exampleHanzi": "商店六点关门，所以我们五点去。",
+              "exampleMeaning": "The shop closes at six, so we will go at five.",
+              "sourceIds": [
+                "demo-source-demo-close"
+              ]
+            }
+          ]
+        },
+        "phase": "practice",
+        "currentQuestions": [],
+        "proposedDirections": "Assess w1: Explain a plan using the stated shop closing time.",
+        "sourceMaterial": {
+          "draftId": "demo-source-material-demo-close",
+          "passageHanzi": "商店六点关门，所以我们五点去。",
+          "passageMeaning": "The shop closes at six, so we will go at five.",
+          "scenario": null
+        },
+        "gap": {
+          "waypointIds": [
+            "w1"
+          ],
+          "cardId": "demo-close",
+          "intent": "Explain a plan using the stated shop closing time.",
+          "whyMissing": "No current question assesses this understanding."
+        }
+      },
+      "promptContext": {
+        "kind": "reading",
+        "phase": "practice",
+        "settings": {
+          "quizLevel": "responseHanzi",
+          "complexity": "connected"
+        },
+        "targets": [
+          {
+            "cardId": "demo-close",
+            "hanzi": "关门",
+            "meaning": "Close for the day."
+          }
+        ],
+        "sourceMaterial": {
+          "passageHanzi": "商店六点关门，所以我们五点去。",
+          "passageMeaning": "The shop closes at six, so we will go at five."
+        },
+        "graph": {
+          "waypoints": [
+            {
+              "id": "w1",
+              "cardIds": [
+                "demo-close"
+              ],
+              "objective": "Explain a plan using the stated shop closing time.",
+              "exampleHanzi": "商店六点关门，所以我们五点去。",
+              "exampleMeaning": "The shop closes at six, so we will go at five."
+            }
+          ]
+        },
+        "currentQuestions": [],
+        "proposedDirections": "Assess w1: Explain a plan using the stated shop closing time."
+      },
+      "arguments": {
+        "stem": "The shop closes at six. You plan to go at five. Which Mandarin reply explains that plan?",
+        "answerA": "商店六点关门，所以我们五点去。",
+        "answerB": "商店五点关门，所以我们六点去。",
+        "answerC": "商店六点开门，所以我们五点去。",
+        "answerD": "商店五点开门，所以我们六点去。",
+        "correct": "A",
+        "feedback": "The reply links closing at six to going at five. The alternatives change the times or describe opening instead of closing."
+      }
+    }
+  ]
+}

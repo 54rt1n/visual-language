@@ -1,0 +1,51 @@
+CC-CEDICT
+Community maintained free Chinese-English dictionary.
+Published by MDBG; maintained by CC-CEDICT contributors and editors.
+
+This unchanged snapshot is licensed under the Creative Commons
+Attribution-ShareAlike 4.0 International License:
+https://creativecommons.org/licenses/by-sa/4.0/
+
+Source and updates:
+https://www.mdbg.net/chinese/dictionary?page=cedict
+https://cc-cedict.org/wiki/
+Contribute corrections: https://cc-cedict.org/editor/editor.php
+
+Snapshot: 2026-09-10T22:27:42Z; 125050 entries.
+File: cc-cedict-20260910-9e8c364a.txt.gz
+SHA-256: 9e8c364a020db10248c6dcf686d1028e3f552474aa2b819b8199c39ff0949131
+The original gzip archive and its embedded attribution/license header are
+redistributed unchanged. Visual Language builds a temporary lookup index and
+converts numbered pinyin to tone marks for display; it does not rewrite the data.
+Definitions are general English dictionary senses, not sentence translations.
+No endorsement or warranty by the dictionary contributors is implied.
+
+Referenced work from the original header:
+CEDICT - Copyright (C) 1997, 1998 Paul Andrew Denisowski.
+
+The dictionary's license is separate from Visual Language application code.
+
+Decompression software: fflate 0.8.3
+https://github.com/101arrowz/fflate
+
+MIT License
+
+Copyright (c) 2026 Arjun Barrett
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

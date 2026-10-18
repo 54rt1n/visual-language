@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "character": "Zheng",
+  "defaultState": "attentive",
+  "format": "image/png",
+  "width": 1254,
+  "height": 1254,
+  "transparent": true,
+  "animated": false,
+  "states": {
+    "attentive": {
+      "file": "attentive-v1.png",
+      "usage": "Default listening and explanation"
+    },
+    "welcome": {
+      "file": "welcome-v1.png",
+      "usage": "Learner starts or resumes a session"
+    },
+    "thinking": {
+      "file": "thinking-v1.png",
+      "usage": "A real teacher generation or retrieval request is pending"
+    },
+    "encouraging": {
+      "file": "encouraging-v1.png",
+      "usage": "A confirmed successful answer or learner milestone"
+    },
+    "gentleCorrection": {
+      "file": "gentle-correction-v1.png",
+      "usage": "Supportive remediation after a confirmed mistake"
+    }
+  }
+}

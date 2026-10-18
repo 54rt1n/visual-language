@@ -1,0 +1,612 @@
+{
+  "caseId": "scenario-responseHanzi",
+  "plan": {
+    "version": 1,
+    "kind": "scenario",
+    "settings": {
+      "quizLevel": "responseHanzi",
+      "complexity": "simple",
+      "scope": "topic",
+      "focus": "complexity",
+      "topic": "Ordering tea"
+    },
+    "steps": [
+      {
+        "cardId": "evaluation-card-1",
+        "waypointId": "w1",
+        "phase": "learn",
+        "activity": "workedExample"
+      },
+      {
+        "cardId": "evaluation-card-1",
+        "questionId": "q2",
+        "phase": "practice",
+        "activity": "scenarioReply"
+      },
+      {
+        "cardId": "evaluation-card-2",
+        "waypointId": "w2",
+        "phase": "learn",
+        "activity": "workedExample"
+      },
+      {
+        "cardId": "evaluation-card-2",
+        "questionId": "q1",
+        "phase": "practice",
+        "activity": "scenarioReply"
+      }
+    ],
+    "preparation": {
+      "input": {
+        "kind": "scenario",
+        "settings": {
+          "quizLevel": "responseHanzi",
+          "complexity": "simple",
+          "scope": "topic",
+          "focus": "complexity",
+          "topic": "Ordering tea"
+        },
+        "objective": "Order tea politely and request no sugar in a simulated café.",
+        "conversationContext": "Authored café simulation; no real menu claims.",
+        "sourceMaterial": {
+          "draftId": "evaluation-source-draft",
+          "passageHanzi": "请给我一杯茶。不要加糖。",
+          "passageMeaning": "Please give me a cup of tea. Do not add sugar.",
+          "scenario": {
+            "situation": "A simulated café order.",
+            "teacherRole": "Server",
+            "learnerRole": "Customer",
+            "openingHanzi": "您想喝什么？",
+            "openingMeaning": "What would you like to drink?",
+            "objective": "Order tea politely and request no sugar."
+          }
+        },
+        "targets": [
+          {
+            "cardId": "evaluation-card-1",
+            "hanzi": "请给我一杯茶",
+            "meaning": "please give me a cup of tea"
+          },
+          {
+            "cardId": "evaluation-card-2",
+            "hanzi": "不要加糖",
+            "meaning": "do not add sugar"
+          }
+        ],
+        "sources": [
+          {
+            "id": "evaluation-card-source-1",
+            "title": "请给我一杯茶 — learning card",
+            "excerpt": "请给我一杯茶 (qǐng gěi wǒ yì bēi chá) — please give me a cup of tea. Sense: please give me a cup of tea. Assessed skill: recognition."
+          },
+          {
+            "id": "evaluation-card-source-2",
+            "title": "不要加糖 — learning card",
+            "excerpt": "不要加糖 (bú yào jiā táng) — do not add sugar. Sense: do not add sugar. Assessed skill: recognition."
+          },
+          {
+            "id": "authored-source",
+            "title": "Authored evaluation snapshot (not retrieved)",
+            "excerpt": "请给我一杯茶。不要加糖。\nPlease give me a cup of tea. Do not add sugar."
+          }
+        ]
+      },
+      "lesson": {
+        "graph": {
+          "overview": "Recognize and use the polite request 请给我一杯茶 to order a cup of tea in a café setting. Recognize and use the phrase 不要加糖 to request that no sugar be added to a drink.",
+          "waypoints": [
+            {
+              "id": "w1",
+              "cardIds": [
+                "evaluation-card-1"
+              ],
+              "dependsOn": [],
+              "objective": "Recognize and use the polite request 请给我一杯茶 to order a cup of tea in a café setting.",
+              "explanation": "The phrase 请给我一杯茶 is a standard, polite way to request a drink. It combines the politeness marker 请 (please), the verb 给 (give), the object 我 (me), and the measure phrase 一杯茶 (a cup of tea). In the café scenario, the learner uses this single clause to respond to the server's question 您想喝什么？ (What would you like to drink?). This establishes the core ordering action before adding any modifications.",
+              "exampleHanzi": "请给我一杯茶",
+              "exampleMeaning": "Please give me a cup of tea.",
+              "sourceIds": [
+                "evaluation-card-source-1",
+                "authored-source"
+              ]
+            },
+            {
+              "id": "w2",
+              "cardIds": [
+                "evaluation-card-2"
+              ],
+              "dependsOn": [
+                "w1"
+              ],
+              "objective": "Recognize and use the phrase 不要加糖 to request that no sugar be added to a drink.",
+              "explanation": "The phrase 不要加糖 is a standard way to specify a modification to a drink order. It combines the negation 不要 (do not want) with the verb 加 (add) and the object 糖 (sugar). In the café scenario, the learner uses this single clause to follow up on the initial order of tea, ensuring the drink is prepared without sugar. This completes the practical goal of ordering tea politely and requesting no sugar.",
+              "exampleHanzi": "不要加糖",
+              "exampleMeaning": "Do not add sugar.",
+              "sourceIds": [
+                "evaluation-card-source-2",
+                "authored-source"
+              ]
+            }
+          ]
+        },
+        "review": {
+          "decision": "accept",
+          "reason": "The lesson graph is complete and coherent. Waypoint w1 teaches the core ordering phrase 请给我一杯茶, and w2 builds on it to teach the modification 不要加糖. Both waypoints align with the objective of ordering tea politely and requesting no sugar. The dependency chain is logical, the examples are single-clause as required, and the scenario roles (customer/server) are preserved. No missing prerequisites or redundant points were identified.",
+          "model": "Qwen/Qwen3.8-27B"
+        }
+      },
+      "practice": {
+        "lessonHash": "b832b7250de2d9486f92971338113161c578b82325e1d5eb29bbaf65592d61b9",
+        "phase": "practice",
+        "questions": [
+          {
+            "id": "q1",
+            "gap": {
+              "waypointIds": [
+                "w2"
+              ],
+              "cardId": "evaluation-card-2",
+              "intent": "Select the appropriate reply 不要加糖 when the server asks about sugar preference, applying the negation structure in a fresh context.",
+              "whyMissing": "The learner has not yet practiced selecting the no-sugar modification reply in a check context where the server asks about sugar preference."
+            },
+            "question": {
+              "cardId": "evaluation-card-2",
+              "stem": "You have already ordered a cup of tea. The server asks, \"Do you want sugar in it?\" You do not want any sugar. Which reply should you give?",
+              "passage": "您想加糖吗？",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "不要加糖"
+                },
+                {
+                  "id": "B",
+                  "text": "请给我一杯茶"
+                },
+                {
+                  "id": "C",
+                  "text": "您想喝什么？"
+                },
+                {
+                  "id": "D",
+                  "text": "加糖"
+                }
+              ],
+              "quizLevel": "responseHanzi",
+              "correctOptionId": "A",
+              "explanation": "The correct reply is 不要加糖, which uses the negation 不要 (do not want) plus 加 (add) and 糖 (sugar) to say \"do not add sugar,\" directly answering the server's question about sugar. 请给我一杯茶 (\"please give me a cup of tea\") is the initial order, not a reply about sugar. 您想喝什么？ (\"What would you like to drink?\") is the server's question, not the customer's answer. 加糖 (\"add sugar\") is the opposite of what you want.",
+              "distractorFeedback": [
+                {
+                  "optionId": "B",
+                  "explanation": "The correct reply is 不要加糖, which uses the negation 不要 (do not want) plus 加 (add) and 糖 (sugar) to say \"do not add sugar,\" directly answering the server's question about sugar. 请给我一杯茶 (\"please give me a cup of tea\") is the initial order, not a reply about sugar. 您想喝什么？ (\"What would you like to drink?\") is the server's question, not the customer's answer. 加糖 (\"add sugar\") is the opposite of what you want."
+                },
+                {
+                  "optionId": "C",
+                  "explanation": "The correct reply is 不要加糖, which uses the negation 不要 (do not want) plus 加 (add) and 糖 (sugar) to say \"do not add sugar,\" directly answering the server's question about sugar. 请给我一杯茶 (\"please give me a cup of tea\") is the initial order, not a reply about sugar. 您想喝什么？ (\"What would you like to drink?\") is the server's question, not the customer's answer. 加糖 (\"add sugar\") is the opposite of what you want."
+                },
+                {
+                  "optionId": "D",
+                  "explanation": "The correct reply is 不要加糖, which uses the negation 不要 (do not want) plus 加 (add) and 糖 (sugar) to say \"do not add sugar,\" directly answering the server's question about sugar. 请给我一杯茶 (\"please give me a cup of tea\") is the initial order, not a reply about sugar. 您想喝什么？ (\"What would you like to drink?\") is the server's question, not the customer's answer. 加糖 (\"add sugar\") is the opposite of what you want."
+                }
+              ],
+              "sourceIds": [
+                "evaluation-card-source-1",
+                "evaluation-card-source-2",
+                "authored-source"
+              ],
+              "objective": "Select the appropriate reply 不要加糖 when the server asks about sugar preference, applying the negation structure in a fresh context.",
+              "workedExample": {
+                "hanzi": "不要加糖",
+                "meaning": "Do not add sugar.",
+                "explanation": "The phrase 不要加糖 is a standard way to specify a modification to a drink order. It combines the negation 不要 (do not want) with the verb 加 (add) and the object 糖 (sugar). In the café scenario, the learner uses this single clause to follow up on the initial order of tea, ensuring the drink is prepared without sugar. This completes the practical goal of ordering tea politely and requesting no sugar."
+              }
+            },
+            "coverageReview": {
+              "questionHash": "8d3a014beb24705da6aa1b17b92bab794184672a62cd8ec83811f7e734758439",
+              "waypointIds": [
+                "w2"
+              ],
+              "assessment": "The question presents a café scenario where the server asks about sugar preference (您想加糖吗？). The learner must select the appropriate Mandarin reply to decline sugar. Option A (不要加糖) is the correct response, directly testing the learner's ability to recognize and use the negation phrase 不要加糖 to request no sugar. Option B (请给我一杯茶) is a distractor representing the initial order, which is irrelevant to the specific question about sugar. Option C (您想喝什么？) is the server's opening question, not a customer reply. Option D (加糖) is the opposite of the desired intent. The question genuinely assesses w2 (recognizing and using 不要加糖) because the learner must identify this specific expression as the correct reply to the sugar inquiry. It does not assess w1 because the initial order is already established in the stem, and selecting the correct answer does not require recognizing or using 请给我一杯茶."
+            },
+            "review": {
+              "decision": "accept",
+              "reason": "The candidate correctly targets waypoint w2 (不要加糖) as a check question. The English stem clearly states the communicative goal: the learner has already ordered tea and must reply that they do not want sugar. The passage 您想加糖吗？ is a natural, single-clause server question that fits the café scenario and preserves the learner as customer. The correct answer A (不要加糖) is the only defensible choice: B is the initial order, C is the server's opening question, and D is the opposite intent. All Mandarin choices are single clauses using taught vocabulary. The feedback is faithful, source-supported, and explains why each distractor is wrong. The question aligns with proposed direction 3 and does not duplicate any current practice question. No issues found.",
+              "model": "Qwen/Qwen3.8-27B"
+            }
+          },
+          {
+            "id": "q2",
+            "gap": {
+              "waypointIds": [
+                "w1"
+              ],
+              "cardId": "evaluation-card-1",
+              "intent": "Select the polite ordering clause 请给我一杯茶 as a direct response to the server's opening question in the café scenario.",
+              "whyMissing": "The current question only assesses the no-sugar request (w2). The learner has not yet been assessed on selecting the initial polite order for tea (w1) in response to the server's opening question."
+            },
+            "question": {
+              "cardId": "evaluation-card-1",
+              "stem": "You are at a café. The server asks, \"What would you like to drink?\" You want a cup of tea. Which reply should you give?",
+              "passage": "您想喝什么？",
+              "options": [
+                {
+                  "id": "A",
+                  "text": "请给我一杯茶"
+                },
+                {
+                  "id": "B",
+                  "text": "不要加糖"
+                },
+                {
+                  "id": "C",
+                  "text": "谢谢"
+                },
+                {
+                  "id": "D",
+                  "text": "一杯咖啡"
+                }
+              ],
+              "quizLevel": "responseHanzi",
+              "correctOptionId": "A",
+              "explanation": "The correct reply is \"请给我一杯茶\" (Please give me a cup of tea), which directly answers the server's question about what you want to drink. \"不要加糖\" (Do not add sugar) is a modification request, not an order. \"谢谢\" (Thank you) is a polite acknowledgment but does not specify the drink. \"一杯咖啡\" (A cup of coffee) is the wrong drink.",
+              "distractorFeedback": [
+                {
+                  "optionId": "B",
+                  "explanation": "The correct reply is \"请给我一杯茶\" (Please give me a cup of tea), which directly answers the server's question about what you want to drink. \"不要加糖\" (Do not add sugar) is a modification request, not an order. \"谢谢\" (Thank you) is a polite acknowledgment but does not specify the drink. \"一杯咖啡\" (A cup of coffee) is the wrong drink."
+                },
+                {
+                  "optionId": "C",
+                  "explanation": "The correct reply is \"请给我一杯茶\" (Please give me a cup of tea), which directly answers the server's question about what you want to drink. \"不要加糖\" (Do not add sugar) is a modification request, not an order. \"谢谢\" (Thank you) is a polite acknowledgment but does not specify the drink. \"一杯咖啡\" (A cup of coffee) is the wrong drink."
+                },
+                {
+                  "optionId": "D",
+                  "explanation": "The correct reply is \"请给我一杯茶\" (Please give me a cup of tea), which directly answers the server's question about what you want to drink. \"不要加糖\" (Do not add sugar) is a modification request, not an order. \"谢谢\" (Thank you) is a polite acknowledgment but does not specify the drink. \"一杯咖啡\" (A cup of coffee) is the wrong drink."
+                }
+              ],
+              "sourceIds": [
+                "evaluation-card-source-1",
+                "authored-source"
+              ],
+              "objective": "Select the polite ordering clause 请给我一杯茶 as a direct response to the server's opening question in the café scenario.",
+              "workedExample": {
+                "hanzi": "请给我一杯茶",
+                "meaning": "Please give me a cup of tea.",
+                "explanation": "The phrase 请给我一杯茶 is a standard, polite way to request a drink. It combines the politeness marker 请 (please), the verb 给 (give), the object 我 (me), and the measure phrase 一杯茶 (a cup of tea). In the café scenario, the learner uses this single clause to respond to the server's question 您想喝什么？ (What would you like to drink?). This establishes the core ordering action before adding any modifications."
+              }
+            },
+            "coverageReview": {
+              "questionHash": "5e4317dcc8880b81e0713cac98eea0f11803538508ec958b3214fde436a8d02e",
+              "waypointIds": [
+                "w1"
+              ],
+              "assessment": "The question presents the server's opening question 您想喝什么？ and asks the learner to select the appropriate Mandarin reply for ordering a cup of tea. Option A, 请给我一杯茶, is the correct response that directly addresses the request for a drink. The other options are distractors: B (不要加糖) is a modification request not yet applicable, C (谢谢) is a generic thank you, and D (一杯咖啡) is the wrong drink. Selecting A requires recognizing the specific expression 请给我一杯茶 as the polite ordering clause for tea, which is the core understanding of waypoint w1. The question does not assess w2 because the no-sugar request is not part of the decision process for this initial order."
+            },
+            "review": {
+              "decision": "accept",
+              "reason": "The candidate correctly targets the missing understanding for waypoint w1 (selecting the polite ordering clause 请给我一杯茶). The stem clearly states the communicative goal (ordering a cup of tea in response to the server's question). The correct answer (A) is the only defensible choice: B is a modification request, C is an acknowledgment, and D is the wrong drink. The Mandarin choices are single clauses using taught vocabulary, fitting the language ceiling. The feedback is accurate and source-supported. This question does not duplicate the existing question (q1), which assesses the no-sugar request (w2). The task aligns with proposed direction 1 and the scenario workflow.",
+              "model": "Qwen/Qwen3.8-27B"
+            }
+          }
+        ],
+        "complete": true,
+        "coverageReason": "Every lesson understanding has evidence from evaluated question choices.",
+        "coverage": [
+          {
+            "waypointId": "w2",
+            "questionIds": [
+              "q1"
+            ],
+            "assessment": "The question presents a café scenario where the server asks about sugar preference (您想加糖吗？). The learner must select the appropriate Mandarin reply to decline sugar. Option A (不要加糖) is the correct response, directly testing the learner's ability to recognize and use the negation phrase 不要加糖 to request no sugar. Option B (请给我一杯茶) is a distractor representing the initial order, which is irrelevant to the specific question about sugar. Option C (您想喝什么？) is the server's opening question, not a customer reply. Option D (加糖) is the opposite of the desired intent. The question genuinely assesses w2 (recognizing and using 不要加糖) because the learner must identify this specific expression as the correct reply to the sugar inquiry. It does not assess w1 because the initial order is already established in the stem, and selecting the correct answer does not require recognizing or using 请给我一杯茶."
+          },
+          {
+            "waypointId": "w1",
+            "questionIds": [
+              "q2"
+            ],
+            "assessment": "The question presents the server's opening question 您想喝什么？ and asks the learner to select the appropriate Mandarin reply for ordering a cup of tea. Option A, 请给我一杯茶, is the correct response that directly addresses the request for a drink. The other options are distractors: B (不要加糖) is a modification request not yet applicable, C (谢谢) is a generic thank you, and D (一杯咖啡) is the wrong drink. Selecting A requires recognizing the specific expression 请给我一杯茶 as the polite ordering clause for tea, which is the core understanding of waypoint w1. The question does not assess w2 because the no-sugar request is not part of the decision process for this initial order."
+          }
+        ]
+      },
+      "check": {
+        "lessonHash": "b832b7250de2d9486f92971338113161c578b82325e1d5eb29bbaf65592d61b9",
+        "phase": "check",
+        "questions": [],
+        "complete": false,
+        "coverageReason": "",
+        "coverage": [],
+        "replanning": {
+          "lessonHash": "b832b7250de2d9486f92971338113161c578b82325e1d5eb29bbaf65592d61b9",
+          "phase": "check",
+          "limit": 2,
+          "rejectedDirections": [
+            {
+              "gap": {
+                "waypointIds": [
+                  "w2"
+                ],
+                "cardId": "evaluation-card-2",
+                "intent": "Check w2: The server confirms the tea order and asks if you want sugar. You need to decline sugar. Select the appropriate single-clause reply from four choices.",
+                "whyMissing": "The learner needs to demonstrate they can recognize and use the phrase 不要加糖 to request that no sugar be added to a drink, distinguishing it from initial orders or other drink requests."
+              },
+              "candidate": {
+                "stem": "You have already ordered a cup of tea. The server asks, \"Do you want sugar in it?\" You do not want any sugar. Which reply should you give?",
+                "passage": "您想加糖吗？",
+                "answerA": "请给我一杯茶",
+                "answerB": "不要加糖",
+                "answerC": "请给我一杯咖啡",
+                "answerD": "我要一杯水",
+                "correct": "B",
+                "feedback": "The correct reply is 不要加糖 (do not add sugar), which directly answers the server's question about sugar. 请给我一杯茶 (please give me a cup of tea) is an order, not a modification. 请给我一杯咖啡 (please give me a cup of coffee) orders a different drink. 我要一杯水 (I want a cup of water) also orders a different drink."
+              },
+              "reason": "build_question_answers correction budget exhausted: This question repeats an existing question.",
+              "model": "Qwen/Qwen3.8-27B"
+            },
+            {
+              "gap": {
+                "waypointIds": [
+                  "w2"
+                ],
+                "cardId": "evaluation-card-2",
+                "intent": "Check w2: The server confirms your tea order and asks, \"Do you want sugar?\" You need to decline sugar. Select the appropriate single-clause reply from four choices.",
+                "whyMissing": "The learner needs to demonstrate they can recognize and use the phrase 不要加糖 to request that no sugar be added to a drink, distinguishing it from initial orders or other drink requests."
+              },
+              "candidate": {
+                "stem": "You have ordered a cup of tea. The server asks, \"Do you want sugar in it?\" You do not want any sugar. Which reply should you give?",
+                "passage": "您想加糖吗？",
+                "answerA": "请给我一杯茶",
+                "answerB": "不要加糖",
+                "answerC": "我要加糖",
+                "answerD": "请给我一杯咖啡",
+                "correct": "B",
+                "feedback": "The correct reply is \"不要加糖\" (do not add sugar), which directly declines the server's question about adding sugar. \"请给我一杯茶\" (please give me a cup of tea) is an initial order, not a response to a modification question. \"我要加糖\" (I want to add sugar) is the opposite of the desired intent. \"请给我一杯咖啡\" (please give me a cup of coffee) changes the drink entirely, which is not the goal here."
+              },
+              "reason": "The candidate's stem (\"You have already ordered a cup of tea. The server asks, 'Do you want sugar in it?'...\") and passage (\"您想加糖吗？\") are identical to practice question q1, which already tests the same target (不要加糖) in the same conversational circumstance. The proposed direction explicitly notes the previous attempt failed due to repetition and requires a fresh application with a different stem context or server phrasing. Since this candidate does not change the situation or the server's question, it repeats an existing question and cannot be accepted.",
+              "model": "Qwen/Qwen3.8-27B"
+            }
+          ]
+        },
+        "proposedDirections": "1. Check w2: You have ordered a cup of tea. The server asks whether you want it with sugar or without (您加糖还是不加糖？). You want no sugar. Select the appropriate single-clause reply from four choices. This uses a different server question (sugar-or-not choice) than practice q1's yes/no 您想加糖吗？, so it is a fresh application of 不要加糖.\n2. Check w1: You are at a café and the server asks what you would like to drink (您想喝什么？). You want a cup of tea. Select the appropriate single-clause reply from four choices. This assesses the polite order 请给我一杯茶 as a reply selection, which is not yet covered by a check question."
+      }
+    },
+    "source": {
+      "draftId": "evaluation-source-draft",
+      "passageHanzi": "请给我一杯茶。不要加糖。",
+      "passageMeaning": "Please give me a cup of tea. Do not add sugar.",
+      "scenario": {
+        "situation": "A simulated café order.",
+        "teacherRole": "Server",
+        "learnerRole": "Customer",
+        "openingHanzi": "您想喝什么？",
+        "openingMeaning": "What would you like to drink?",
+        "objective": "Order tea politely and request no sugar."
+      }
+    },
+    "brief": "Recognize and use the polite request 请给我一杯茶 to order a cup of tea in a café setting. Recognize and use the phrase 不要加糖 to request that no sugar be added to a drink.",
+    "anchorId": "evaluation-source-node",
+    "title": "Ordering tea",
+    "context": "Authored café simulation; no real menu claims.",
+    "cardIds": [
+      "evaluation-card-1",
+      "evaluation-card-2"
+    ],
+    "stepIndex": 0,
+    "remediatedSteps": [],
+    "skippedSteps": []
+  },
+  "sources": [
+    {
+      "id": "authored-source",
+      "kind": "web",
+      "title": "Authored evaluation snapshot (not retrieved)",
+      "url": "https://example.org/evaluation/scenario",
+      "excerpt": "请给我一杯茶。不要加糖。\nPlease give me a cup of tea. Do not add sugar.",
+      "retrievedAt": 1791460800000,
+      "nodeId": "evaluation-source-node"
+    },
+    {
+      "id": "evaluation-capture-source-1",
+      "kind": "local",
+      "title": "请给我一杯茶 — saved meaning",
+      "excerpt": "请给我一杯茶 (qǐng gěi wǒ yì bēi chá): please give me a cup of tea",
+      "retrievedAt": 1791460800000,
+      "nodeId": "evaluation-source-node",
+      "cardId": "evaluation-card-1"
+    },
+    {
+      "id": "evaluation-capture-source-2",
+      "kind": "local",
+      "title": "不要加糖 — saved meaning",
+      "excerpt": "不要加糖 (bú yào jiā táng): do not add sugar",
+      "retrievedAt": 1791460800000,
+      "nodeId": "evaluation-source-node",
+      "cardId": "evaluation-card-2"
+    },
+    {
+      "id": "evaluation-card-source-1",
+      "kind": "local",
+      "title": "请给我一杯茶 — learning card",
+      "excerpt": "请给我一杯茶 (qǐng gěi wǒ yì bēi chá) — please give me a cup of tea. Sense: please give me a cup of tea. Assessed skill: recognition.",
+      "retrievedAt": 1791460800000,
+      "nodeId": "root-57fe4d39-bfe3-41f3-a3d8-18cecd3a4410",
+      "cardId": "evaluation-card-1"
+    },
+    {
+      "id": "evaluation-card-source-2",
+      "kind": "local",
+      "title": "不要加糖 — learning card",
+      "excerpt": "不要加糖 (bú yào jiā táng) — do not add sugar. Sense: do not add sugar. Assessed skill: recognition.",
+      "retrievedAt": 1791460800000,
+      "nodeId": "root-57fe4d39-bfe3-41f3-a3d8-18cecd3a4410",
+      "cardId": "evaluation-card-2"
+    }
+  ],
+  "originalRequestCount": 27,
+  "originalDurationMs": 465881,
+  "sourceReport": "eval-results/harness-qwen27b-v15-p18-full-matrix-live-2026-10-14.json",
+  "sourceSha256": "3c224910abc04642eb873e692721562c758a933afa07bfdfc58ab285a24f516c",
+  "scope": "Actual interrupted-stream checkpoint for evaluator root-anchor restoration; fixture testing is not semantic evidence.",
+  "quizzes": [
+    {
+      "id": "quiz-bb4694a6-e062-4472-8357-d3f69b0161ec",
+      "kind": "quiz",
+      "sessionId": "session-84ec6f51-469d-4ab1-9128-0f9eb03794aa",
+      "text": "",
+      "quiz": {
+        "title": "Lesson practice",
+        "questions": [
+          {
+            "cardId": "evaluation-card-2",
+            "stem": "You have already ordered a cup of tea. The server asks, \"Do you want sugar in it?\" You do not want any sugar. Which reply should you give?",
+            "passage": "您想加糖吗？",
+            "options": [
+              {
+                "id": "C",
+                "text": "您想喝什么？"
+              },
+              {
+                "id": "A",
+                "text": "不要加糖"
+              },
+              {
+                "id": "D",
+                "text": "加糖"
+              },
+              {
+                "id": "B",
+                "text": "请给我一杯茶"
+              }
+            ],
+            "quizLevel": "responseHanzi",
+            "lessonStep": 3,
+            "correctOptionId": "A",
+            "explanation": "The correct reply is 不要加糖, which uses the negation 不要 (do not want) plus 加 (add) and 糖 (sugar) to say \"do not add sugar,\" directly answering the server's question about sugar. 请给我一杯茶 (\"please give me a cup of tea\") is the initial order, not a reply about sugar. 您想喝什么？ (\"What would you like to drink?\") is the server's question, not the customer's answer. 加糖 (\"add sugar\") is the opposite of what you want.",
+            "distractorFeedback": [
+              {
+                "optionId": "B",
+                "explanation": "The correct reply is 不要加糖, which uses the negation 不要 (do not want) plus 加 (add) and 糖 (sugar) to say \"do not add sugar,\" directly answering the server's question about sugar. 请给我一杯茶 (\"please give me a cup of tea\") is the initial order, not a reply about sugar. 您想喝什么？ (\"What would you like to drink?\") is the server's question, not the customer's answer. 加糖 (\"add sugar\") is the opposite of what you want."
+              },
+              {
+                "optionId": "C",
+                "explanation": "The correct reply is 不要加糖, which uses the negation 不要 (do not want) plus 加 (add) and 糖 (sugar) to say \"do not add sugar,\" directly answering the server's question about sugar. 请给我一杯茶 (\"please give me a cup of tea\") is the initial order, not a reply about sugar. 您想喝什么？ (\"What would you like to drink?\") is the server's question, not the customer's answer. 加糖 (\"add sugar\") is the opposite of what you want."
+              },
+              {
+                "optionId": "D",
+                "explanation": "The correct reply is 不要加糖, which uses the negation 不要 (do not want) plus 加 (add) and 糖 (sugar) to say \"do not add sugar,\" directly answering the server's question about sugar. 请给我一杯茶 (\"please give me a cup of tea\") is the initial order, not a reply about sugar. 您想喝什么？ (\"What would you like to drink?\") is the server's question, not the customer's answer. 加糖 (\"add sugar\") is the opposite of what you want."
+              }
+            ],
+            "sourceIds": [
+              "evaluation-card-source-1",
+              "evaluation-card-source-2",
+              "authored-source"
+            ],
+            "objective": "Select the appropriate reply 不要加糖 when the server asks about sugar preference, applying the negation structure in a fresh context.",
+            "workedExample": {
+              "hanzi": "不要加糖",
+              "meaning": "Do not add sugar.",
+              "explanation": "The phrase 不要加糖 is a standard way to specify a modification to a drink order. It combines the negation 不要 (do not want) with the verb 加 (add) and the object 糖 (sugar). In the café scenario, the learner uses this single clause to follow up on the initial order of tea, ensuring the drink is prepared without sugar. This completes the practical goal of ordering tea politely and requesting no sugar."
+            }
+          },
+          {
+            "cardId": "evaluation-card-1",
+            "stem": "You are at a café. The server asks, \"What would you like to drink?\" You want a cup of tea. Which reply should you give?",
+            "passage": "您想喝什么？",
+            "options": [
+              {
+                "id": "C",
+                "text": "谢谢"
+              },
+              {
+                "id": "A",
+                "text": "请给我一杯茶"
+              },
+              {
+                "id": "D",
+                "text": "一杯咖啡"
+              },
+              {
+                "id": "B",
+                "text": "不要加糖"
+              }
+            ],
+            "quizLevel": "responseHanzi",
+            "lessonStep": 1,
+            "correctOptionId": "A",
+            "explanation": "The correct reply is \"请给我一杯茶\" (Please give me a cup of tea), which directly answers the server's question about what you want to drink. \"不要加糖\" (Do not add sugar) is a modification request, not an order. \"谢谢\" (Thank you) is a polite acknowledgment but does not specify the drink. \"一杯咖啡\" (A cup of coffee) is the wrong drink.",
+            "distractorFeedback": [
+              {
+                "optionId": "B",
+                "explanation": "The correct reply is \"请给我一杯茶\" (Please give me a cup of tea), which directly answers the server's question about what you want to drink. \"不要加糖\" (Do not add sugar) is a modification request, not an order. \"谢谢\" (Thank you) is a polite acknowledgment but does not specify the drink. \"一杯咖啡\" (A cup of coffee) is the wrong drink."
+              },
+              {
+                "optionId": "C",
+                "explanation": "The correct reply is \"请给我一杯茶\" (Please give me a cup of tea), which directly answers the server's question about what you want to drink. \"不要加糖\" (Do not add sugar) is a modification request, not an order. \"谢谢\" (Thank you) is a polite acknowledgment but does not specify the drink. \"一杯咖啡\" (A cup of coffee) is the wrong drink."
+              },
+              {
+                "optionId": "D",
+                "explanation": "The correct reply is \"请给我一杯茶\" (Please give me a cup of tea), which directly answers the server's question about what you want to drink. \"不要加糖\" (Do not add sugar) is a modification request, not an order. \"谢谢\" (Thank you) is a polite acknowledgment but does not specify the drink. \"一杯咖啡\" (A cup of coffee) is the wrong drink."
+              }
+            ],
+            "sourceIds": [
+              "evaluation-card-source-1",
+              "authored-source"
+            ],
+            "objective": "Select the polite ordering clause 请给我一杯茶 as a direct response to the server's opening question in the café scenario.",
+            "workedExample": {
+              "hanzi": "请给我一杯茶",
+              "meaning": "Please give me a cup of tea.",
+              "explanation": "The phrase 请给我一杯茶 is a standard, polite way to request a drink. It combines the politeness marker 请 (please), the verb 给 (give), the object 我 (me), and the measure phrase 一杯茶 (a cup of tea). In the café scenario, the learner uses this single clause to respond to the server's question 您想喝什么？ (What would you like to drink?). This establishes the core ordering action before adding any modifications."
+            }
+          }
+        ]
+      },
+      "status": "validated",
+      "sourceIds": [
+        "evaluation-card-source-1",
+        "evaluation-card-source-2",
+        "authored-source"
+      ],
+      "cardIds": [
+        "evaluation-card-2",
+        "evaluation-card-1"
+      ],
+      "generation": {
+        "provider": "featherless",
+        "model": "Qwen/Qwen3.8-27B",
+        "promptVersion": "lesson-guidance-v18",
+        "createdAt": 1791460800000
+      },
+      "sourceLessonId": "evaluation-source-draft",
+      "lessonPhase": "practice",
+      "quizTargets": [
+        {
+          "cardId": "evaluation-card-2",
+          "skill": "recognition",
+          "hanzi": "不要加糖",
+          "pinyin": "bú yào jiā táng",
+          "sense": "do not add sugar",
+          "meaning": "do not add sugar",
+          "level": "beginner",
+          "explanationLanguage": "English"
+        },
+        {
+          "cardId": "evaluation-card-1",
+          "skill": "recognition",
+          "hanzi": "请给我一杯茶",
+          "pinyin": "qǐng gěi wǒ yì bēi chá",
+          "sense": "please give me a cup of tea",
+          "meaning": "please give me a cup of tea",
+          "level": "beginner",
+          "explanationLanguage": "English"
+        }
+      ],
+      "createdAt": 1791460800000,
+      "updatedAt": 1791460800000,
+      "contentReview": {
+        "verdict": "supported",
+        "reasons": "Every lesson understanding has evidence from evaluated question choices.",
+        "provider": "featherless",
+        "model": "Qwen/Qwen3.8-27B",
+        "promptVersion": "lesson-guidance-v18"
+      }
+    }
+  ]
+}

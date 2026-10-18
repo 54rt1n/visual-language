@@ -1,0 +1,201 @@
+{
+  "sourceReport": "/home/user/projects/visual-language/eval-results/harness-qwen27b-v12-p14-full-matrix-live-2026-10-14.json",
+  "sourceStatusAtCapture": "running",
+  "caseId": "topic-responsePinyin",
+  "repetition": 2,
+  "originalRequestCount": 11,
+  "originalDurationMs": 122771,
+  "plan": {
+    "version": 1,
+    "kind": "topic",
+    "settings": {
+      "quizLevel": "responsePinyin",
+      "complexity": "phrases",
+      "scope": "everyday",
+      "focus": "characters",
+      "topic": "Courtesy"
+    },
+    "steps": [
+      {
+        "cardId": "evaluation-card-1",
+        "waypointId": "w1",
+        "phase": "learn",
+        "activity": "workedExample"
+      },
+      {
+        "cardId": "evaluation-card-2",
+        "waypointId": "w2",
+        "phase": "learn",
+        "activity": "workedExample"
+      }
+    ],
+    "preparation": {
+      "input": {
+        "kind": "topic",
+        "settings": {
+          "quizLevel": "responsePinyin",
+          "complexity": "phrases",
+          "scope": "everyday",
+          "focus": "characters",
+          "topic": "Courtesy"
+        },
+        "objective": "Distinguish thanking someone from apologizing.",
+        "conversationContext": "Zheng: 谢谢！对不起。\nThank you! Sorry.",
+        "targets": [
+          {
+            "cardId": "evaluation-card-1",
+            "hanzi": "谢谢",
+            "meaning": "thank you"
+          },
+          {
+            "cardId": "evaluation-card-2",
+            "hanzi": "对不起",
+            "meaning": "sorry"
+          }
+        ],
+        "sources": [
+          {
+            "id": "evaluation-card-source-1",
+            "title": "谢谢 — learning card",
+            "excerpt": "谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition."
+          },
+          {
+            "id": "evaluation-card-source-2",
+            "title": "对不起 — learning card",
+            "excerpt": "对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition."
+          }
+        ]
+      },
+      "lesson": {
+        "graph": {
+          "overview": "Recognize 谢谢 as the expression used to express gratitude when someone helps you or does something kind. Recognize 对不起 as the expression used to apologize when you have made a mistake or caused inconvenience.",
+          "waypoints": [
+            {
+              "id": "w1",
+              "cardIds": [
+                "evaluation-card-1"
+              ],
+              "dependsOn": [],
+              "objective": "Recognize 谢谢 as the expression used to express gratitude when someone helps you or does something kind.",
+              "explanation": "谢谢 (xiè xiè) is the standard Mandarin phrase for \"thank you.\" You use it to show appreciation when someone gives you something, helps you, or does a favor. It is a positive expression of gratitude.",
+              "exampleHanzi": "谢谢",
+              "exampleMeaning": "Thank you",
+              "sourceIds": [
+                "evaluation-card-source-1"
+              ]
+            },
+            {
+              "id": "w2",
+              "cardIds": [
+                "evaluation-card-2"
+              ],
+              "dependsOn": [
+                "w1"
+              ],
+              "objective": "Recognize 对不起 as the expression used to apologize when you have made a mistake or caused inconvenience.",
+              "explanation": "对不起 (duì bù qǐ) is the standard Mandarin phrase for \"sorry\" or \"I'm sorry.\" You use it to express regret or apologize when you have done something wrong, such as bumping into someone, being late, or making a mistake. It contrasts with 谢谢, which is used for gratitude rather than apology.",
+              "exampleHanzi": "对不起",
+              "exampleMeaning": "Sorry",
+              "sourceIds": [
+                "evaluation-card-source-2"
+              ]
+            }
+          ]
+        },
+        "review": {
+          "decision": "accept",
+          "reason": "The lesson teaches both target expressions with their correct senses: w1 covers 谢谢 as gratitude and w2 covers 对不起 as apology, explicitly contrasting the two. The dependency order is coherent, the scope stays within everyday courtesy, and the objective of distinguishing thanking from apologizing is fully addressed.",
+          "model": "Qwen/Qwen3.8-27B"
+        }
+      },
+      "practice": {
+        "lessonHash": "0af580b5c5e5f22673a2e5148f5fc739a2cdde2fd60b57e60e790a65c52ea1c5",
+        "phase": "practice",
+        "questions": [],
+        "complete": false,
+        "coverageReason": "",
+        "coverage": [],
+        "proposedDirections": "1. Practice: A friend hands you a gift; select the appropriate Mandarin reply from four choices. Missing understanding: using 谢谢 to express gratitude for a kind act. Relevant waypoint: w1.\n2. Practice: You accidentally step on someone's foot; select the appropriate Mandarin reply from four choices. Missing understanding: using 对不起 to apologize for causing inconvenience. Relevant waypoint: w2.\n3. Check: You are late for a meeting and the host is waiting; select the appropriate Mandarin reply from four choices. Missing understanding: distinguishing apology (对不起) from gratitude (谢谢) in a fresh social situation. Relevant waypoints: w1, w2.",
+        "pending": {
+          "stateHash": "9520887d4de39071051078c57b7124d7d145d2518698b14b765c63fd8cc4848a",
+          "gap": {
+            "waypointIds": [
+              "w1",
+              "w2"
+            ],
+            "cardId": "evaluation-card-2",
+            "intent": "Distinguish apology (对不起) from gratitude (谢谢) in a fresh social situation.",
+            "whyMissing": "Learners may confuse the social functions of thanking and apologizing; this check applies the distinction to a new scenario (being late) to ensure correct usage."
+          },
+          "step": "coverage",
+          "candidate": {
+            "stem": "You arrive late to a meeting and your colleague is waiting for you. Which reply is appropriate?",
+            "answerA": "谢谢",
+            "answerB": "对不起",
+            "answerC": "你好",
+            "answerD": "再见",
+            "correct": "B",
+            "feedback": "The correct reply is \"对不起\" (duì bù qǐ), which means \"sorry\" and is used to apologize for being late or causing inconvenience. \"谢谢\" (xiè xiè) means \"thank you\" and is used for gratitude, not apology. \"你好\" (nǐ hǎo) is a greeting, and \"再见\" (zài jiàn) means \"goodbye,\" neither of which fits the context of apologizing for tardiness."
+          },
+          "reviewRound": 0,
+          "review": {
+            "decision": "accept",
+            "reason": "The candidate aligns with proposed direction 3 (Check: distinguishing apology from gratitude in a fresh situation). The stem describes a clear social scenario (being late) where an apology is required. The correct answer (B: 对不起) is the only defensible choice for apologizing. Distractors are appropriate: A (谢谢) tests the core confusion between gratitude and apology, while C (你好) and D (再见) are common but contextually incorrect phrases. The feedback accurately explains the usage of the target expression and contrasts it with the distractors. The question uses only the taught vocabulary and adheres to the language ceiling.",
+            "model": "Qwen/Qwen3.8-27B"
+          }
+        }
+      }
+    },
+    "brief": "Recognize 谢谢 as the expression used to express gratitude when someone helps you or does something kind. Recognize 对不起 as the expression used to apologize when you have made a mistake or caused inconvenience.",
+    "anchorId": "evaluation-source-node",
+    "title": "Conversation",
+    "context": "Zheng: 谢谢！对不起。\nThank you! Sorry.",
+    "cardIds": [
+      "evaluation-card-1",
+      "evaluation-card-2"
+    ],
+    "stepIndex": 0,
+    "remediatedSteps": [],
+    "skippedSteps": []
+  },
+  "sources": [
+    {
+      "id": "evaluation-capture-source-1",
+      "kind": "local",
+      "title": "谢谢 — saved meaning",
+      "excerpt": "谢谢 (xiè xiè): thank you",
+      "retrievedAt": 1791460800000,
+      "nodeId": "evaluation-source-node",
+      "cardId": "evaluation-card-1"
+    },
+    {
+      "id": "evaluation-capture-source-2",
+      "kind": "local",
+      "title": "对不起 — saved meaning",
+      "excerpt": "对不起 (duì bù qǐ): sorry",
+      "retrievedAt": 1791460800000,
+      "nodeId": "evaluation-source-node",
+      "cardId": "evaluation-card-2"
+    },
+    {
+      "id": "evaluation-card-source-1",
+      "kind": "local",
+      "title": "谢谢 — learning card",
+      "excerpt": "谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition.",
+      "retrievedAt": 1791460800000,
+      "nodeId": "evaluation-source-node",
+      "cardId": "evaluation-card-1"
+    },
+    {
+      "id": "evaluation-card-source-2",
+      "kind": "local",
+      "title": "对不起 — learning card",
+      "excerpt": "对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition.",
+      "retrievedAt": 1791460800000,
+      "nodeId": "evaluation-source-node",
+      "cardId": "evaluation-card-2"
+    }
+  ],
+  "trialSha256": "7e335ca9dae87b1fb963a84c1025db9e876a8b2c45e425c7a9f86495ff27ec2d",
+  "labelStatus": "Actual mechanically failed checkpoint; resumed fixture is plumbing only, not language approval."
+}

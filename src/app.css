@@ -1,0 +1,217 @@
+:root {
+  font-family:
+    'Noto Sans CJK SC', 'Noto Sans SC', 'Source Han Sans SC',
+    system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: #e8eaed;
+  background-color: #12141a;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+  padding: 8px 12px;
+  border: 1px solid #465773;
+  border-radius: 8px;
+  background: #7aa2f7;
+  color: #12141a;
+  font-weight: 600;
+}
+
+button.ghost { background: transparent; color: #b4c4df; }
+button:disabled { cursor: default; opacity: .45; }
+:focus-visible { outline: 2px solid #b2d0ff; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; } }
+
+.svelte-flow {
+  --xy-background-color: #12141a;
+  --xy-node-border-radius: 10px;
+}
+
+.svelte-flow__attribution {
+  background: transparent !important;
+  color: #4a5160 !important;
+}
+
+.vl-node {
+  min-width: 260px;
+  max-width: 360px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #2c3340;
+  background: #1a1d26;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  font-size: 13px;
+}
+
+.vl-node.selected {
+  box-shadow: 0 0 0 2px #7aa2f7;
+}
+
+.vl-node h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.vl-node .body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.vl-node.root {
+  border-color: #2a9d8f;
+}
+.vl-node.root h3 {
+  color: #2a9d8f;
+}
+
+.vl-node.user {
+  border-color: #e9c46a;
+}
+.vl-node.user h3 {
+  color: #e9c46a;
+}
+
+.vl-node.assistant {
+  border-color: #7aa2f7;
+}
+.vl-node.assistant h3 {
+  color: #7aa2f7;
+}
+
+.vl-node .reasoning {
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #12141a;
+  color: #8b93a7;
+  font-size: 11px;
+  max-height: 120px;
+  overflow: auto;
+}
+
+.vl-node .error {
+  color: #f07178;
+  margin-top: 6px;
+}
+
+.vl-node .pulse {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: #7aa2f7;
+  animation: pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.vl-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(26, 29, 38, 0.94);
+  border: 1px solid #2c3340;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.vl-panel h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.vl-panel .sub {
+  margin: 0;
+  font-size: 11px;
+  color: #8b93a7;
+}
+
+.vl-panel label {
+  font-size: 11px;
+  color: #8b93a7;
+}
+
+.vl-panel input,
+.vl-panel textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #2c3340;
+  background: #12141a;
+  color: #e8eaed;
+  resize: vertical;
+}
+
+.vl-panel textarea {
+  min-height: 64px;
+}
+
+.vl-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.vl-row button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #7aa2f7;
+  color: #12141a;
+  font-weight: 600;
+}
+
+.vl-row button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.vl-row button.ghost {
+  background: transparent;
+  color: #8b93a7;
+  border: 1px solid #2c3340;
+}
+
+.vl-status {
+  font-size: 11px;
+  color: #8b93a7;
+}

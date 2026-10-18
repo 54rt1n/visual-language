@@ -1,0 +1,10 @@
+Optional contextual Mandarin pronunciation pack
+
+G2pW by GitYCC and contributors, Apache-2.0.
+Source: https://github.com/GitYCC/g2pW/tree/36c3fcce93aebfcb54803d2ad6677023a28ad950
+Official v2 model: https://storage.googleapis.com/esun-ai/g2pW/G2PWModel-v2-onnx.zip
+Modified by Visual Language: conditional candidate tables packed and model quantized to int4; metadata transformed to JSON. See scripts/prepare-reading-model.py and docs/READING-PRONUNCIATION-EVALUATION.md. This is not an unmodified upstream model.
+BERT Chinese vocabulary by Google, Apache-2.0, revision 8f23c25b06e129b6c986331a13d8d025a92cf0ea.
+ONNX Runtime Web 1.23.2 by Microsoft Corporation, MIT; see ORT-LICENSE.txt and ORT-ThirdPartyNotices.txt. Runtime files are unmodified.
+
+The model is Taiwan-oriented. Contextual predictions are not certified pronunciations; regional conventions can differ. Source text is never changed.

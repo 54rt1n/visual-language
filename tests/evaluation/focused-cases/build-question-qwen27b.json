@@ -1,0 +1,85 @@
+{
+  "format": "visual-language-frozen-stage-context",
+  "version": 1,
+  "stage": "buildQuestion",
+  "source": {
+    "report": "eval-results/harness-qwen27b-v6-footer-topic-live-2026-10-13.json",
+    "sha256": "f5808ce8a8747a9485383e1fc345549b31081844e18356ebc107f8bf622eb534",
+    "caseId": "topic-meaningPinyin",
+    "callIndex": 7
+  },
+  "context": {
+    "kind": "topic",
+    "settings": {
+      "quizLevel": "meaningPinyin",
+      "complexity": "phrases",
+      "scope": "everyday",
+      "focus": "characters",
+      "topic": "Courtesy"
+    },
+    "objective": "Distinguish thanking someone from apologizing.",
+    "conversationContext": "Zheng: 谢谢！对不起。\nThank you! Sorry.",
+    "targets": [
+      {
+        "cardId": "card-77e5ebe4-130f-438b-bed9-a2c6f002c130",
+        "hanzi": "谢谢",
+        "meaning": "thank you"
+      },
+      {
+        "cardId": "card-177493a2-f2bb-4a66-b488-42dfd6d18df2",
+        "hanzi": "对不起",
+        "meaning": "sorry"
+      }
+    ],
+    "sources": [
+      {
+        "id": "source-18e45bcd-771c-4ad8-907e-5a0fd1242436",
+        "title": "谢谢 — learning card",
+        "excerpt": "谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition."
+      },
+      {
+        "id": "source-b984aa83-cc68-413a-ae3f-00de6f20b464",
+        "title": "对不起 — learning card",
+        "excerpt": "对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition."
+      }
+    ],
+    "graph": {
+      "overview": "Recognize 谢谢 as an expression of gratitude. Recognize 对不起 as an expression of apology.",
+      "waypoints": [
+        {
+          "id": "w1",
+          "cardIds": [
+            "card-77e5ebe4-130f-438b-bed9-a2c6f002c130"
+          ],
+          "dependsOn": [],
+          "objective": "Recognize 谢谢 as an expression of gratitude.",
+          "explanation": "谢谢 is used to express thanks when someone helps you or does something kind for you. It is a standard phrase for showing appreciation in everyday Mandarin.",
+          "exampleHanzi": "谢谢",
+          "exampleMeaning": "thank you",
+          "sourceIds": [
+            "source-18e45bcd-771c-4ad8-907e-5a0fd1242436"
+          ]
+        },
+        {
+          "id": "w2",
+          "cardIds": [
+            "card-177493a2-f2bb-4a66-b488-42dfd6d18df2"
+          ],
+          "dependsOn": [],
+          "objective": "Recognize 对不起 as an expression of apology.",
+          "explanation": "对不起 is used to express regret or say sorry when you have made a mistake or caused inconvenience. It is the standard phrase for apologizing in everyday Mandarin.",
+          "exampleHanzi": "对不起",
+          "exampleMeaning": "sorry",
+          "sourceIds": [
+            "source-b984aa83-cc68-413a-ae3f-00de6f20b464"
+          ]
+        }
+      ]
+    },
+    "phase": "practice",
+    "currentQuestions": [],
+    "coverage": [],
+    "proposedDirections": "1. Identify the meaning of 谢谢 in a context where a friend hands you a gift (w1).\n2. Identify the meaning of 对不起 in a context where you accidentally bump into someone (w2).\n3. Distinguish between the meanings of 谢谢 and 对不起 when presented in a single choice set (w1, w2).",
+    "generationMode": "build_question_answers"
+  }
+}

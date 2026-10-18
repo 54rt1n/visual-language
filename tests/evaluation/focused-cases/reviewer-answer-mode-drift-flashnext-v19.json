@@ -1,0 +1,158 @@
+{
+  "format": "visual-language-frozen-stage-context",
+  "version": 1,
+  "stage": "reviewQuestion",
+  "source": {
+    "report": "eval-results/harness-flashnext-v19-p19-full-matrix-live-2026-10-14.json",
+    "captureReportSha256": "c9c1992748ef8eab37b681080c21b67a75c72889a92452b47a33569176b764be",
+    "parentStatusAtCapture": "running",
+    "caseId": "topic-meaningPinyin",
+    "repetition": 1,
+    "callIndex": 9,
+    "callSha256": "ccfe433d41f1f1d2aaa2f34f6e7c3505d72a19929468897407eb7b1a6f07effd"
+  },
+  "context": {
+    "kind": "topic",
+    "settings": {
+      "quizLevel": "meaningPinyin",
+      "complexity": "phrases",
+      "scope": "everyday",
+      "focus": "characters",
+      "topic": "Courtesy"
+    },
+    "objective": "Distinguish thanking someone from apologizing.",
+    "conversationContext": "Zheng: 谢谢！对不起。\nThank you! Sorry.",
+    "targets": [
+      {
+        "cardId": "evaluation-card-1",
+        "hanzi": "谢谢",
+        "meaning": "thank you"
+      },
+      {
+        "cardId": "evaluation-card-2",
+        "hanzi": "对不起",
+        "meaning": "sorry"
+      }
+    ],
+    "sources": [
+      {
+        "id": "evaluation-card-source-1",
+        "title": "谢谢 — learning card",
+        "excerpt": "谢谢 (xiè xiè) — thank you. Sense: thank you. Assessed skill: recognition."
+      },
+      {
+        "id": "evaluation-card-source-2",
+        "title": "对不起 — learning card",
+        "excerpt": "对不起 (duì bù qǐ) — sorry. Sense: sorry. Assessed skill: recognition."
+      }
+    ],
+    "graph": {
+      "overview": "Recognize 谢谢 as the expression used to thank someone for something they did or gave. Recognize 对不起 as the expression used to apologize for a mistake or inconvenience you caused, and tell it apart from 谢谢.",
+      "waypoints": [
+        {
+          "id": "w1",
+          "cardIds": [
+            "evaluation-card-1"
+          ],
+          "dependsOn": [],
+          "objective": "Recognize 谢谢 as the expression used to thank someone for something they did or gave.",
+          "explanation": "谢谢 (xiè xie) means \"thank you.\" Use it when someone helps you, gives you something, or offers something kind. It looks forward to their kindness, not to a mistake you made. It is the standard everyday way to express thanks in Mandarin.",
+          "exampleHanzi": "谢谢！",
+          "exampleMeaning": "Thank you!",
+          "sourceIds": [
+            "evaluation-card-source-1"
+          ]
+        },
+        {
+          "id": "w2",
+          "cardIds": [
+            "evaluation-card-2"
+          ],
+          "dependsOn": [
+            "w1"
+          ],
+          "objective": "Recognize 对不起 as the expression used to apologize for a mistake or inconvenience you caused, and tell it apart from 谢谢.",
+          "explanation": "对不起 (duì bu qǐ) means \\\"sorry.\\\" Use it when you have done something wrong, made a mistake, or inconvenienced someone. Unlike 谢谢, which responds to another person's kindness, 对不起 looks back at your own fault. So in \\\"谢谢！对不起。\\\" the speaker thanks someone and separately apologizes; the two expressions answer different situations and are not interchangeable.",
+          "exampleHanzi": "对不起！",
+          "exampleMeaning": "Sorry!",
+          "sourceIds": [
+            "evaluation-card-source-2",
+            "evaluation-card-source-1"
+          ]
+        }
+      ]
+    },
+    "phase": "practice",
+    "remainingWaypointIds": [
+      "w1",
+      "w2"
+    ],
+    "currentQuestions": [],
+    "coverage": [],
+    "proposedDirections": "1. [w1] Missing evidence that the learner recognizes 谢谢 as a response to another person's kindness (help, a gift, an offer), rather than just matching the gloss \"thank you.\" Ask which situation calls for 谢谢, contrasting it with a fault situation.\n2. [w2] Missing evidence that the learner recognizes 对不起 as an apology for one's own mistake or inconvenience. Ask which situation calls for 对不起, e.g. bumping into someone or being late, contrasted with receiving something.\n3. [w1, w2] Missing evidence for the core distinction in the objective: given a fresh mini-scenario where one person gives something and the other spills it, which expression fits each speaker's turn — 谢谢 vs 对不起. This checks they are not interchangeable.",
+    "gap": {
+      "waypointIds": [
+        "w2"
+      ],
+      "cardId": "evaluation-card-2",
+      "intent": "Recognize the apology expression as responding to the speaker's own mistake or inconvenience, distinct from thanking.",
+      "whyMissing": "No current question shows the learner recognizes this expression as an apology for one's own fault rather than a response to kindness."
+    },
+    "target": {
+      "cardId": "evaluation-card-2",
+      "hanzi": "对不起",
+      "meaning": "sorry"
+    },
+    "waypoints": [
+      {
+        "id": "w1",
+        "cardIds": [
+          "evaluation-card-1"
+        ],
+        "dependsOn": [],
+        "objective": "Recognize 谢谢 as the expression used to thank someone for something they did or gave.",
+        "explanation": "谢谢 (xiè xie) means \"thank you.\" Use it when someone helps you, gives you something, or offers something kind. It looks forward to their kindness, not to a mistake you made. It is the standard everyday way to express thanks in Mandarin.",
+        "exampleHanzi": "谢谢！",
+        "exampleMeaning": "Thank you!",
+        "sourceIds": [
+          "evaluation-card-source-1"
+        ]
+      },
+      {
+        "id": "w2",
+        "cardIds": [
+          "evaluation-card-2"
+        ],
+        "dependsOn": [
+          "w1"
+        ],
+        "objective": "Recognize 对不起 as the expression used to apologize for a mistake or inconvenience you caused, and tell it apart from 谢谢.",
+        "explanation": "对不起 (duì bu qǐ) means \\\"sorry.\\\" Use it when you have done something wrong, made a mistake, or inconvenienced someone. Unlike 谢谢, which responds to another person's kindness, 对不起 looks back at your own fault. So in \\\"谢谢！对不起。\\\" the speaker thanks someone and separately apologizes; the two expressions answer different situations and are not interchangeable.",
+        "exampleHanzi": "对不起！",
+        "exampleMeaning": "Sorry!",
+        "sourceIds": [
+          "evaluation-card-source-2",
+          "evaluation-card-source-1"
+        ]
+      }
+    ],
+    "candidate": {
+      "stem": "What is the speaker doing with this expression?",
+      "passage": "对不起！",
+      "answerA": "The speaker is apologizing for a mistake or inconvenience they caused.",
+      "answerB": "The speaker is thanking someone for help, a gift, or a kind offer.",
+      "answerC": "The speaker is greeting someone they have just met.",
+      "answerD": "The speaker is asking someone to repeat what they said.",
+      "correct": "A",
+      "feedback": "This expression is an apology: the speaker looks back at their own fault or the trouble they caused and says they are sorry. It is not thanks, which responds to another person's kindness rather than the speaker's mistake. It is also not a greeting to someone new, and not a request to repeat something."
+    },
+    "generationMode": "verify_correct_question"
+  },
+  "observedReview": {
+    "decision": "revise",
+    "reason": "The Mandarin is hidden, but the pinyin-level quiz still shows \"对不起\" in the passage, and the English stem plus choices make the item solvable only if the learner reads the Chinese — that part is fine. The real problem: the item asks the learner to identify the function of the very expression being tested, which is a gloss-matching task (\"对不起\" = sorry = apologizing), not evidence that the learner recognizes it as the response to a fault situation. The proposed gap for w2 asks for a fresh situation (e.g., bumping into someone, being late) contrasted with receiving something, so the learner must map a scenario to the expression rather than label a given one. Rewrite as a scenario-based item: present a brief situation in English where the speaker caused a mistake or inconvenience and ask which expression fits, with 谢谢 and 对不起 as the Mandarin choices. Keep the language ceiling (only the two taught expressions as options) and one defensible key."
+  },
+  "observedIssue": "English-answer mode feedback asks for Mandarin answer choices, contrary to the fixed assessment format.",
+  "semanticGold": null,
+  "scope": "Feedback-format regression capture, not a qualified verdict on complete question quality."
+}

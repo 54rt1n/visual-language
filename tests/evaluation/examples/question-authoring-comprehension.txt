@@ -1,0 +1,15 @@
+The listed tool is available for this request. Submit its result as one function call using your tool template: <tool_call><function=TOOL_NAME><parameter=FIELD_NAME>VALUE</parameter></function></tool_call>. Replace TOOL_NAME and FIELD_NAME with the offered tool and its schema fields. Include every required field; use JSON for array/object values. Do not write a signature, markdown, or explanatory prose outside the call.
+
+Worked examples of this authoring step follow. Each shows a compact lesson-state projection and its complete submission. Use the actual lesson state and references for the current request.
+
+Example 1 input:
+{"kind":"topic","phase":"practice","targets":[{"cardId":"demo-welcome","hanzi":"不客气","meaning":"you are welcome"}],"currentQuestions":[],"proposedDirections":"Assess w1: Recognize a response to thanks","settings":{"quizLevel":"meaningHanzi","complexity":"phrases"},"graph":{"waypoints":[{"id":"w1","cardIds":["demo-welcome"],"objective":"Recognize a response to thanks","exampleHanzi":"不客气","exampleMeaning":"You are welcome."}]}}
+
+Example 1 output:
+<tool_call><function=build_question_answers><parameter=stem>What does this expression mean?</parameter><parameter=passage>不客气</parameter><parameter=answerA>You are welcome.</parameter><parameter=answerB>Good night.</parameter><parameter=answerC>See you tomorrow.</parameter><parameter=answerD>Please wait.</parameter><parameter=correct>A</parameter><parameter=feedback>不客气 responds to thanks with "You are welcome." The other choices say farewell or ask someone to wait.</parameter></function></tool_call>
+
+Example 2 input:
+{"kind":"reading","phase":"check","targets":[{"cardId":"demo-departure","hanzi":"出发","meaning":"set off"}],"currentQuestions":[],"proposedDirections":"Assess w1: Understand the stated reason for setting off","settings":{"quizLevel":"meaningPinyin","complexity":"connected"},"graph":{"waypoints":[{"id":"w1","cardIds":["demo-departure"],"objective":"Understand the stated reason for setting off","exampleHanzi":"雨停了，所以我们出发。","exampleMeaning":"The rain has stopped, so we are setting off."}]},"practiceQuestions":[{"id":"q1","cardId":"demo-departure","stem":"What does this sentence mean?","passage":"雨停了，所以我们出发。"}]}
+
+Example 2 output:
+<tool_call><function=build_question_answers><parameter=stem>Which relationship does this sentence express?</parameter><parameter=passage>雨停了，所以我们出发。</parameter><parameter=answerA>The change in the weather is the reason for setting off.</parameter><parameter=answerB>Setting off is the reason for the change in the weather.</parameter><parameter=answerC>The journey must finish before the weather can change.</parameter><parameter=answerD>The journey continues despite unchanged weather.</parameter><parameter=correct>A</parameter><parameter=feedback>所以 links the rain stopping as the reason to setting off as the result. Reversing that order changes the relationship. The sentence does not say that the journey has finished or that the weather stayed the same.</parameter></function></tool_call>

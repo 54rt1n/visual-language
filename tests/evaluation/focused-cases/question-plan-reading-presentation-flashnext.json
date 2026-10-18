@@ -1,0 +1,116 @@
+{
+  "provenance": {
+    "sourceReport": "eval-results/planner-single-direction-workflow-v1-flashnext-live-2026-10-15.json",
+    "sourceReportSha256": "17e72093466ff8661dc660143c460e8c389ee8d9b4b3ad6fa702c0e002911280",
+    "caseId": "reading-meaningPinyin",
+    "callIndexZeroBased": 11,
+    "requestHash": "11eca1b4399a98421630451f02add20b2b24b918cb3b2a55cc239d819d2031b9"
+  },
+  "context": {
+    "kind": "reading",
+    "settings": {
+      "quizLevel": "meaningPinyin",
+      "complexity": "connected",
+      "scope": "specialist",
+      "focus": "specificity",
+      "topic": "Recycling at an exhibition"
+    },
+    "objective": "Understand instructions about sorting waste and recycling at an exhibition.",
+    "conversationContext": "Authored reading snapshot, not a current news claim.",
+    "sourceMaterial": {
+      "draftId": "evaluation-source-draft",
+      "passageHanzi": "展览结束后，请分类投放垃圾。纸张可以回收利用，所以请放进回收箱。",
+      "passageMeaning": "After the exhibition, please sort the waste into the appropriate bins. Paper can be recycled, so please put it in the recycling bin.",
+      "scenario": null
+    },
+    "targets": [
+      {
+        "cardId": "evaluation-card-1",
+        "hanzi": "分类投放",
+        "meaning": "sort and put into the appropriate bins"
+      },
+      {
+        "cardId": "evaluation-card-2",
+        "hanzi": "回收利用",
+        "meaning": "recycle and reuse"
+      }
+    ],
+    "sources": [
+      {
+        "id": "evaluation-card-source-1",
+        "title": "分类投放 — learning card",
+        "excerpt": "分类投放 (fēn lèi tóu fàng) — sort and put into the appropriate bins. Sense: sort and put into the appropriate bins. Assessed skill: recognition."
+      },
+      {
+        "id": "evaluation-card-source-2",
+        "title": "回收利用 — learning card",
+        "excerpt": "回收利用 (huí shōu lì yòng) — recycle and reuse. Sense: recycle and reuse. Assessed skill: recognition."
+      },
+      {
+        "id": "authored-source",
+        "title": "Authored evaluation snapshot (not retrieved)",
+        "excerpt": "展览结束后，请分类投放垃圾。纸张可以回收利用，所以请放进回收箱。\nAfter the exhibition, please sort the waste into the appropriate bins. Paper can be recycled, so please put it in the recycling bin."
+      }
+    ],
+    "graph": {
+      "overview": "Recognize 分类投放 as the instruction to sort waste and put it into the appropriate bins. Recognize 回收利用 as \"recycle and reuse\" and understand it as the reason paper goes into the recycling bin (回收箱).",
+      "waypoints": [
+        {
+          "id": "w1",
+          "cardIds": [
+            "evaluation-card-1"
+          ],
+          "dependsOn": [],
+          "objective": "Recognize 分类投放 as the instruction to sort waste and put it into the appropriate bins.",
+          "explanation": "分类 means \"sort into categories\" and 投放 means \"put/deliver into.\" Together, 分类投放垃圾 tells you to separate the waste and place each kind in the correct bin. In the passage this instruction is given for after the exhibition ends, so it is a request about what to do with the rubbish, not about cleaning or throwing everything away in one go.",
+          "exampleHanzi": "展览结束后，请分类投放垃圾。",
+          "exampleMeaning": "After the exhibition, please sort the waste into the appropriate bins.",
+          "sourceIds": [
+            "evaluation-card-source-1",
+            "authored-source"
+          ]
+        },
+        {
+          "id": "w2",
+          "cardIds": [
+            "evaluation-card-2"
+          ],
+          "dependsOn": [
+            "w1"
+          ],
+          "objective": "Recognize 回收利用 as \"recycle and reuse\" and understand it as the reason paper goes into the recycling bin (回收箱).",
+          "explanation": "回收 means \"collect back / recycle\" and 利用 means \"make use of,\" so 回收利用 means to recycle material and use it again. In the passage it appears in the clause 纸张可以回收利用 (\"paper can be recycled\"), and the word 所以 (\"so\") links that property to the instruction 请放进回收箱 (\"please put it in the recycling bin\"). So the passage gives a reason-then-action pattern: because paper can be recycled, it belongs in the recycling bin. Note 回收箱 is the bin itself, built from the same 回收 idea.",
+          "exampleHanzi": "纸张可以回收利用，所以请放进回收箱。",
+          "exampleMeaning": "Paper can be recycled, so please put it in the recycling bin.",
+          "sourceIds": [
+            "evaluation-card-source-2",
+            "authored-source"
+          ]
+        }
+      ]
+    },
+    "phase": "practice",
+    "remainingWaypointIds": [
+      "w2"
+    ],
+    "currentQuestions": [
+      {
+        "id": "q1",
+        "cardId": "evaluation-card-1",
+        "stem": "What does the underlined instruction ask people to do?",
+        "passage": "展览结束后，请分类投放垃圾。"
+      }
+    ],
+    "coverage": [
+      {
+        "waypointId": "w1",
+        "questionIds": [
+          "q1"
+        ]
+      }
+    ],
+    "generationMode": "list_missing_questions"
+  },
+  "expected": {},
+  "scope": "Actual planner input immediately before the first underlined-expression proposal in the terminal Flash reading diagnostic. Captured input is not a semantic gold label."
+}

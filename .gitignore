@@ -1,0 +1,15 @@
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+*.swp
+*.swo
+.DS_Store
+node_modules/.tmp
+test-results
+playwright-report
+eval-results
+vendor
+codedb.snapshot
+local

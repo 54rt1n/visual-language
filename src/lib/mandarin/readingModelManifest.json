@@ -1,0 +1,52 @@
+{
+  "version": "g2pw-v2-int4-1",
+  "directory": "reading-model/g2pw-v2-int4-1/",
+  "bytes": 81154648,
+  "files": [
+    {
+      "file": "model.onnx",
+      "bytes": 68594613,
+      "sha256": "bbcff9e87197515b72bfe0232e0ac278621bac22c50c8f98e2456d9d952a501b"
+    },
+    {
+      "file": "metadata.json",
+      "bytes": 244124,
+      "sha256": "4d041471c6d37fd3444ab9c15d5bed82ae1d9a8d3303ec0a21c219950a27123d"
+    },
+    {
+      "file": "G2pW-LICENSE.txt",
+      "bytes": 11356,
+      "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1"
+    },
+    {
+      "file": "ort.wasm.min.mjs",
+      "bytes": 49856,
+      "sha256": "69751720f611e37d1ce2fa3c6ebaa80f949014752636c5f8887a63d40feadcc7"
+    },
+    {
+      "file": "ort-wasm-simd-threaded.mjs",
+      "bytes": 20321,
+      "sha256": "90a557d15c02bac4504d95b67f431d8594635ed2a0a62a7f2cd83d090ff91d3e"
+    },
+    {
+      "file": "ort-wasm-simd-threaded.wasm",
+      "bytes": 11905541,
+      "sha256": "45eaee27761ad883742a8d4b8fce1538d60ce43b51adf1726fafccc59b8c1a15"
+    },
+    {
+      "file": "ORT-LICENSE.txt",
+      "bytes": 1073,
+      "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c"
+    },
+    {
+      "file": "ORT-ThirdPartyNotices.txt",
+      "bytes": 326866,
+      "sha256": "e9e90971a8e75a9a8ac0c6412e29c1202d079998389915aa485f46c816c3b4cc"
+    },
+    {
+      "file": "NOTICE.txt",
+      "bytes": 898,
+      "sha256": "64b3c436a5c4cdf8c6f2d52ebb615de670d846d3a457f32ffc2444f4ae608144"
+    }
+  ]
+}
