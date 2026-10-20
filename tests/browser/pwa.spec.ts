@@ -1,6 +1,53 @@
 import { openTool } from './navigation'
 import { expect, test } from '@playwright/test'
 
+for (const dismiss of ['Close dialog', 'Escape']) {
+  test(`update panel can ${dismiss} while a local save is delayed`, async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
+    await page.evaluate(() => {
+      const original = crypto.subtle.digest.bind(crypto.subtle), pending: (() => void)[] = []
+      crypto.subtle.digest = (...args) => new Promise((resolve, reject) => {
+        pending.push(() => { void original(...args).then(resolve, reject) })
+      })
+      Object.assign(window, { releaseDelayedWrites: () => { crypto.subtle.digest = original; for (const release of pending) release() } })
+    })
+    const draft = 'Keep this draft while saving is delayed.'
+    await page.getByRole('textbox', { name: 'Message to Zheng' }).fill(draft)
+    await openTool(page, 'App updates')
+    await page.getByRole('button', { name: 'Save & prepare to update', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Saving…', exact: true })).toBeDisabled()
+    if (dismiss === 'Escape') await page.keyboard.press('Escape')
+    else await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(page.getByRole('textbox', { name: 'Message to Zheng' })).toHaveValue(draft)
+    await page.evaluate(() => (window as Window & { releaseDelayedWrites: () => void }).releaseDelayedWrites())
+    await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('textbox', { name: 'Message to Zheng' })).toHaveValue(draft)
+  })
+}
+
+test('an update check that never returns times out and permits retry or dismissal', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready
+    ServiceWorkerRegistration.prototype.update = () => new Promise(() => {})
+  })
+  await page.clock.install()
+  await openTool(page, 'App updates')
+  await page.getByRole('button', { name: 'Check for app update', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Checking for updates…', exact: true })).toBeDisabled()
+  await page.clock.fastForward(15_001)
+  await expect(page.getByRole('status').filter({ hasText: 'Could not check for an update' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Check for app update', exact: true })).toBeEnabled()
+  await page.getByRole('button', { name: 'Check for app update', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Checking for updates…', exact: true })).toBeDisabled()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
 test('production manifest, icons, scoped shell cache and loaded-app offline backup', async ({ page, context }) => {
   await page.goto('/')
   await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()

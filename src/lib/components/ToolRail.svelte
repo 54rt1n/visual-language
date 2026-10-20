@@ -1,8 +1,15 @@
 <script lang="ts">
   import { BookOpen, ListChecks, GraduationCap, BookmarkPlus, Search, Settings2, Plus, PanelsTopLeft, Compass, Ellipsis, PanelLeftOpen, PanelLeftClose } from '@lucide/svelte'
   let { disabled, settingsDisabled, conflicted, onSelect }: { disabled: boolean; settingsDisabled: boolean; conflicted: boolean; onSelect: (action: string) => void } = $props()
-  let expanded = $state(false), container = $state<HTMLDivElement>(), overflow = $state(false), atEnd = $state(false)
+  function initialExpanded() {
+    try { return localStorage.getItem('vl-tool-labels-v1') !== 'hide' } catch { return true }
+  }
+  let expanded = $state(initialExpanded()), container = $state<HTMLDivElement>(), overflow = $state(false), atEnd = $state(false)
   let tooltip = $state<{ text: string; x: number; y: number; anchor: HTMLElement } | null>(null)
+  function toggleLabels() {
+    expanded = !expanded; tooltip = null
+    try { localStorage.setItem('vl-tool-labels-v1', expanded ? 'show' : 'hide') } catch { /* Keep the toggle usable when browser storage is restricted. */ }
+  }
   const groups = [
     { name: 'Learning', tools: [
       { id: 'lessons', label: 'Lessons', name: 'Lessons', hint: 'Continue lessons, review, track progress, and manage your collection.', icon: ListChecks },
@@ -46,7 +53,7 @@
 </script>
 
 <nav class="tool-rail" class:expanded aria-label="Workspace tools">
-  <button type="button" class="ghost label-toggle" aria-label={expanded ? 'Hide tool labels' : 'Show tool labels'} aria-expanded={expanded} aria-controls="workspace-tool-buttons" onclick={() => { expanded = !expanded; tooltip = null }}>
+  <button type="button" class="ghost label-toggle" aria-label={expanded ? 'Hide tool labels' : 'Show tool labels'} aria-expanded={expanded} aria-controls="workspace-tool-buttons" onclick={toggleLabels}>
     {#if expanded}<PanelLeftClose size={20} /><span>Hide labels</span>{:else}<PanelLeftOpen size={20} />{/if}
   </button>
   <div class="tool-buttons" id="workspace-tool-buttons" bind:this={container} onscroll={measure}>

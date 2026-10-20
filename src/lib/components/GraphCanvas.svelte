@@ -79,6 +79,7 @@
 
   const workspace = new WorkspaceState(modeFromHash(window.location.hash))
   const pwa = new PwaLifecycle()
+  const showUpdateNotice = $derived(pwa.updateAvailable && !pwa.updateNoticeDismissed)
   const nodeTypes = {
     root: RootNode,
     user: UserNode,
@@ -797,8 +798,8 @@
         </p>
         <p class="vl-status" role="status">{!ready ? 'Opening local workspace…' : graphDirty ? 'Unsaved changes…' : workspace.status === 'saved' ? 'Saved on this device' : workspace.status === 'saving' ? 'Saving…' : 'Save needs attention'} · {online ? 'Online' : 'No connection'}</p>
       </div>
-      {#if pwa.updateAvailable || workspace.error}<div class="vl-panel status-actions">
-        {#if pwa.updateAvailable}<button type="button" class="ghost" disabled={streaming || graphBusy || startingRequest} onclick={() => { modal = 'pwa' }}>App update ready</button>{/if}
+      {#if showUpdateNotice || workspace.error}<div class="vl-panel status-actions">
+        {#if showUpdateNotice}<div class="update-notice"><button type="button" class="ghost" disabled={streaming || graphBusy || startingRequest} onclick={() => { modal = 'pwa' }}>App update ready</button><button type="button" class="ghost" aria-label="Dismiss update notice" onclick={() => { pwa.updateNoticeDismissed = true }}>✕</button></div>{/if}
         {#if workspace.error}<p class="save-error" role="alert">{workspace.error}</p><button type="button" class="ghost" onclick={reloadSaved}>Reload saved state</button>{#if ready}<button type="button" class="ghost" onclick={downloadDraftRecovery}>Download unsaved draft</button>{/if}{/if}
       </div>{/if}
     </Panel>
@@ -917,9 +918,11 @@
   }
   .canvas :global(.svelte-flow__handle) { cursor: default; }
 
+  .workspace-layout { --tool-rail-width: 64px; }
+  .workspace-layout:has(:global(.tool-rail.expanded)) { --tool-rail-width: 172px; }
   .brand {
-    min-width: 220px;
-    max-width: min(380px, 70vw);
+    min-width: min(220px, calc(100vw - var(--tool-rail-width) - 40px));
+    max-width: min(380px, 70vw, calc(100vw - var(--tool-rail-width) - 40px));
     overflow-wrap: anywhere;
     pointer-events: none;
     box-shadow: none;
@@ -929,7 +932,11 @@
   :global(.svelte-flow__panel.background-status) { z-index: auto; pointer-events: none; }
   /* Do not create a stacking context around the background status. Recovery
      actions are exceptional foreground controls; About lives in the tool rail. */
-  .status-actions { position: relative; z-index: 5; pointer-events: auto; margin-top: 8px; max-width: min(380px, calc(100vw - 104px)); }
+  .status-actions { position: relative; z-index: 5; pointer-events: auto; margin-top: 8px; max-width: min(380px, calc(100vw - var(--tool-rail-width) - 40px)); }
+  .update-notice { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .update-notice button { min-height: 44px; }
+  .update-notice button:first-child { flex: 1; min-width: 0; }
+  .update-notice button:last-child { min-width: 44px; }
 
   .composer {
     width: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
@@ -946,7 +953,7 @@
     :global(.svelte-flow__minimap) { display: none; }
   }
   @media (max-width: 640px) {
-    .brand { min-width: 0; width: calc(100vw - 104px); max-width: none; max-height: 28dvh; overflow-y: auto; gap: 4px; padding: 8px 10px; }
+    .brand { min-width: 0; width: calc(100vw - var(--tool-rail-width) - 40px); max-width: none; max-height: 28dvh; overflow-y: auto; gap: 4px; padding: 8px 10px; }
     .brand p { margin: 0; } .brand .vl-status { font-size: 10px; }
     .teacher-content h3 span { display: none; }
     .full-caption { display: none; } .compact-caption { display: inline; }
