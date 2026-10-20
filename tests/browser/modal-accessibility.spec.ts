@@ -120,7 +120,7 @@ test('keyboard quiz selection survives Escape and reload before one explicit sub
   await close()
   await expect(page.getByRole('button', { name: 'Daily review', exact: true })).toBeFocused()
   expect(await page.locator('.svelte-flow__viewport').getAttribute('style')).toBe(viewport)
-  const paused = await snapshot(), session = paused.sessions.find(s => s.status === 'paused')!
+  const paused = await snapshot(), session = paused.sessions.find(s => s.status === 'paused' && s.activeExerciseId)!
   const exercise = paused.exercises.find(e => e.id === session.activeExerciseId)!
   const draft = paused.drafts.find(d => d.kind === 'answer' && d.exerciseId === exercise.id)!
   expect(draft.selectedOptionId).toBeTruthy(); expect(paused.cards).toEqual(before.cards)

@@ -24,7 +24,7 @@ test.describe('First-visit welcome', () => {
       const connect = welcome.getByRole('button', { name: 'Set up AI connection', exact: true })
       await expect(connect).toBeFocused()
       await expect(connect).toBeInViewport({ ratio: 1 })
-      await expect(welcome.getByRole('button', { name: 'Explore first', exact: true })).toBeInViewport({ ratio: 1 })
+      await expect(welcome.getByRole('button', { name: 'Try demo', exact: true })).toBeInViewport({ ratio: 1 })
       await page.screenshot({ path: `test-results/welcome-${viewport.width}.png`, fullPage: true })
       await connect.click()
       await expect(welcome).toHaveCount(0)
@@ -44,7 +44,7 @@ test.describe('First-visit welcome', () => {
     })
   }
 
-  for (const action of ['Explore first', 'Escape']) {
+  for (const action of ['Close dialog', 'Escape']) {
     test(`${action} dismisses welcome across reloads and leaves connection setup available`, async ({ page }) => {
       await ready(page)
       const welcome = page.getByRole('dialog', { name: 'Welcome to Visual Language', exact: true })

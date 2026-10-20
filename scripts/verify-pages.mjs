@@ -38,7 +38,7 @@ try {
   await page.goto(url)
   await page.getByText('Saved on this device', { exact: false }).waitFor()
   await page.getByRole('dialog', { name: 'Welcome to Visual Language', exact: true }).waitFor()
-  await page.getByRole('button', { name: 'Explore first', exact: true }).click()
+  await page.getByRole('dialog', { name: 'Welcome to Visual Language', exact: true }).getByRole('button', { name: 'Close dialog', exact: true }).click()
   assert.equal(await page.locator('link[rel="manifest"]').getAttribute('href'), `${base}manifest.webmanifest`)
   const manifest = await (await page.request.get(url + 'manifest.webmanifest')).json()
   for (const property of ['id', 'scope', 'start_url']) assert.equal(new URL(manifest[property], url + 'manifest.webmanifest').href, url)

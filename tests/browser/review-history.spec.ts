@@ -81,6 +81,6 @@ test('history access from an unresolved review needs explicit help and cannot pr
   await expect(page.getByRole('button', { name: 'Preview correction: recalled', exact: true })).toBeDisabled()
   await expect(page.getByRole('article')).toContainText('Help recorded: source')
   await close(page); const saved = await download(page)
-  const active = saved.state.sessions.find((s: { status: string }) => s.status !== 'completed').activeExerciseId
+  const active = saved.state.sessions.find((s: { status: string; activeExerciseId: string | null }) => s.status !== 'completed' && s.activeExerciseId).activeExerciseId
   expect(saved.state.events.filter((e: { exerciseId?: string; kind: string }) => e.exerciseId === active && e.kind === 'review')).toHaveLength(1)
 })

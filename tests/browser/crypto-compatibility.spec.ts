@@ -15,7 +15,7 @@ test('plain HTTP without randomUUID or subtle supports local editing, reload and
   expect(await page.evaluate(() => ({ secure: isSecureContext, uuid: typeof crypto.randomUUID, subtle: typeof crypto.subtle, random: typeof crypto.getRandomValues }))).toEqual({ secure: false, uuid: 'undefined', subtle: 'undefined', random: 'function' })
   await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
   // This separate origin starts with its own first-visit preferences.
-  await page.getByRole('dialog', { name: 'Welcome to Visual Language', exact: true }).getByRole('button', { name: 'Explore first', exact: true }).click()
+  await page.getByRole('dialog', { name: 'Welcome to Visual Language', exact: true }).getByRole('button', { name: 'Close dialog', exact: true }).click()
   await page.getByRole('button', { name: 'New topic', exact: true }).click()
   await page.getByRole('textbox', { name: 'Message to Zheng' }).fill('Local HTTP draft — no credentials.')
   await openTool(page, 'Backup & restore')

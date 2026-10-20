@@ -1,4 +1,4 @@
-import type { Lesson } from '../domain/lesson'
+import { lessonView, type Lesson } from '../domain/lesson'
 import { englishAnswers, preparedLessonSteps } from '../domain/lessonPlan'
 import { lessonPreparationHash, waypointQuestionHash, type LessonPreparation, type WaypointQuiz } from '../domain/lessonPreparation'
 import type { WaypointLessonInput } from '../domain/lessonGraph'
@@ -63,7 +63,7 @@ export function demoLessonPreparation(input: WaypointLessonInput, fresh = false,
 }
 
 export function demoLessonQuizzes(state: Workspace, lesson: Lesson, sessionId: string, preparation: LessonPreparation, at: number, phases: ('practice' | 'check')[] = ['practice', 'check']): SavedDraft[] {
-  const steps = preparedLessonSteps(preparation, lesson.settings, lesson.kind)
+  const steps = lessonView(state, state.sessions.find(s => s.id === sessionId))!.steps
   return phases.map(phase => ({ id: nid('quiz'), kind: 'quiz', text: '', sessionId, lessonPhase: phase, status: 'validated',
     cardIds: lesson.cardIds, sourceIds: preparation.input.sources.map(s => s.id),
     quiz: { title: phase === 'check' ? 'Sample lesson quiz' : 'Sample lesson practice', questions: preparation[phase]!.questions.map(q => shuffleOptions({ ...q.question, lessonStep: steps.findIndex(s => s.phase === phase && s.questionId === q.id) })) },

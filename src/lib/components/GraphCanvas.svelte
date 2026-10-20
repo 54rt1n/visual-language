@@ -278,9 +278,12 @@
     return () => { disposed = true; observer?.disconnect(); cancelAnimationFrame(frame) }
   })
 
-  function dismissWelcome(next: 'providers' | null = null) {
+  function rememberWelcome() {
     // This browser preference is separate from learning data and backups.
     try { localStorage.setItem('vl-welcome-v1', 'seen') } catch { /* Continue even when the preference cannot be persisted. */ }
+  }
+  function dismissWelcome(next: 'providers' | null = null) {
+    rememberWelcome()
     modal = next
   }
 
@@ -884,7 +887,7 @@
 
 {#if !modal && !languageSetupOpen && !recallProtected && (readingFocusNode?.type === 'assistant' || readingFocusNode?.type === 'chunk')}{#key readingFocusNode.id}<ResponseReader nodeId={readingFocusNode.id} text={readingFocusNode.data.text} passage={readingFocusNode.type === 'chunk'} originalWordSegments={readingFocusNode.type === 'chunk' ? readingFocusNode.data.originalWordSegments : undefined} onClose={() => { readingFocusId = undefined }} />{/key}{/if}
 
-{#if modal === 'welcome'}<WelcomeDialog onConnect={() => dismissWelcome('providers')} onClose={() => dismissWelcome()} />
+{#if modal === 'welcome'}<WelcomeDialog onConnect={() => dismissWelcome('providers')} onDemo={async () => { rememberWelcome(); await switchWorkspace('demo') }} onClose={() => dismissWelcome()} />
 {:else if modal === 'lessons'}<LessonsDialog {workspace} onChanged={applySaved} onOpen={(sessionId, anchorId) => { practiceAnchorId = anchorId; practiceSessionId = sessionId; practiceItemId = undefined; practiceAutoStart = true; modal = 'conversation-practice' }} onCreate={() => { void openDiscovery() }} onClose={() => { modal = null }} />
 {:else if modal === 'conversation-practice'}<LessonDialog {workspace} {settings} anchorId={practiceAnchorId} initialSessionId={practiceSessionId} initialItemId={practiceItemId} autoStart={practiceAutoStart} onChanged={applySaved} onClose={() => { modal = null }} onReturn={id => { modal = null; if (workspace.snapshot?.state.nodes.some(n => n.id === id)) void revealNode(id) }} onDailyReview={() => { void openTeacher() }} onLessons={() => { modal = 'lessons' }} />
 {:else if modal === 'providers'}<SettingsDialog {settings} allowNetwork={!prerecorded} onSave={async (value) => {
