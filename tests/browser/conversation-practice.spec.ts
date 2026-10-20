@@ -135,9 +135,6 @@ test('empty conversation practice returns to saving without creating a session',
 
 test('conversation recognition practice uses saved choices without promoting an overdue card', async ({page}) => {
   await page.goto('/#demo')
-  await page.getByRole('button',{name:'Demo controls',exact:true}).click()
-  await page.getByRole('button',{name:'Use prerecorded rehearsal',exact:true}).click()
-  await page.getByRole('button',{name:'Close dialog',exact:true}).click()
   await openTool(page,'Node tools')
   await page.getByLabel('Selected graph node').selectOption('demo-everyday-reply')
   await page.getByRole('button',{name:'Show on canvas',exact:true}).click()
@@ -166,9 +163,6 @@ test('conversation recognition practice uses saved choices without promoting an 
 
 for (const level of Object.keys(quizLevels) as QuizLevel[]) test(`prepared quiz presentation: ${level}`, async ({page}) => {
   await page.goto('/#demo')
-  await page.getByRole('button',{name:'Demo controls',exact:true}).click()
-  await page.getByRole('button',{name:'Use prerecorded rehearsal',exact:true}).click()
-  await page.getByRole('button',{name:'Close dialog',exact:true}).click()
   await openTool(page,'Node tools')
   await page.getByLabel('Selected graph node').selectOption('demo-everyday-reply')
   await page.getByRole('button',{name:'Show on canvas',exact:true}).click()
@@ -191,7 +185,7 @@ for (const level of Object.keys(quizLevels) as QuizLevel[]) test(`prepared quiz 
   await expect(dialog.getByRole('button', { name: 'Show answer', exact: true })).toBeVisible()
   if (level === 'meaningPinyin') await dialog.getByRole('button', { name: 'Show answer', exact: true }).click()
   if (level === 'meaningHanzi') {
-    await dialog.getByRole('radio', { name: 'an apology', exact: true }).check()
+    await dialog.getByRole('radio', { name: 'I am sorry', exact: true }).check()
     await dialog.getByRole('button', { name: 'Check answer', exact: true }).click()
     await expect(dialog.getByRole('group', { name: 'Choose again', exact: true })).toBeVisible()
     await expect(dialog.locator('[data-lesson-feedback]')).toBeInViewport({ ratio: 1 })

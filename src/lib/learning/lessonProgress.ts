@@ -20,7 +20,7 @@ function checkRows(state: Workspace, session: LearningSession) {
 }
 
 export function reviewSettingsForCard(state: Workspace, cardId: string): LessonSettings | undefined {
-  return state.sessions.filter(s => lessonForSession(state, s)?.cardIds.includes(cardId) && lessonReadiness(state, s).ready)
+  return state.sessions.filter(s => s.lessonAttempt?.interactionDay && lessonForSession(state, s)?.cardIds.includes(cardId) && lessonReadiness(state, s).ready)
     .sort((a, b) => b.createdAt - a.createdAt).map(s => lessonForSession(state, s)!.settings).at(0)
 }
 

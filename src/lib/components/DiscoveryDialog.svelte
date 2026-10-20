@@ -104,7 +104,7 @@
 <Modal title="Explore a topic" onClose={() => void close()}>
   <div class="discovery">
     <header class="teacher-heading">{#if teacherPortraits}<TeacherPortrait state={expression} variant="discovery" />{/if}<div><h3>What would you like to learn?</h3><p class="small">Turn a topic you care about into a Mandarin lesson.</p></div></header>
-    {#if prerecorded}<p class="notice">Creating lessons needs a live AI connection. Use Demo controls to switch from prerecorded examples.</p>{/if}
+    {#if prerecorded}<p class="notice">Creating your own lesson needs an AI connection. Switch to live AI in Demo options, or try the ready-made sample lesson.</p>{/if}
     {#if drafts.length}<div class="saved-lessons"><label>Saved lesson<select value={selectedId} disabled={busy} onchange={event => void choose(event.currentTarget.value)}><option value="">New lesson</option>{#each drafts as draft}<option value={draft.id}>{(draft.discovery?.title ?? draft.discoveryRequest?.publicTopic) || 'Untitled lesson'} · {draft.status === 'validated' ? 'Ready' : draft.status === 'editing' ? 'Draft' : 'Unfinished'}</option>{/each}</select></label><button type="button" class="ghost" disabled={busy} onclick={() => void choose('')}>New lesson</button></div>{/if}
     {#if !material}
       {#if unfinished && !busy && !error}<p class="notice" role="status">Your unfinished lesson is saved. Continue where you left off, or edit the topic to start a new version.</p>{/if}

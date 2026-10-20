@@ -17,11 +17,58 @@ async function download(page: Page) {
   return { buffer, filename: result.suggestedFilename(), backup: JSON.parse(buffer.toString()) }
 }
 async function close(page: Page) { await page.getByRole('button', { name: 'Close dialog' }).click(); await expect(page.getByRole('dialog')).toHaveCount(0) }
-async function controls(page: Page) { await openTool(page, 'Demo workspace') }
-async function prerecorded(page: Page) { await controls(page); await page.getByRole('button', { name: 'Use prerecorded rehearsal', exact: true }).click(); await expect(page.getByText('Prerecorded demo enabled.', { exact: false })).toBeVisible(); await close(page) }
-async function advance(page: Page, days: number) { await controls(page); await page.getByLabel('Days to advance').fill(String(days)); await page.getByRole('button', { name: 'Advance demo clock' }).click(); await expect(page.getByText('Advanced the isolated demo', { exact: false })).toBeVisible(); await close(page) }
+async function controls(page: Page) {
+  await openTool(page, 'Demo workspace')
+  const dialog = page.getByRole('dialog', { name: 'Demo', exact: true })
+  await expect(dialog).toBeVisible()
+  if (await page.locator('.demo-badge').count()) await dialog.getByText('Demo options', { exact: true }).click()
+}
+async function prerecorded(page: Page) { await expect(page.locator('.demo-badge')).toContainText('Sample content') }
+async function advance(page: Page, days: number) { await controls(page); await page.getByLabel('Days to advance').fill(String(days)); await page.getByRole('button', { name: 'Advance demo clock' }).click(); await expect(page.getByText('Advanced the demo', { exact: false })).toBeVisible(); await close(page) }
 async function start(page: Page) { await page.getByRole('button', { name: 'Daily review', exact: true }).click(); await page.getByRole('dialog').getByRole('button', { name: 'Start practice' }).click() }
 async function answer(page: Page, value: string) { await page.getByLabel('Your answer', { exact: true }).fill(value); await page.getByRole('button', { name: 'Submit answer', exact: true }).click() }
+
+test('Try demo opens a key-free sample lesson with guided practice, a separate quiz and saved progress', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 568 })
+  const external: string[] = [], errors: string[] = []
+  page.on('request', request => { if (!request.url().startsWith('http://127.0.0.1:4173')) external.push(request.url()) })
+  page.on('pageerror', error => errors.push(error.message))
+  await ready(page)
+  await page.getByRole('button', { name: 'Try demo', exact: true }).click()
+  await page.getByRole('button', { name: 'Open demo workspace', exact: true }).click()
+  const welcome = page.getByRole('dialog', { name: 'Demo', exact: true })
+  await expect(welcome).toBeVisible()
+  await expect(welcome).toContainText('No API key needed')
+  await expect(welcome.locator('details')).not.toHaveAttribute('open', '')
+  await expect(welcome.getByRole('button', { name: 'Try sample lesson', exact: true })).toBeInViewport({ ratio: 1 })
+  await page.screenshot({ path: 'test-results/demo-welcome-mobile.png', fullPage: true })
+  await welcome.getByRole('button', { name: 'Try sample lesson', exact: true }).click()
+  await expect(page.getByText('Lesson · Part 1 of 2', { exact: true })).toBeVisible()
+  const correct = ['please give me a cup of tea', 'thank you']
+  for (let i = 0; i < correct.length; i++) {
+    await page.getByRole('button', { name: 'Try it', exact: true }).click()
+    await page.getByRole('radio', { name: new RegExp(correct[i]!) }).check()
+    await page.getByRole('button', { name: 'Check answer', exact: true }).click()
+    await page.getByRole('button', { name: i === 1 ? 'Start quiz' : 'Continue', exact: true }).click()
+  }
+  await expect(page.getByText('Quiz · Question 1 of 2', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Show answer', exact: true })).toHaveCount(0)
+  await page.getByRole('radio', { name: /please give me a cup of tea/ }).check()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
+  await page.getByRole('radio', { name: /thank you/ }).check()
+  await page.getByRole('button', { name: 'Submit quiz', exact: true }).click()
+  await expect(page.getByRole('region', { name: 'Quiz result' })).toContainText('2 of 2 correct')
+  await page.getByRole('button', { name: 'Back to lessons', exact: true }).click()
+  const sample = page.getByRole('article', { name: 'Order a cup of tea', exact: true })
+  await expect(sample).toContainText('Level 1 of 4')
+  await expect(sample).toContainText('1/10 points')
+  await page.screenshot({ path: 'test-results/demo-lessons-mobile.png', fullPage: true })
+  await close(page); await page.reload()
+  await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
+  await page.getByRole('button', { name: 'Lessons', exact: true }).click()
+  await expect(sample).toContainText('1/10 points')
+  expect(external).toEqual([]); expect(errors).toEqual([])
+})
 
 test('demo navigation, clock, imports and reset keep the normal workspace and draft separate', async ({ page }) => {
   const external: string[] = []
@@ -32,10 +79,11 @@ test('demo navigation, clock, imports and reset keep the normal workspace and dr
   await data(page); const normal = await download(page); await close(page)
   await controls(page)
   await page.getByRole('button', { name: 'Open demo workspace' }).click()
-  await expect(page.locator('.demo-badge')).toContainText('live provider path')
+  await expect(page.locator('.demo-badge')).toContainText('Sample content')
+  await close(page)
   await expect(page.getByRole('textbox', { name: 'Message to Zheng' })).toHaveValue('')
   await data(page); const seed = await download(page)
-  expect(seed.backup.data.cards).toHaveLength(5); expect(seed.backup.data.demo).toMatchObject({ enabled: true, now: NOW })
+  expect(seed.backup.data.cards).toHaveLength(6); expect(seed.backup.data.demo).toMatchObject({ enabled: true, now: NOW })
   expect(seed.filename).toContain('backup-demo-')
   await page.getByLabel('Choose backup file').setInputFiles({ name: 'normal.json', mimeType: 'application/json', buffer: normal.buffer })
   await expect(page.getByRole('alert')).toContainText('Leave demo mode')
@@ -47,7 +95,7 @@ test('demo navigation, clock, imports and reset keep the normal workspace and dr
   expect(advanced.backup.data.events).toEqual(seed.backup.data.events)
   await close(page); await controls(page)
   await expect(page.getByRole('button', { name: 'Reset demo only' })).toBeDisabled()
-  await page.getByRole('checkbox', { name: 'Replace only the demo workspace' }).check()
+  await page.getByRole('checkbox', { name: 'Reset only the demo workspace' }).check()
   await page.getByRole('button', { name: 'Reset demo only' }).click()
   await expect(page.getByText('Demo reset.', { exact: false })).toBeVisible()
   await close(page); await data(page)
@@ -80,7 +128,7 @@ test('prerecorded demo completes real review, remediation, introduction and pend
   await page.getByText('Context for the next question', { exact: true }).click()
   await expect(page.getByRole('checkbox', { name: 'Use Tavily examples for questions and corrective practice' })).toBeDisabled()
   await page.getByRole('button', { name: 'Review next due card' }).click()
-  await expect(page.getByRole('dialog')).toContainText('Prerecorded fixtures, not live model/tool/search evidence')
+  await expect(page.getByRole('dialog')).toContainText('Sample questions')
   await page.getByRole('radio', { name: /谢谢/ }).check()
   await page.getByRole('button', { name: 'Submit answer', exact: true }).click()
   await expect(page.getByText('Scheduled result:', { exact: false })).toContainText('box 2')
@@ -92,7 +140,7 @@ test('prerecorded demo completes real review, remediation, introduction and pend
   await expect(page.getByText('Practice only: box and due date are unchanged.', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Next review', exact: true }).click()
   await page.getByRole('button', { name: 'Teach this item', exact: true }).click()
-  await expect(page.getByText('Prerecorded demonstration example — not a live response', { exact: true })).toBeVisible()
+  await expect(page.getByText('Example', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Finish introduction — first review tomorrow' }).click()
   await expect(page.getByText('Introduction complete:', { exact: false })).toContainText('box 1')
   await page.getByRole('button', { name: 'End session', exact: true }).click()
@@ -128,7 +176,7 @@ test('prerecorded demo completes real review, remediation, introduction and pend
   await page.getByRole('radio', { name: /谢谢/ }).check(); await close(page)
   await controls(page)
   await expect(page.getByRole('button', { name: 'Advance demo clock' })).toBeDisabled()
-  await expect(page.getByRole('button', { name: 'Use live providers' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Use live AI' })).toBeDisabled()
   await close(page); await data(page); const pending = await download(page)
   expect(pending.backup.data.demo).toMatchObject({ now: NOW + 3 * DAY, contentMode: 'fixtures' })
   expect(pending.backup.data.sessions.at(-1).status).toBe('paused')
@@ -143,7 +191,7 @@ test('prerecorded demo completes real review, remediation, introduction and pend
   await restored.getByRole('checkbox', { name: 'Replace the current workspace' }).check()
   await restored.getByRole('button', { name: 'Replace workspace', exact: true }).click()
   await expect(restored.getByText('Workspace restored.', { exact: false })).toBeVisible(); await close(restored)
-  await restored.reload(); await expect(restored.locator('.demo-badge')).toContainText('prerecorded fixtures')
+  await restored.reload(); await expect(restored.locator('.demo-badge')).toContainText('Sample content')
   await restored.getByRole('button', { name: 'Daily review', exact: true }).click()
   await restored.getByRole('dialog').getByRole('button', { name: 'Resume practice' }).click()
   await expect(restored.getByRole('radio', { name: /谢谢/ })).toBeChecked()

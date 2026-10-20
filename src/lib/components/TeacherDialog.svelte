@@ -258,7 +258,7 @@
 
 <Modal title="Daily review" onClose={() => { void pauseAndClose() }}>
   <div class="lesson">
-    {#if workspace.mode === 'demo'}<p class="demo-notice">DEMO · {new Date(clock.now()).toISOString()} · {prerecorded ? 'Prerecorded fixtures, not live model/tool/search evidence. Exact rehearsal scoring is not open-ended language assessment.' : 'Live provider path: approved API keys and credits are used for explicit requests.'} Normal learner data is separate.</p>{/if}
+    {#if workspace.mode === 'demo'}<p class="demo-notice">Demo · {prerecorded ? 'Sample questions' : 'Live AI'}</p>{/if}
     <header class="teacher-heading">{#if teacherPortraits}<TeacherPortrait state={expression} variant={exercise ? 'discovery' : 'lesson'} />{/if}<div><h3>{exercise ? exercise.mode === 'dueReview' && !helped ? 'Recall review' : 'Practice — no schedule change' : "Let's practice"}</h3><p class="small">{exercise ? 'Try from memory, or ask for help.' : 'Review due words, then learn something new.'}</p></div></header>
     {#if !session}
       <form id="lesson-setup" class="profile" onsubmit={event => { event.preventDefault(); void startOrResume() }}>
@@ -314,7 +314,7 @@
             <label>New material<select bind:value={selectedNewCard} disabled={busy}><option value="">Next saved item</option>{#each newCards as next}<option value={next.id}>{document.items.find(i => i.id === next.itemId)!.canonicalText} · {next.skill}</option>{/each}</select></label>
             {#if !canIntroduce}<p class="small">Review your due words first. If you’ve reached this session’s limit, start another session to learn more.</p>{/if}
             {#if material?.lesson && teachingItem}
-              <section class="teaching-material"><h4 lang="zh">{teachingItem.canonicalText}</h4><PinyinText text={teachingItem.pinyin} mode={teachingPreferences.pinyinDisplay} /><p>{teachingItem.meaning}</p><p>{material.lesson.explanation}</p><p class="small">{material.generation?.provider === 'fixture' ? 'Prerecorded demonstration example — not a live response' : 'Teacher-generated example (not a direct quotation)'}</p><blockquote lang="zh">{material.lesson.exampleHanzi}</blockquote><PinyinText text={material.lesson.examplePinyin} mode={teachingPreferences.pinyinDisplay} label="Show example pinyin" /><p>{material.lesson.exampleMeaning}</p><SpeechButton text={material.lesson.exampleHanzi} />
+              <section class="teaching-material"><h4 lang="zh">{teachingItem.canonicalText}</h4><PinyinText text={teachingItem.pinyin} mode={teachingPreferences.pinyinDisplay} /><p>{teachingItem.meaning}</p><p>{material.lesson.explanation}</p><p class="small">{material.generation?.provider === 'fixture' ? 'Example' : 'Teacher-generated example (not a direct quotation)'}</p><blockquote lang="zh">{material.lesson.exampleHanzi}</blockquote><PinyinText text={material.lesson.examplePinyin} mode={teachingPreferences.pinyinDisplay} label="Show example pinyin" /><p>{material.lesson.exampleMeaning}</p><SpeechButton text={material.lesson.exampleHanzi} />
                 <SourceList sources={document.sources.filter(s => material!.sourceIds.includes(s.id))} onReveal={id => { void revealSource(id) }} />
                 <p class="small">{material.generation?.provider} / {material.generation?.model} · {material.generation?.promptVersion}</p>
               </section>

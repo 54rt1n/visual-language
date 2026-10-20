@@ -4,6 +4,7 @@ import type { Workspace } from '../domain/workspace'
 import type { WorkspaceRepository, WorkspaceSnapshot } from '../storage/repository'
 import { DAY, isDue } from '../learning/leitner'
 import { createDemoWorkspace } from './seed'
+import { addDemoLesson } from './lessonMaterial'
 
 export function requireDemo(state: Workspace) {
   if (!state.demo?.enabled) throw new Error('Demo controls cannot change normal learner data.')
@@ -34,6 +35,12 @@ export class DemoService {
     if (!['live', 'fixtures'].includes(contentMode)) throw new Error('Choose live or prerecorded demo content.')
     return this.repository.mutate(snapshot.version, { id: nid('op'), kind: 'demo-content-mode', at: demo.now, intent: { contentMode } }, state => {
       requireNoQuestion(state); requireDemo(state).contentMode = contentMode
+    })
+  }
+  addSampleLesson(snapshot: WorkspaceSnapshot) {
+    const demo = this.assert(snapshot)
+    return this.repository.mutate(snapshot.version, { id: nid('op'), kind: 'add-demo-sample-lesson', at: demo.now, intent: {} }, state => {
+      requireDemo(state); addDemoLesson(state)
     })
   }
   reset(snapshot: WorkspaceSnapshot) {

@@ -67,8 +67,6 @@ test('past-review correction previews cancel safely, retain original grades, fla
 
 test('history access from an unresolved review needs explicit help and cannot promote an aided answer through correction', async ({ page }) => {
   await ready(page)
-  await openTool(page, 'Demo workspace')
-  await page.getByRole('button', { name: 'Use prerecorded rehearsal', exact: true }).click(); await close(page)
   await page.getByRole('button', { name: 'Daily review', exact: true }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Start practice', exact: true }).click()
   await page.getByRole('button', { name: 'Review next due card', exact: true }).click()

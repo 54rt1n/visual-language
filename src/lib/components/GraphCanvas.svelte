@@ -120,7 +120,7 @@
   let practiceAnchorId = $state(''), practiceSessionId = $state<string | undefined>()
   let practiceAutoStart = $state(false)
   const branchSelection = $derived(ready && workspace.snapshot && nodes.length ? conversationSelection(workspace.snapshot.state, selectedOrLast().id) : undefined)
-  const savedPreparedLesson = $derived(workspace.snapshot?.state.sessions.filter(s => s.lessonAttempt && s.learnerId === workspace.snapshot!.state.activeLearnerId && s.status !== 'completed' && lessonForSession(workspace.snapshot!.state, s)?.archivedAt === undefined).at(-1))
+  const savedPreparedLesson = $derived(workspace.snapshot?.state.sessions.filter(s => s.lessonAttempt?.interactionDay && s.learnerId === workspace.snapshot!.state.activeLearnerId && s.status !== 'completed' && lessonForSession(workspace.snapshot!.state, s)?.archivedAt === undefined).at(-1))
   let discoveryDraftId = $state<string | undefined>()
   let graphNodeId = $state<string | undefined>()
   let deleteNodeId = $state<string | undefined>(), deleteNodeScope = $state<ReturnType<typeof deletionScope> | undefined>()
@@ -155,6 +155,7 @@
     openGraphTools: nodeId => { void openGraphTools(nodeId) }, deleteNode: nodeId => { void requestDeleteNode(nodeId) }, toggleCollapse: nodeId => { void toggleCollapse(nodeId) },
     generateReply: nodeId => { void generateReply(nodeId) }, requestBusy: () => !ready || streaming || startingRequest || graphBusy || prerecorded || workspace.status === 'conflict',
     readResponse: nodeId => { void openResponseReader(nodeId) },
+    ensureNodeVisible,
     addLearningWord,
     saveForPractice: (nodeId, text, meaning, details) => { readingFocusId = undefined; void openCapture(nodeId, { text, meaning, details }) },
     isSavedForPractice: (nodeId, text) => Boolean(workspace.snapshot?.state.items.some(i => i.canonicalText === text && i.sourceNodeIds.includes(nodeId))),
@@ -224,6 +225,9 @@
     void workspace.open(() => { abort?.abort(); if (saveTimer) clearTimeout(saveTimer) }).then(() => {
       if (disposed) { workspace.close(); return }
       applySaved(workspace.snapshot!); ready = true
+      if (workspace.mode === 'demo') {
+        try { if (sessionStorage.getItem('vl-demo-entry') === 'open') { sessionStorage.removeItem('vl-demo-entry'); modal = 'demo' } } catch { /* The toolbar still offers Demo controls. */ }
+      }
       const state = workspace.snapshot!.state
       const unused = state.nodes.every(node => node.type === 'root') && !state.items.length && !state.drafts.length && !state.sessions.length
       if (workspace.mode === 'normal' && !resolvedApiKey(settings) && unused && !modal && !languageSetupOpen) {
@@ -355,7 +359,7 @@
   async function send() {
     const text = draft.trim()
     if (!text || streaming || startingRequest || graphBusy || !ready || workspace.status === 'conflict') return
-    if (prerecorded) { status = 'Prerecorded rehearsal has no generated conversation. Use the teacher or switch to live providers in Demo & rehearsal.'; return }
+    if (prerecorded) { status = 'Sample conversations are read-only. Choose live AI in Demo options to create replies.'; return }
     if (recallProtected) { requestSourceAction(() => { modal = null; void send() }); return }
     startingRequest = true
     try {
@@ -646,6 +650,18 @@
     if (!target || !canvasElement) return
     await frameBounds({ ...target.position, ...nodeSize(nodeId) }, animate)
   }
+  async function ensureNodeVisible(nodeId: string) {
+    // Explicit reader navigation can change a node's height after a restored or
+    // manually panned view. Reframe only when the dock or toolbar covers it.
+    await settleLayout()
+    const element = canvasElement?.querySelector<HTMLElement>(`.svelte-flow__node[data-id="${CSS.escape(nodeId)}"]`)
+    if (!element || !canvasElement) return
+    const bounds = element.getBoundingClientRect(), canvas = canvasElement.getBoundingClientRect(), area = visibleCanvas()
+    if (bounds.left < canvas.left + area.left || bounds.top < canvas.top + area.top
+      || bounds.right > canvas.left + area.left + area.width || bounds.bottom > canvas.top + area.top + area.height) {
+      await focusNode(nodeId, false)
+    }
+  }
   async function revealNode(nodeId: string) {
     if (graphBusy || streaming || startingRequest) return
     requestSourceAction(() => {
@@ -718,9 +734,22 @@
     if (!ready || streaming || graphBusy || startingRequest) return
     try { await prepareUpdate(); modal = 'demo' } catch (cause) { status = cause instanceof Error ? cause.message : 'Could not save before opening demo controls.' }
   }
+  async function openDemoLesson(id: string) {
+    if (workspace.mode !== 'demo') throw new Error('Open the demo workspace first.')
+    await flushDraft()
+    const service = new LessonService(workspace.repository!, workspaceClock(workspace))
+    if (workspace.snapshot!.state.lessons.find(l => l.id === id)?.archivedAt !== undefined) applySaved(await workspace.apply(s => service.archive(s, id, false)))
+    const next = await workspace.apply(s => service.startActivity(s, id))
+    applySaved(next)
+    const session = next.state.sessions.find(s => s.lessonAttempt?.lessonId === id && s.status === 'active')!
+    practiceAnchorId = next.state.lessons.find(l => l.id === id)!.anchorId
+    practiceSessionId = session.id; practiceItemId = undefined; practiceAutoStart = true
+    readingFocusId = undefined; modal = 'conversation-practice'
+  }
   async function switchWorkspace(mode: WorkspaceMode) {
     await prepareUpdate()
     await tick(); await flushDraft(); await workspace.flush()
+    if (mode === 'demo') { try { sessionStorage.setItem('vl-demo-entry', 'open') } catch { /* Switching does not require session preferences. */ } }
     // Explicit user navigation after durable save, not a service-worker reload.
     // A full reload also clears in-memory source caches and pending tool state.
     const target = new URL(window.location.href); target.hash = mode === 'demo' ? 'demo' : ''
@@ -785,7 +814,7 @@
     <Panel position="top-right" class="background-status">
       <div class="vl-panel brand">
         <h2>Visual Language</h2>
-        {#if workspace.mode === 'demo'}<p class="demo-badge" role="status">DEMO · {prerecorded ? 'prerecorded fixtures' : 'live provider path'}<br />{workspace.snapshot?.state.demo ? new Date(workspace.snapshot.state.demo.now).toISOString() : 'Opening isolated dataset…'}</p>{/if}
+        {#if workspace.mode === 'demo'}<p class="demo-badge" role="status">DEMO · {prerecorded ? 'Sample content' : 'Live AI'}</p>{/if}
         <button type="button" class="connection-summary" aria-label="AI connection settings" disabled={!ready || streaming || graphBusy || startingRequest} onclick={() => { modal = 'providers' }}>{providerNames[settings.selected]} · {profile.model}</button>
         <p class="vl-status">
           {#if streaming}
@@ -886,7 +915,7 @@
 {:else if modal === 'pwa'}<PwaDialog {pwa} onPrepareUpdate={prepareUpdate} onClose={() => { modal = null }} />
 {:else if modal === 'graph'}<GraphToolsDialog {workspace} {settings} nodeId={graphNodeId} onChanged={applySaved} onReveal={id => { void revealNode(id) }} onRegenerate={id => { void generateReply(id) }} onClose={() => { modal = null }} />
 {:else if modal === 'delete-node' && deleteNodeScope}<Modal title="Delete node?" onClose={() => { if (!graphBusy) { modal = null; deleteNodeId = undefined; deleteNodeScope = undefined } }}><p>This removes this node{deleteNodeScope.nodeIds.length > 1 ? ` and ${deleteNodeScope.nodeIds.length - 1} connected ${deleteNodeScope.nodeIds.length === 2 ? 'node' : 'nodes'} below it` : ''} from the canvas. Saved learning history is kept.</p><div class="delete-node-actions"><button type="button" class="danger-button" disabled={graphBusy} onclick={confirmDeleteNode}>{graphBusy ? 'Deleting…' : 'Delete node'}</button><button type="button" class="ghost" disabled={graphBusy} onclick={() => { modal = null; deleteNodeId = undefined; deleteNodeScope = undefined }}>Cancel</button></div></Modal>
-{:else if modal === 'demo'}<DemoDialog {workspace} {flushDraft} onChanged={applySaved} onSwitch={switchWorkspace} onClose={() => { modal = null }} />
+{:else if modal === 'demo'}<DemoDialog {workspace} {flushDraft} onChanged={applySaved} onSwitch={switchWorkspace} onLesson={openDemoLesson} onLessons={() => { modal = 'lessons' }} onExplore={() => { modal = null; void revealNode('demo-everyday-reply') }} onClose={() => { modal = null }} />
 {:else if modal === 'discovery'}<DiscoveryDialog {workspace} {settings} draftId={discoveryDraftId} onChanged={applySaved} onLesson={(id, sessionId) => { void openConversationPractice(sessionId, id, undefined, Boolean(sessionId)) }} onDailyReview={() => { void openTeacher() }} onReveal={id => { void revealNode(id) }} onSettings={() => { modal = 'providers' }} onClose={() => { modal = null }} />
 {:else if modal === 'source-help'}<Modal title="Reveal learning material?" onClose={() => { if (!helpBusy) { modal = null; pendingSourceAction = undefined } }}><p>A recall question is still pending. Opening source text, pinyin, the library, or search can reveal its answer.</p>{#if protectedLessonReview}<p>Continuing records help for unanswered lesson checks. Your submitted first answers are kept. You can finish, then retry with a fresh check to earn the point.</p>{:else}<p>Continuing records one not-recalled review: box 1, next review one day from this help request. Later answers to this question are practice. This is a learning aid, not an examination restriction.</p>{/if}<div class="source-help-actions"><button type="button" onclick={confirmSourceHelp} disabled={helpBusy}>Reveal material and record help</button><button type="button" class="ghost" disabled={helpBusy} onclick={returnToQuestion}>Return to the question</button></div>{#if helpError}<p role="alert">{helpError}</p>{/if}</Modal>{/if}
 

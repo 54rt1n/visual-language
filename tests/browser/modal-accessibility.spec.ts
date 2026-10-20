@@ -12,7 +12,7 @@ const activities = [
   ['Topics', 'Topics'],
   ['More tools', 'More tools'],
   ['Settings', 'Settings'],
-  ['Try demo', 'Demo & rehearsal'],
+  ['Try demo', 'Demo'],
 ] as const
 
 async function ready(page: Page) {
@@ -107,8 +107,7 @@ test('keyboard quiz selection survives Escape and reload before one explicit sub
   }
   await page.goto('/#demo'); await expect(page.locator('.demo-badge')).toContainText('DEMO')
   await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
-  await activate('Demo workspace'); await activate('Use prerecorded rehearsal')
-  await expect(page.getByText('Prerecorded demo enabled.', { exact: false })).toBeVisible(); await close()
+  await expect(page.locator('.demo-badge')).toContainText('Sample content')
   const before = await snapshot()
   await activate('Daily review'); await activate('Start practice'); await activate('Review next due card')
   await expect(page.locator('.question .prompt')).toBeFocused()

@@ -54,8 +54,8 @@ Open the URL printed by Vite, then:
 5. Send a message to begin. **Ctrl+Enter** sends; Enter adds a new line.
 
 To look around without a key, open **Try demo**, enter the demo workspace, and
-select **Use prerecorded rehearsal**. These examples run without model requests.
-Switch to live providers when you want to generate new content.
+select **Try sample lesson**. Learn to order tea, practice, and take a short quiz.
+The demo uses saved sample content. Live AI and the demo clock are in **Demo options**.
 
 ## Usage
 

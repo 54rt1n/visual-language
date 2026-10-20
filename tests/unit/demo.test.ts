@@ -3,12 +3,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createDemoWorkspace } from '../../src/lib/demo/seed'
 import { DEMO_NOW } from '../../src/lib/demo/material'
 import { DemoService } from '../../src/lib/demo/demoService'
+import { addDemoLesson, DEMO_LESSON_ID, demoLessonPreparation } from '../../src/lib/demo/lessonMaterial'
+import { validateLessonPreparation } from '../../src/lib/domain/lessonPreparation'
 import { RehearsalTeacher } from '../../src/lib/demo/rehearsalTeacher'
 import { modeFromHash, WORKSPACE_DATABASES } from '../../src/lib/domain/workspaceMode'
 import { validateWorkspace } from '../../src/lib/domain/workspace'
 import { WorkspaceRepository } from '../../src/lib/storage/repository'
 import { exportBackup, parseBackup } from '../../src/lib/storage/backup'
 import { LearningService } from '../../src/lib/learning/learningService'
+import { LessonService } from '../../src/lib/learning/lessonService'
+import { reviewSettingsForCard } from '../../src/lib/learning/lessonProgress'
 import { DAY, dueQueue } from '../../src/lib/learning/leitner'
 import { teacherContext, sessionSummary } from '../../src/lib/teacher/teacherContext'
 import { workspaceClock } from '../../src/lib/teacher/host'
@@ -34,8 +38,39 @@ async function submit(h: Awaited<ReturnType<typeof openDemo>>, answer: string, o
 }
 
 describe('isolated demo and authored rehearsal', () => {
+  it('applies the sample lesson settings to daily review only after the learner opens it', async () => {
+    const h = await openDemo()
+    expect(reviewSettingsForCard(h.host.current().state, 'demo-thanks-card')).toBeUndefined()
+    await h.host.apply(s => new LessonService(h.repository, h.clock).startActivity(s, DEMO_LESSON_ID))
+    expect(reviewSettingsForCard(h.host.current().state, 'demo-thanks-card')?.quizLevel).toBe('meaningPinyin')
+  })
+  it('fresh sample quizzes preserve the saved lesson graph when its authoring format changes', () => {
+    const input = createDemoWorkspace().lessons[0]!.preparation!.input
+    const accepted = structuredClone(demoLessonPreparation(input).lesson)
+    accepted.graph.overview = 'An earlier sample lesson.'
+    accepted.graph.waypoints[1]!.dependsOn = []
+    const original = demoLessonPreparation(input, false, accepted)
+    const fresh = demoLessonPreparation(input, true, accepted)
+    expect(fresh.lesson).toEqual(accepted)
+    expect(() => validateLessonPreparation({ ...original, check: fresh.check })).not.toThrow()
+  })
+  it('adds the sample lesson to an older demo without replacing its progress', () => {
+    const state = createDemoWorkspace()
+    state.lessons = []; state.sessions = state.sessions.filter(s => s.lessonAttempt?.lessonId !== DEMO_LESSON_ID)
+    state.drafts = state.drafts.filter(d => d.sessionId !== 'demo-order-tea-session')
+    state.cards = state.cards.filter(c => c.id !== 'demo-tea-recognition-card')
+    const previous = structuredClone({ cards: state.cards, events: state.events, attempts: state.attempts, nodes: state.nodes })
+    addDemoLesson(state)
+    expect(validateWorkspace(state)).toEqual(state)
+    expect(state.cards.slice(0, previous.cards.length)).toEqual(previous.cards)
+    expect(state.events).toEqual(previous.events); expect(state.attempts).toEqual(previous.attempts); expect(state.nodes).toEqual(previous.nodes)
+    const complete = structuredClone(state)
+    addDemoLesson(state)
+    expect(state).toEqual(complete)
+  })
   it('repairs legacy example material only in explicit prerecorded mode without altering prior progress', async () => {
     const h = await openDemo(), attemptId = h.host.current().state.attempts.find(a => a.cardId === 'demo-tea-card')!.id
+    await h.host.apply(s => h.demo.setContentMode(s, 'live'))
     await expect(h.teacher.explainAttempt(attemptId)).rejects.toThrow()
     await h.host.apply(s => h.demo.setContentMode(s, 'fixtures'))
     await h.host.apply((s, r) => r.mutate(s.version, { id: 'legacy-example', kind: 'fixture', at: DEMO_NOW, intent: {} }, state => {
@@ -51,12 +86,16 @@ describe('isolated demo and authored rehearsal', () => {
     expect((await h.teacher.explainAttempt(attemptId)).id).toBe(draft.id)
     expect(h.host.current().state.drafts.filter(d => d.kind === 'feedback')).toHaveLength(1)
   })
-  it('seeds policy-valid history, two roots, five independent cards and a searchable past mistake', () => {
+  it('seeds a prepared sample lesson, two conversations and policy-valid review history', () => {
     const state = createDemoWorkspace()
     expect(validateWorkspace(state)).toEqual(state)
-    expect(state.demo).toEqual({ enabled: true, now: DEMO_NOW, contentMode: 'live' })
+    expect(state.demo).toEqual({ enabled: true, now: DEMO_NOW, contentMode: 'fixtures' })
     expect(state.nodes.filter(n => n.type === 'root')).toHaveLength(2)
-    expect(state.cards.map(c => c.box)).toEqual([1, 3, 2, 4, 1])
+    expect(state.cards.map(c => c.box)).toEqual([1, 3, 2, 4, 1, 1])
+    expect(state.lessons).toHaveLength(1)
+    expect(state.lessons[0]!.steps.map(s => s.phase)).toEqual(['learn', 'practice', 'learn', 'practice', 'check', 'check'])
+    expect(state.lessons[0]!.preparation?.practice?.complete).toBe(true)
+    expect(state.lessons[0]!.preparation?.check?.complete).toBe(true)
     expect(state.cards.at(-1)).toMatchObject({ status: 'new', dueAt: null, introducedAt: null, revision: 0 })
     expect(dueQueue(state.cards, DEMO_NOW, { learnerId: state.activeLearnerId }).cards.map(c => c.id)).toEqual(['demo-thanks-card', 'demo-tea-card'])
     expect(teacherContext(state, 'demo-tea-card', DEMO_NOW).mistakes[0]?.feedback).toContain('coffee')
@@ -90,10 +129,11 @@ describe('isolated demo and authored rehearsal', () => {
     expect(workspaceClock({ mode: 'normal', snapshot } as WorkspaceState).now()).toBe(123456789)
     expect(workspaceClock({ mode: 'demo', snapshot } as WorkspaceState).now()).toBe(DEMO_NOW)
   })
-  it('requires explicit fixture opt-in, refuses edited material, and never fetches', async () => {
+  it('keeps sample teaching out of live mode, refuses edited material, and never fetches', async () => {
     const fetcher = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('No network should be called'))
     const h = await openDemo()
-    await expect(h.teacher.teach('demo-goodbye-card')).rejects.toThrow('Enable prerecorded')
+    await h.host.apply(s => h.demo.setContentMode(s, 'live'))
+    await expect(h.teacher.teach('demo-goodbye-card')).rejects.toThrow('Choose sample content')
     await fixtures(h)
     await expect(h.teacher.draftQuiz(['demo-thanks-card'], { web: true })).rejects.toThrow('no web retrieval')
     await h.host.apply((s, r) => r.mutate(s.version, { id: 'edit', kind: 'test', at: DEMO_NOW, intent: {} }, state => { state.items.find(i => i.id === 'demo-goodbye')!.meaning = 'different sense' }))
@@ -120,11 +160,11 @@ describe('isolated demo and authored rehearsal', () => {
     await submit(h, '请给我一杯茶')
     expect(h.host.current().state.cards.find(c => c.id === 'demo-tea-card')).toEqual(failed)
     await h.host.apply(s => h.learning.finishExercise(s, s.state.exercises.at(-1)!.id))
-    const beforeTeaching = h.host.current().state.cards.at(-1)!
+    const beforeTeaching = h.host.current().state.cards.find(c => c.id === 'demo-goodbye-card')!
     await h.teacher.teach('demo-goodbye-card')
-    expect(h.host.current().state.cards.at(-1)).toEqual(beforeTeaching)
+    expect(h.host.current().state.cards.find(c => c.id === 'demo-goodbye-card')).toEqual(beforeTeaching)
     await h.host.apply(s => h.learning.introduce(s, 'demo-goodbye-card', sessionId))
-    expect(h.host.current().state.cards.at(-1)).toMatchObject({ status: 'active', box: 1, dueAt: DEMO_NOW + DAY, revision: 1 })
+    expect(h.host.current().state.cards.find(c => c.id === 'demo-goodbye-card')).toMatchObject({ status: 'active', box: 1, dueAt: DEMO_NOW + DAY, revision: 1 })
     expect(sessionSummary(h.host.current().state, sessionId, DEMO_NOW)).toMatchObject({ reviewed: 2, recalled: 1, notRecalled: 1, practices: 1, introduced: 1 })
     expect(fetcher).not.toHaveBeenCalled()
   })

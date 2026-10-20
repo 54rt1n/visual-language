@@ -185,6 +185,7 @@
     close()
     pageCursor = { source: text, starts: direction > 0 ? [...pageStarts.slice(0, pageIndex + 1), split.end] : pageStarts, index: pageIndex + direction }
     await tick()
+    if (!focused) await ui.ensureNodeVisible(nodeId)
     if (wordText) { wordText.scrollTop = 0; wordText.focus({ preventScroll: true }) }
   }
   function saveForPractice() {

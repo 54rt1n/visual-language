@@ -4,6 +4,7 @@ import { DAY, introduce, review } from '../learning/leitner'
 import { deterministicAssessment } from '../learning/assessment'
 import { completeWorkedExample } from '../teacher/feedback'
 import { DEMO_ITEMS, DEMO_MODEL, DEMO_NOW, type DemoMaterial } from './material'
+import { addDemoLesson } from './lessonMaterial'
 
 export function rehearsalProposal(material: DemoMaterial, skill: LeitnerCard['skill'], practice = false): Omit<Exercise, 'id' | 'sessionId' | 'cardId' | 'cardRevision' | 'mode' | 'presentedAt'> {
   const meaning = skill === 'meaning'
@@ -18,14 +19,14 @@ export function rehearsalProposal(material: DemoMaterial, skill: LeitnerCard['sk
  * a complete workspace. Nothing here is written to the normal learner database. */
 export function createDemoWorkspace(): Workspace {
   const state = createWorkspace(DEMO_NOW - 12 * DAY), learner = state.learners[0]!
-  state.name = 'DEMO · Mandarin rehearsal'; state.demo = { enabled: true, now: DEMO_NOW, contentMode: 'live' }
+  state.name = 'Demo · Mandarin'; state.demo = { enabled: true, now: DEMO_NOW, contentMode: 'fixtures' }
   learner.goal = 'Order tea politely, ask for directions, and use everyday courtesy.'
   state.nodes = []; state.edges = []
   for (const [index, root] of ['demo-everyday', 'demo-travel'].entries()) {
     state.nodes.push({ id: root, rootId: root, type: 'root', position: { x: index * 1400, y: 0 }, bookmarked: false, collapsed: false, data: { name: index ? 'DEMO · Getting around' : 'DEMO · Everyday Mandarin' } },
-      { id: `${root}-question`, rootId: root, type: 'user', position: { x: index * 1400, y: 170 }, bookmarked: false, collapsed: false, data: { text: `Prerecorded demo request: ${index ? 'Help me find the subway and say goodbye.' : 'Help me order tea politely and thank someone.'}` } },
+      { id: `${root}-question`, rootId: root, type: 'user', position: { x: index * 1400, y: 170 }, bookmarked: false, collapsed: false, data: { text: index ? 'Help me find the subway and say goodbye.' : 'Help me order tea politely and thank someone.' } },
       { id: `${root}-reply`, rootId: root, type: 'assistant', position: { x: index * 1400, y: 360 }, bookmarked: true, collapsed: false,
-        data: { text: `Prerecorded rehearsal material — not a live model response.\n${DEMO_ITEMS.filter(m => m.root === root).map(m => `${m.text} — ${m.meaning}. ${m.explanation}`).join('\n')}`, reasoning: '', state: 'complete', error: '', provider: 'fixture', model: DEMO_MODEL } })
+        data: { text: DEMO_ITEMS.filter(m => m.root === root).map(m => `${m.text} — ${m.meaning}.\n${m.explanation}`).join('\n\n'), reasoning: '', state: 'complete', error: '', provider: 'fixture', model: DEMO_MODEL } })
     state.edges.push({ id: `${root}-question-edge`, source: root, target: `${root}-question`, data: { kind: 'conversation' } }, { id: `${root}-reply-edge`, source: `${root}-question`, target: `${root}-reply`, data: { kind: 'conversation' } })
   }
   for (const [index, material] of DEMO_ITEMS.entries()) {
@@ -61,5 +62,6 @@ export function createDemoWorkspace(): Workspace {
     state.cards.push(card)
   }
   state.view.activeRootId = 'demo-everyday'; state.view.selectedNodeIds = ['demo-everyday']; state.view.viewport = { x: 320, y: 180, zoom: 0.65 }
+  addDemoLesson(state)
   return validateWorkspace(state)
 }

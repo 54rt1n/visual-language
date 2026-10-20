@@ -199,7 +199,7 @@
 
 <Modal title="Your lesson" onClose={() => void close(autoStart ? onLessons : onClose)}>
   <div class="journey" bind:this={journey}>
-    {#if prerecorded}<p class="muted">Demo · prerecorded examples. These do not demonstrate live lesson generation.</p>{/if}
+    {#if prerecorded}<p class="muted">Demo · Sample lesson</p>{/if}
     {#if !session}
       <h3 tabindex="-1" bind:this={heading}>{selection.title}</h3>
       <p>{lessonKindLabels[selection.kind]}. {selection.source?.scope ? 'This lesson keeps all its reviewed teaching points.' : 'Choose up to nine saved phrases.'} Learn from examples, practice with choices, then check your understanding in a new situation.</p>

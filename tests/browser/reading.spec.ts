@@ -161,6 +161,11 @@ test('long replies page at complete words, scroll by keyboard and retain later l
   expect(await contents()).toBe(source.slice(0, 1602))
   await page.reload(); await expect(part).toContainText('Part 1')
   await part.getByRole('button', { name: 'Next part', exact: true }).click()
+  await expect.poll(() => page.locator('.assistant').evaluate(element => {
+    const node = element.getBoundingClientRect(), dock = document.querySelector('.teacher-panel')!.getBoundingClientRect()
+    const rail = document.querySelector('.tool-rail')!.getBoundingClientRect()
+    return node.bottom < dock.top && node.left > rail.right
+  })).toBe(true)
   await page.getByRole('button', { name: 'Explore 咖啡', exact: true }).click()
   await expect(details.locator('.pronunciation')).toHaveText('kā fēi')
   expect(requests).toHaveLength(1)
@@ -332,9 +337,6 @@ test('saved explanations require explicit help during a pending review and never
   const external: string[] = []
   await page.route('**/*', route => { if (!route.request().url().startsWith('http://127.0.0.1:4173')) { external.push(route.request().url()); return route.abort() } return route.continue() })
   await page.goto('/#demo'); await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
-  await openTool(page, 'Demo workspace')
-  await page.getByRole('button', { name: 'Use prerecorded rehearsal', exact: true }).click()
-  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
   const seed = await backup(page), node = seed.data.nodes.find((node: { type: string; data: { text?: string } }) => node.type === 'assistant' && node.data.text?.includes('谢谢'))
   const start = node.data.text.indexOf('谢谢'), at = seed.data.demo.now
   seed.data.drafts.push({ id: 'guarded-reading-fixture', kind: 'reading', status: 'validated', text: '', cardIds: [], sourceIds: [], createdAt: at, updatedAt: at,
