@@ -40,12 +40,24 @@ export function questionFromWaypoint(value: unknown, gap: QuestionGap, graph: Le
   }
 }
 
-/** Compact question projections suffice for the same duplicate guard used in preparation. */
-export function assertDistinctQuestion(question: Pick<QuizQuestion, 'stem' | 'passage'>,
-  previous: ReadonlyArray<Pick<QuizQuestion, 'stem' | 'passage'>>) {
+type QuestionComparison = Pick<QuizQuestion, 'stem' | 'passage'> & Partial<Pick<QuizQuestion, 'options' | 'correctOptionId'>>
+
+/** Detect text duplicates and unchanged fixed-expression assessments, independent of choice order. */
+export function assertDistinctQuestion(question: QuestionComparison,
+  previous: ReadonlyArray<QuestionComparison>, settings?: Pick<LessonSettings, 'quizLevel' | 'complexity'>) {
   const signature = (q: Pick<QuizQuestion, 'stem' | 'passage'>) => `${q.passage ?? ''}\n${q.stem}`
     .normalize('NFKC').toLowerCase().replace(/[\p{P}\p{Z}\s]/gu, '')
   if (previous.some(existing => signature(existing) === signature(question))) throw new InputValidationError('This question repeats an existing question.')
+  if (!settings || settings.complexity !== 'phrases' || !englishAnswers(settings.quizLevel) || !question.passage || !question.options?.length) return
+  const normalize = (text: string) => text.normalize('NFKC').toLowerCase().replace(/[\p{P}\p{Z}\s]/gu, '')
+  const answers = (q: QuestionComparison) => JSON.stringify(q.options?.map(option => normalize(option.text)).sort())
+  const key = (q: QuestionComparison) => q.options?.find(option => option.id === q.correctOptionId)?.text
+  const correct = key(question)
+  if (correct && previous.some(existing => existing.passage && existing.options?.length
+    && normalize(existing.passage) === normalize(question.passage!)
+    && answers(existing) === answers(question) && key(existing) && normalize(key(existing)!) === normalize(correct))) {
+    throw new InputValidationError('This fixed-expression question repeats the same Mandarin, answer choices and correct answer with a different heading. Keep the expression in passage and ask "When would someone say this?" with four English descriptions of circumstances.')
+  }
 }
 
 /** Validate saved/content questions directly, without converting back into a model tool call. */

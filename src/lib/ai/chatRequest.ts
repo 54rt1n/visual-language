@@ -21,6 +21,7 @@ export function buildChatRequest(options: ChatOptions) {
     ...(options.compatibility === 'alibaba' ? { enable_thinking: false } : {}),
     ...(options.compatibility === 'featherless' ? { chat_template_kwargs: { enable_thinking: options.featherlessThinking ?? false } } : {}),
     ...(options.compatibility === 'minimax' ? { reasoning_split: true } : {}),
+    ...(options.compatibility === 'openrouter' && options.reasoningEnabled !== undefined ? { reasoning: { enabled: options.reasoningEnabled } } : {}),
     ...(options.temperature === undefined || options.compatibility === 'anthropic' ? {} : { temperature: options.temperature }),
     ...(options.tools?.length ? { tools: options.tools, tool_choice: options.toolChoice ?? 'auto' } : {}),
   } }

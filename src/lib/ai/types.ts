@@ -52,6 +52,8 @@ export type ChatOptions = {
   };
   /** Featherless template reasoning; omitted requests keep ordinary chat concise. */
   featherlessThinking?: boolean;
+  /** Optional reasoning intent for providers with an explicit reasoning control. */
+  reasoningEnabled?: boolean;
   baseUrl: string
   apiKey: string
   model: string

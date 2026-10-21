@@ -177,6 +177,18 @@ describe('provider-neutral SSE', () => {
     expect(JSON.parse(fetcher.mock.calls[2]![1]!.body as string).chat_template_kwargs).toEqual({ enable_thinking: true })
     expect((await streamChat({ ...config, compatibility: 'featherless', fetcher: async () => response(event(nativeCall(), 'stop') + 'data: [DONE]\n\n') })).toolCalls).toHaveLength(1)
   })
+  it('sends explicit OpenRouter reasoning choices without changing ordinary chat or other providers', async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => response(event(nativeCall(), 'tool_calls') + 'data: [DONE]\n\n'))
+    for (const reasoningEnabled of [false, true, undefined]) {
+      await streamChat({ ...config, compatibility: 'openrouter', reasoningEnabled, fetcher })
+    }
+    await streamChat({ ...config, compatibility: 'standard', reasoningEnabled: true, fetcher })
+    const bodies = fetcher.mock.calls.map(([, init]) => JSON.parse(init!.body as string))
+    expect(bodies[0].reasoning).toEqual({ enabled: false })
+    expect(bodies[1].reasoning).toEqual({ enabled: true })
+    expect(bodies[2]).not.toHaveProperty('reasoning')
+    expect(bodies[3]).not.toHaveProperty('reasoning')
+  })
   it('cancels a repeating content stream while preserving accumulated text and reported model', async () => {
     const cancel = vi.fn(), onModel = vi.fn(); let content = ''
     const bytes = new TextEncoder().encode(event({ content: '!'.repeat(32) }) + event({ content: '!'.repeat(32) }) + event({ content: 'not consumed' }))

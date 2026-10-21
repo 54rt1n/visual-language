@@ -1,6 +1,7 @@
 import type { ChatOptions } from '../../ai/types'
 import featherlessQwenProfile from './profiles/featherless-qwen-v6.json'
 import featherlessGlmProfile from './profiles/featherless-glm-native-v1.json'
+import openrouterNemotronProfile from './profiles/openrouter-nemotron-lightning-v1.json'
 import { z } from 'zod'
 import { GENERATION_OUTPUT_TOKENS } from '../../ai/generationBudget'
 import { englishAnswers, type LessonSettings } from '../../domain/lessonSettings'
@@ -38,7 +39,8 @@ const evaluatedFeatherlessModels = new Set(['Qwen/Qwen3.8-27B', 'Qwen/Qwen3.8-Fl
 export function selectLessonModelProfile(profile?: LessonModelProfile, provider?: ProfileProvider): LessonModelProfile {
   const known = provider?.compatibility === 'featherless' && evaluatedFeatherlessModels.has(provider.model)
   const glm = provider?.compatibility === 'featherless' && provider.model === 'zai-org/GLM-5.3-Flash'
-  return lessonModelProfileSchema.parse(profile ?? (known ? featherlessQwenProfile : glm ? featherlessGlmProfile : defaultLessonModelProfile))
+  const nemotron = provider?.compatibility === 'openrouter' && provider.model === 'nvidia/nemotron-3.5-lightning:free'
+  return lessonModelProfileSchema.parse(profile ?? (known ? featherlessQwenProfile : glm ? featherlessGlmProfile : nemotron ? openrouterNemotronProfile : defaultLessonModelProfile))
 }
 
 export function resolveLessonModelProfile(profile: LessonModelProfile | undefined, stage: LessonStageId, provider?: ProfileProvider,

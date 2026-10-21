@@ -50,7 +50,7 @@ export async function executeLessonStage<T extends z.ZodType>(options: LessonGen
   const isolatedContext = definition.isolatedContext?.(context)
   const stageExamples = typeof definition.nativeExamples === 'function' ? definition.nativeExamples(context) : definition.nativeExamples ?? []
   const nativeExamples = !isolatedContext && resolved.protocol.toolResponseDialect === 'native' ? [...stageExamples, ...resolved.nativeExamples] : []
-  for (const example of nativeExamples) schema.parse(example.arguments)
+  for (const example of nativeExamples) definition.schema({ ...context, ...example.context }).parse(example.arguments)
   const workedContent = resolved.protocol.toolResponseDialect === 'native' ? '' : stageExamples
     .map(example => `\nWorked input: ${JSON.stringify(example.context)}\nComplete submission arguments: ${JSON.stringify(example.arguments)}`).join('\n')
   const prompt = assembleLessonPrompt(tool.function, context, definition.instructions(context) + workedContent, {

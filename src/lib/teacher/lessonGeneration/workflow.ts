@@ -196,7 +196,7 @@ function validateQuestion(question: AcceptedWaypointQuestion['question'], gap: Q
     if (error instanceof InputValidationError) throw new InputValidationError(error.message.replaceAll('Question 1', 'Candidate'))
     throw error
   }
-  assertDistinctQuestion(canonical, [...current, ...previous].map(existing => existing.question))
+  assertDistinctQuestion(canonical, [...current, ...previous].map(existing => existing.question), input.settings)
   return canonical
 }
 
@@ -433,7 +433,7 @@ async function buildWaypointQuizWithinBudget(value: WaypointLessonInput, lesson:
     const gap = quiz.pending!.gap
     const context = waypointContext(graph, gap.waypointIds), sources = input.sources.filter(s => context.some(w => w.sourceIds.includes(s.id)))
     const focusedInput = { ...input, sources }
-    const requestContext = { ...projectQuizContext(input, graph, quiz, previous), graph: { overview: graph.overview, waypoints: graph.waypoints.map(({ id, cardIds, dependsOn, objective }) => ({ id, cardIds, dependsOn, objective })) }, gap, target: input.targets.find(t => t.cardId === gap.cardId), waypoints: context }
+    const requestContext = { ...projectQuizContext(input, graph, quiz, previous, options.earlierCheckQuestions), graph: { overview: graph.overview, waypoints: graph.waypoints.map(({ id, cardIds, dependsOn, objective }) => ({ id, cardIds, dependsOn, objective })) }, gap, questionIdeas: quiz.proposedDirections, target: input.targets.find(t => t.cardId === gap.cardId), waypoints: context }
     let candidate = quiz.pending!.candidate, review = quiz.pending!.review
     for (;;) {
       if (quiz.pending!.revision) {

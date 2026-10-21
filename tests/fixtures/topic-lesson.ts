@@ -77,8 +77,12 @@ export function waypointFixture(options: ChatOptions, input = parseToolContext(o
   else if (name === 'revise_question_answers') value = input.candidateToRevise
   else if (name === 'build_question_answers') {
     const t = input.targets.find((t: any) => t.cardId === input.gap.cardId), english = englishAnswers(input.settings.quizLevel), check = input.phase === 'check'
-    const choices = english ? [t.meaning, 'hello', 'goodbye', 'you are welcome'] : [t.hanzi, '你好', '再见', '不客气']
-    value = { stem: english ? check ? 'In this later encounter, which meaning fits the expression?' : 'What does the expression mean?' : `${check ? 'In another encounter' : 'In this situation'}, choose the reply for: ${t.meaning}`,
+    const courtesySituations: Record<string, string> = { '谢谢': 'Someone has helped you.', '对不起': 'You made a mistake.',
+      '你好': 'You are meeting someone.', '再见': 'You are leaving a conversation.' }
+    const situation = english && check && input.settings.complexity === 'phrases' ? courtesySituations[t.hanzi] : undefined
+    const choices = situation ? [situation, ...Object.values(courtesySituations).filter(text => text !== situation)]
+      : english ? [t.meaning, 'hello', 'goodbye', 'you are welcome'] : [t.hanzi, '你好', '再见', '不客气']
+    value = { stem: english ? situation ? 'When would someone say this expression?' : check ? 'In this later encounter, which meaning fits the expression?' : 'What does the expression mean?' : `${check ? 'In another encounter' : 'In this situation'}, choose the reply for: ${t.meaning}`,
       ...(english ? { passage: t.hanzi } : {}), answerA: choices[0], answerB: choices[1], answerC: choices[2], answerD: choices[3], correct: 'A',
       feedback: `This expression conveys ${t.meaning}; the other choices convey different meanings.` }
   } else if (name === 'verify_correct_question') value = { decision: 'accept', reason: 'Authored fixture question review.' }

@@ -29,6 +29,11 @@ const profile: LessonModelProfile = { id: 'test-model', version: '1', guidance: 
 const verdict = { decision: 'accept', reason: 'Authored review.' }
 
 describe('lesson generation framework boundaries', () => {
+  it('enables reasoning for the evaluated OpenRouter Nemotron model while keeping native tools', () => {
+    expect(resolveLessonModelProfile(undefined, 'buildWaypoint', { model: 'nvidia/nemotron-3.5-lightning:free', compatibility: 'openrouter' }))
+      .toMatchObject({ profile: { id: 'openrouter-nemotron-lightning' }, generation: { reasoning: 'on' }, protocol: { toolResponseDialect: 'native' } })
+    expect(selectLessonModelProfile(undefined, { model: 'nvidia/nemotron-3.5-lightning:free', compatibility: 'standard' }).id).toBe('shared')
+  })
   it('opts one stage into task placement without changing accepted work or correction dispatches', async () => {
     const run = async (tail: boolean) => {
       const requests: ChatOptions[] = []
@@ -241,6 +246,53 @@ describe('lesson generation framework boundaries', () => {
     lessonStages.reviewQuestion, { ...input, phase: 'practice' })).rejects.toThrow()
     expect(transport).not.toHaveBeenCalled()
   })
+  it('validates planner examples against their own references while keeping the live tool scoped to the lesson', async () => {
+    const example = { context: { targets: [{ cardId: 'demo-hello', hanzi: '你好', meaning: 'Hello.' }], remainingWaypointIds: ['w2'] },
+      arguments: { waypointId: 'w2', cardId: 'demo-hello', directions: 'Ask when the greeting fits.' } }
+    const selected: LessonModelProfile = { id: 'planner-example', version: '1', stages: { proposeQuestions: { nativeExamples: [example] } } }
+    const requests: ChatOptions[] = []
+    await executeLessonStage({ provider, modelProfile: selected, transport: async request => {
+      requests.push(request)
+      return waypointResult(request, { waypointId: 'w1', cardId: 'c1', directions: 'Ask when to thank someone.' })
+    } }, lessonStages.proposeQuestions, { ...input, phase: 'check', remainingWaypointIds: ['w1'] })
+    const parameters = requests[0]!.tools![0]!.function.parameters as { properties: { cardId: { enum: string[] }; waypointId: { enum: string[] } } }
+    expect(parameters.properties.cardId.enum).toEqual(['c1', 'c2'])
+    expect(parameters.properties.waypointId.enum).toEqual(['w1'])
+    expect(requests[0]!.messages[2]!.tool_calls![0]!.function.arguments).toBe(JSON.stringify(example.arguments))
+    const transport = vi.fn()
+    await expect(executeLessonStage({ provider, transport, modelProfile: { ...selected, stages: { proposeQuestions: {
+      nativeExamples: [{ ...example, arguments: { ...example.arguments, cardId: 'c1' } }],
+    } } } }, lessonStages.proposeQuestions, { ...input, phase: 'check', remainingWaypointIds: ['w1'] })).rejects.toThrow()
+    expect(transport).not.toHaveBeenCalled()
+  })
+  it('keeps the question brief through review and revision without exposing it to isolated solvers', async () => {
+    const requests: ChatOptions[] = []
+    let revised = false
+    await generateLesson(input, { provider, transport: async request => {
+      requests.push(request)
+      const context = parseToolContext(currentToolMessage(request.messages).content!)
+      if (request.generationTrace!.stage === 'reviewQuestion' && context.phase === 'check' && !revised) {
+        revised = true
+        return waypointResult(request, { decision: 'revise', reason: 'Keep the selected task and clarify the stem.' })
+      }
+      return lessonFixture(request)
+    } })
+    const revisions = requests.filter(request => request.generationTrace!.stage === 'reviseQuestion')
+    expect(revisions).toHaveLength(1)
+    let brief: string | undefined
+    for (const request of requests) {
+      const context = parseToolContext(currentToolMessage(request.messages).content!)
+      if (context.phase !== 'check') continue
+      if (request.generationTrace!.stage === 'buildQuestion') {
+        brief = context.questionIdeas
+        expect(brief).toBeTruthy()
+      }
+      if (['reviewQuestion', 'reviseQuestion'].includes(request.generationTrace!.stage)) expect(context.questionIdeas).toBe(brief)
+    }
+    for (const request of requests.filter(request => ['solveVisibleQuestion', 'solveEnglishQuestion'].includes(request.generationTrace!.stage))) {
+      expect(parseToolContext(currentToolMessage(request.messages).content!)).not.toHaveProperty('questionIdeas')
+    }
+  })
   it('excludes native examples from isolated solver prompts and XML profiles', () => {
     const nativeExamples = glmProfile.stages.reviewQuestion.nativeExamples
     const tool = { name: 'solve_english_question', description: 'Solve the visible English.', parameters: {} }
@@ -306,6 +358,16 @@ describe('lesson generation framework boundaries', () => {
     const transport = vi.fn(async (o: ChatOptions) => waypointResult(o, verdict))
     await executeLessonStage({ provider: { ...provider, compatibility: 'standard' }, transport, modelProfile: profile }, lessonStages.reviewWaypoint, input)
     expect(transport.mock.calls[0]![0]).not.toHaveProperty('featherlessThinking')
+  })
+  it.each([false, true])('passes the lesson reasoning setting to OpenRouter (enabled: %s)', async enabled => {
+    const transport = vi.fn(async (options: ChatOptions) => {
+      expect(buildChatRequest(options).payload).toMatchObject({ reasoning: { enabled } })
+      expect(options).not.toHaveProperty('featherlessThinking')
+      return waypointResult(options, verdict)
+    })
+    await executeLessonStage({ provider: { ...provider, compatibility: 'openrouter' }, transport,
+      ...(enabled ? { modelProfile: profile } : {}) }, lessonStages.reviewWaypoint, input)
+    expect(transport).toHaveBeenCalledOnce()
   })
 
   it('rejects attempts to put workflow policy, unknown stages, or oversized budgets in profiles', () => {

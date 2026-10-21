@@ -1,7 +1,7 @@
 /** Built-in connections use each vendor's documented OpenAI-compatible API. */
 export const providerIds = ['nebius', 'featherless', 'openai', 'anthropic', 'google', 'alibaba', 'minimax', 'openrouter', 'custom'] as const
 export type ProviderId = typeof providerIds[number]
-export const compatibilityIds = ['standard', 'alibaba', 'featherless', 'anthropic', 'minimax'] as const
+export const compatibilityIds = ['standard', 'alibaba', 'featherless', 'anthropic', 'minimax', 'openrouter'] as const
 export type ProviderCompatibility = typeof compatibilityIds[number]
 type ProviderDefinition = { name: string; baseUrl: string; model: string; compatibility?: ProviderCompatibility; modelList: boolean; note: string; keyUrl?: string; envKeys: readonly string[] }
 export const providerCatalog: Record<ProviderId, ProviderDefinition> = {
@@ -12,7 +12,7 @@ export const providerCatalog: Record<ProviderId, ProviderDefinition> = {
   google: { keyUrl: 'https://aistudio.google.com/apikey', name: 'Google Gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-3.8-flash', modelList: true, note: 'Uses Google’s official OpenAI-compatible Gemini API.', envKeys: ['GEMINI_API_KEY', 'GOOGLE_API_KEY'] },
   alibaba: { keyUrl: 'https://modelstudio.console.alibabacloud.com/subscription/token-plan', name: 'Alibaba Cloud', baseUrl: 'https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1', model: 'qwen3.8-max', compatibility: 'alibaba', modelList: false, note: 'Uses Alibaba Token Plan. For another plan, update Advanced connection settings.', envKeys: ['ALIBABA_TOKEN_KEY'] },
   minimax: { keyUrl: 'https://platform.minimax.io/console/access', name: 'MiniMax', baseUrl: 'https://api.minimax.io/v1', model: 'MiniMax-M2.7', compatibility: 'minimax', modelList: false, note: 'Uses MiniMax’s official OpenAI-compatible API. Select a model included in your account or plan.', envKeys: ['MINIMAX_API_KEY', 'MINIMAX_TOKEN_KEY'] },
-  openrouter: { keyUrl: 'https://openrouter.ai/settings/keys', name: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1', model: 'nvidia/nemotron-3-ultra-550b-a55b:free', modelList: true, note: 'Uses models available through your OpenRouter account.', envKeys: ['OPENROUTER_API_KEY'] },
+  openrouter: { keyUrl: 'https://openrouter.ai/settings/keys', name: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1', model: 'nvidia/nemotron-3-ultra-550b-a55b:free', compatibility: 'openrouter', modelList: true, note: 'Uses models available through your OpenRouter account.', envKeys: ['OPENROUTER_API_KEY'] },
   custom: { name: 'Custom endpoint', baseUrl: '', model: '', modelList: true, note: 'Enter an OpenAI-compatible HTTPS endpoint and model ID.', envKeys: [] },
 }
 export const providerNames = Object.fromEntries(providerIds.map(id => [id, providerCatalog[id].name])) as Record<ProviderId, string>

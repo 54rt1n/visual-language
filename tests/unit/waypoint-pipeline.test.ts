@@ -55,6 +55,24 @@ describe('projected lesson graph workflow', () => {
     // This guard rejects duplicate display text; a different stem still needs semantic review.
     expect(() => assertDistinctQuestion({ ...authoredCheck, stem: 'Which reply politely orders tea?' }, [practice])).not.toThrow()
   })
+  it.each(['meaningHanzi', 'meaningPinyin'] as const)('rejects the captured repeated phrase and answer group in %s even after rewording or shuffling', quizLevel => {
+    const practice = { stem: 'What does this expression mean?', passage: '谢谢。', correctOptionId: 'A' as const,
+      options: [{ id: 'A' as const, text: 'Thank you.' }, { id: 'B' as const, text: "I'm sorry." },
+        { id: 'C' as const, text: 'Excuse me.' }, { id: 'D' as const, text: 'Hello.' }] }
+    const settings = { quizLevel, complexity: 'phrases' as const }
+    const check = { ...practice, stem: 'What does the speaker mean when saying this expression?' }
+    expect(() => assertDistinctQuestion(check, [practice], settings)).toThrow('same Mandarin, answer choices and correct answer')
+    const shuffled = { ...check, correctOptionId: 'C' as const,
+      options: practice.options.map((option, i) => ({ id: option.id, text: practice.options[(i + 2) % 4]!.text })) }
+    expect(() => assertDistinctQuestion(shuffled, [practice], settings)).toThrow('same Mandarin, answer choices and correct answer')
+    const usage = { ...check, stem: 'When would someone say this?', options: practice.options.map((option, i) => ({ ...option,
+      text: ['Someone has helped you.', 'You made a mistake.', 'You are greeting someone.', 'You are leaving.'][i]!,
+    })) }
+    expect(() => assertDistinctQuestion(usage, [practice], settings)).not.toThrow()
+    expect(() => assertDistinctQuestion({ ...check, passage: '对不起。' }, [practice], settings)).not.toThrow()
+    expect(() => assertDistinctQuestion(check, [practice], { ...settings, complexity: 'connected' })).not.toThrow()
+    expect(() => assertDistinctQuestion(check, [practice], { quizLevel: 'responseHanzi', complexity: 'phrases' })).not.toThrow()
+  })
   it('bounds standalone phase preparation before dispatching beyond its action budget', async () => {
     const transport = vi.fn(fixture)
     await expect(buildWaypointQuiz(input, reviewed, 'practice', { provider, transport, workflowPolicy: { maxRequests: 1 } }))

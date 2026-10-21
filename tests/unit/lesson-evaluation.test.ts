@@ -26,7 +26,7 @@ describe('prepared waypoint lesson evaluation', () => {
     expect(result.checkpointCommits.filter(c => c.checkpointId === 'lesson-scope').every(c => c.persisted)).toBe(true)
     expect(Object.values(result.invariants).every(Boolean)).toBe(true)
     expect(rawLessonEvaluationPolicy.evaluation).toEqual({ maxRequests: 272, timeBudgetMs: 2_700_000 })
-  })
+  }, 15_000) // Full offline creation, both quizzes and playback need headroom on shared CI runners.
   it('retains raw creation checkpoints and failure evidence before a canonical lesson exists', async () => {
     const result = await runCase(rawLessonCases[0]!, fixture, undefined, async options => {
       if (options.tools?.[0]?.function.name === 'review_lesson_scope') throw new Error('Interrupted scope review fixture.')
@@ -42,10 +42,13 @@ describe('prepared waypoint lesson evaluation', () => {
     expect(new Set(modelMatrix.map(row => `${row.provider}:${row.model}`)).size).toBe(modelMatrix.length)
     expect(candidateModels).toEqual(expect.arrayContaining(['MiniMax-M2.7', 'MiniMax-M3', 'MiniMax-M3.1-Flash-Preview', 'qwen3.8-max', 'deepseek-ai/DeepSeek-V4-Flash-0731']))
     expect(modelMatrix.find(row => row.model === 'MiniMax-M3')?.provider).toBe('minimax')
-    const env = { MINIMAX_TOKEN_KEY: 'mini', ALIBABA_TOKEN_KEY: 'ali', FEATHERLESS_API_KEY: 'feather' }
+    expect(modelMatrix.find(row => row.model === 'nvidia/nemotron-3.5-lightning:free')?.provider).toBe('openrouter')
+    const env = { MINIMAX_TOKEN_KEY: 'mini', ALIBABA_TOKEN_KEY: 'ali', FEATHERLESS_API_KEY: 'feather', OPENROUTER_API_KEY: 'router' }
     expect(evaluationApiKey('minimax', env)).toBe('mini')
     expect(evaluationApiKey('alibaba', env)).toBe('ali')
     expect(evaluationApiKey('nebius', env)).toBe('')
+    expect(evaluationApiKey('openrouter', env)).toBe('router')
+    expect(evaluationApiKey('openrouter', { FEATHERLESS_API_KEY: 'feather' })).toBe('')
     expect(evaluationApiKey('minimax', { ...env, MINIMAX_API_KEY: 'primary' })).toBe('primary')
   })
   it.each([{ caseId: 'topic-meaningPinyin', invalid: true }, { caseId: 'topic-responseHanzi', invalid: false }])(

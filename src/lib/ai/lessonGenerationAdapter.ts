@@ -5,5 +5,6 @@ export function lessonGenerationSettings(compatibility: ChatOptions['compatibili
   maxTokens: number; temperature: number; reasoning: 'on' | 'off';
 }) {
   return { maxTokens: settings.maxTokens, temperature: settings.temperature,
-    ...(compatibility === 'featherless' ? { featherlessThinking: settings.reasoning === 'on' } : {}) }
+    ...(compatibility === 'featherless' ? { featherlessThinking: settings.reasoning === 'on' } : {}),
+    ...(compatibility === 'openrouter' ? { reasoningEnabled: settings.reasoning === 'on' } : {}) }
 }

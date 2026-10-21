@@ -116,6 +116,9 @@ describe('prepared topic lesson harness', () => {
     const proposal = h.transport.mock.calls.map(([o]) => parseToolContext(o.messages[1]!.content!)).find(i => i.generationMode === 'list_missing_questions')!
     expect(Object.keys(proposal.earlierCheckQuestions[0]).sort()).toEqual(['passageExcerpt', 'stem'])
     expect(proposal.earlierCheckQuestions[0].passageExcerpt.length).toBeLessThanOrEqual(240)
+    const reviews = h.transport.mock.calls.filter(([o]) => o.generationTrace?.stage === 'reviewQuestion')
+    expect(reviews.length).toBeGreaterThan(0)
+    for (const [request] of reviews) expect(parseToolContext(request.messages.at(-1)!.content!).earlierCheckQuestions).toEqual(proposal.earlierCheckQuestions)
     expect(h.session().lessonAttempt).toEqual(first)
     expect(h.transport.mock.calls.some(([o]) => parseToolContext(o.messages[1]!.content!).generationMode === 'add_lesson_waypoint')).toBe(false)
     expect(lessonHistory(h.host.current().state, lessonId)).toHaveLength(2)

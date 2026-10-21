@@ -16,7 +16,7 @@ const suite = options.suite ?? 'mandarin'
 if (options.entry && (suite !== 'lessons' || !['raw', 'authored'].includes(options.entry))) throw new Error('--entry raw|authored requires the lessons suite.')
 if (!['mandarin', 'lessons'].includes(suite)) throw new Error('Suite must be mandarin or lessons.')
 if (options.help) {
-  console.log(`npm run eval:${suite} -- [--fixture | --provider featherless|nebius|alibaba|minimax --model MODEL --confirm-live] [--case ID,ID] [--entry raw|authored (lessons only)] [--repeat 1..3] [--out FILE] [--resume-from TERMINAL_REPORT --resume-trial CASE_ID/rN (lessons, repeat 1)] [--thinking on|off|coverage (Featherless lessons only)] [--lesson-profile FILE (lessons only)] [--token-counter featherless (live lessons only)]\nWithout a run mode, validates/lists cases with zero API calls. Fixtures are not model accuracy. Live mode uses the matching local testing key and fixed provider endpoint; no provider fallback. New output files only.`)
+  console.log(`npm run eval:${suite} -- [--fixture | --provider featherless|nebius|alibaba|minimax|openrouter --model MODEL --confirm-live] [--case ID,ID] [--entry raw|authored (lessons only)] [--repeat 1..3] [--out FILE] [--resume-from TERMINAL_REPORT --resume-trial CASE_ID/rN (lessons, repeat 1)] [--thinking on|off|coverage (Featherless lessons only)] [--lesson-profile FILE (lessons only)] [--token-counter featherless (live lessons only)]\nWithout a run mode, validates/lists cases with zero API calls. Fixtures are not model accuracy. Live mode uses the matching local testing key and fixed provider endpoint; no provider fallback. New output files only.`)
   process.exit(0)
 }
 if (options.thinking !== undefined && (!['on', 'off', 'coverage'].includes(options.thinking) || suite !== 'lessons' || options.provider !== 'featherless' || !options['confirm-live'])) throw new Error('Thinking overrides require a live Featherless lesson run and on|off|coverage.')
@@ -66,7 +66,7 @@ try {
     let config = { mode: 'fixture' }
     if (!options.fixture) {
       const { evaluationProviders, evaluationApiKey } = await server.ssrLoadModule('/tests/evaluation/model-matrix.ts')
-      if (!evaluationProviders.includes(options.provider) || !options.model?.trim() || !options['confirm-live']) throw new Error('Live runs require --provider featherless|nebius|alibaba|minimax, --model and --confirm-live. No calls made.')
+      if (!evaluationProviders.includes(options.provider) || !options.model?.trim() || !options['confirm-live']) throw new Error(`Live runs require --provider ${evaluationProviders.join('|')}, --model and --confirm-live. No calls made.`)
       const env = loadEnv('development', process.cwd(), ''), apiKey = evaluationApiKey(options.provider, env)
       if (!apiKey) throw new Error(`Missing testing key for ${options.provider}. No calls made; no fallback provider is used.`)
       config = { mode: 'live', provider: options.provider, model: options.model.trim(), apiKey, confirmed: true, ...(options.thinking ? { featherlessThinking: options.thinking === 'coverage' ? 'coverage' : options.thinking === 'on' } : {}) }
@@ -78,6 +78,7 @@ try {
     codeFiles.push('src/lib/teacher/lessonGeneration/sourcePreparation.ts', 'src/lib/domain/discovery.ts', 'tests/fixtures/lesson-source.ts', 'src/lib/teacher/lessonGeneration/teachingExamples.ts', 'src/lib/teacher/lessonGeneration/planningExamples.ts', 'tests/evaluation/model-matrix.ts', 'src/lib/ai/providers.ts', 'src/lib/ai/chatRequest.ts', 'src/lib/ai/completionEvent.ts', 'src/lib/ai/inferenceFailure.ts', 'src/lib/ai/providerDiagnostics.ts',
       'src/lib/ai/requestProtocol.ts', 'src/lib/ai/requestRecovery.ts', 'src/lib/ai/contextBudget.ts', 'src/lib/ai/featherlessTokenCounter.ts', 'src/lib/ai/generationBudget.ts', 'src/lib/ai/qwenToolProtocol.ts', 'src/lib/teacher/lessonGeneration/graphConstruction.ts', 'src/lib/teacher/lessonGeneration/checkpoint.ts', 'src/lib/teacher/lessonGeneration/assessmentPlan.ts', 'src/lib/teacher/lessonGeneration/workflowBudget.ts')
     if (suite === 'lessons') codeFiles.push('src/lib/teacher/lessonGeneration/executionPolicy.ts', 'src/lib/teacher/lessonGeneration/stageSubmission.ts')
+    if (suite === 'lessons') codeFiles.push('src/lib/teacher/lessonGeneration/profiles/openrouter-nemotron-lightning-v1.json')
     codeFiles.push('src/lib/ai/qwenToolEnvelope.ts')
     codeFiles.push('src/lib/ai/http.ts', 'src/lib/ai/requestQueue.ts')
     if (suite === 'lessons') codeFiles.push('tests/evaluation/provider-capacity.ts', 'tests/evaluation/request-failure.ts')
