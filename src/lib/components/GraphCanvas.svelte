@@ -831,7 +831,7 @@
         <p class="vl-status" role="status">{!ready ? 'Opening local workspace…' : graphDirty ? 'Unsaved changes…' : workspace.status === 'saved' ? 'Saved on this device' : workspace.status === 'saving' ? 'Saving…' : 'Save needs attention'} · {online ? 'Online' : 'No connection'}</p>
       </div>
       {#if showUpdateNotice || workspace.error}<div class="vl-panel status-actions">
-        {#if showUpdateNotice}<div class="update-notice"><button type="button" class="ghost" disabled={streaming || graphBusy || startingRequest} onclick={() => { modal = 'pwa' }}>App update ready</button><button type="button" class="ghost" aria-label="Dismiss update notice" onclick={() => { pwa.updateNoticeDismissed = true }}>✕</button></div>{/if}
+        {#if showUpdateNotice}<div class="update-notice"><button type="button" class="ghost" disabled={streaming || graphBusy || startingRequest} onclick={() => { modal = 'pwa' }}>App update ready</button><button type="button" class="ghost" aria-label="Dismiss update notice" onclick={() => { pwa.dismissUpdateNotice() }}>✕</button></div>{/if}
         {#if workspace.error}<p class="save-error" role="alert">{workspace.error}</p><button type="button" class="ghost" onclick={reloadSaved}>Reload saved state</button>{#if ready}<button type="button" class="ghost" onclick={downloadDraftRecovery}>Download unsaved draft</button>{/if}{/if}
       </div>{/if}
     </Panel>

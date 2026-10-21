@@ -5,13 +5,33 @@ import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { extname, join, resolve, sep } from 'node:path'
 import { build } from 'vite'
-import { chromium } from '@playwright/test'
+import { chromium, expect } from '@playwright/test'
 
 // A local subpath rehearsal, never a publication or authenticated provider test.
 const output = await mkdtemp(join(tmpdir(), 'visual-language-pages-check-'))
 const base = '/visual-language/'
-let server, browser, candidate = false
+let server, browser, candidate = 0
 const avatarRequests = []
+async function shellVersion(page, slot = 'active') {
+  return page.evaluate(async slot => {
+    const registration = await navigator.serviceWorker.ready, channel = new MessageChannel()
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => { channel.port1.close(); channel.port2.close(); reject(new Error('Shell status timed out')) }, 5000)
+      const finish = version => { clearTimeout(timeout); channel.port1.close(); channel.port2.close(); resolve(version) }
+      channel.port1.onmessage = event => { finish(event.data.version) }
+      if (!registration[slot]) { finish(undefined); return }
+      registration[slot].postMessage({ type: 'SHELL_STATUS' }, [channel.port2])
+    })
+  }, slot)
+}
+async function expectNoUpdate(page) {
+  await page.getByRole('button', { name: 'More tools', exact: true }).click()
+  await page.getByRole('button', { name: 'App updates', exact: true }).click()
+  await page.getByRole('button', { name: 'Check for app update', exact: true }).click()
+  await page.getByRole('status').filter({ hasText: 'Update check finished.' }).waitFor()
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  assert.equal(await page.getByRole('button', { name: 'App update ready', exact: true }).count(), 0)
+}
 try {
   await build({ base, logLevel: 'error', build: { outDir: output, emptyOutDir: true } })
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.webmanifest': 'application/manifest+json' }
@@ -25,7 +45,7 @@ try {
       const file = resolve(output, pathname.slice(base.length) || 'index.html')
       if (!file.startsWith(output + sep)) { response.writeHead(404).end(); return }
       let content = await readFile(file)
-      if (candidate && file === join(output, 'sw.js')) content = Buffer.from(content.toString().replace('const VERSION = "', 'const VERSION = "candidate-'))
+      if (candidate && file === join(output, 'sw.js')) content = Buffer.from(content.toString().replace('const VERSION = "', `const VERSION = "candidate-${candidate}-`))
       response.writeHead(200, { 'Content-Type': mime[extname(file)] ?? 'application/octet-stream', 'Cache-Control': 'no-store' }); response.end(content)
     } catch { response.writeHead(404).end() }
   })
@@ -76,6 +96,37 @@ try {
     assert.equal(shipped.byteLength, entry.bytes); assert(entry.bytes <= budget.portraits.perFileLimit)
   }
   assert.equal(await page.evaluate(async () => (await navigator.serviceWorker.ready).scope), url)
+  assert.equal(await page.evaluate(() => navigator.serviceWorker.controller), null)
+  await expectNoUpdate(page)
+  // A separate fresh profile exercises first-load and same-build registrations
+  // with real workers, including a waiting worker held by another client.
+  const freshContext = await browser.newContext(), firstLoad = await freshContext.newPage()
+  await firstLoad.goto(url)
+  await firstLoad.getByRole('dialog', { name: 'Welcome to Visual Language', exact: true }).getByRole('button', { name: 'Close dialog', exact: true }).click()
+  const currentVersion = await shellVersion(firstLoad)
+  const keeper = await freshContext.newPage()
+  await keeper.goto(url)
+  await keeper.getByText('Saved on this device', { exact: false }).waitFor()
+  assert.equal(await firstLoad.evaluate(() => navigator.serviceWorker.controller), null)
+  assert.equal(await keeper.evaluate(() => Boolean(navigator.serviceWorker.controller)), true)
+  candidate = 'bootstrap'
+  await firstLoad.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update() })
+  await expect.poll(() => shellVersion(firstLoad, 'waiting'), { timeout: 15_000 }).toMatch(/^candidate-bootstrap-/)
+  await expectNoUpdate(firstLoad)
+  await keeper.getByRole('button', { name: 'App update ready', exact: true }).waitFor()
+  const pendingVersion = await shellVersion(keeper, 'waiting')
+  await keeper.evaluate(async version => {
+    const keys = (await caches.keys()).filter(key => key.startsWith('visual-language-shell:') && key.endsWith(`:${version}`))
+    await Promise.all(keys.map(key => caches.delete(key)))
+  }, pendingVersion)
+  await expectNoUpdate(keeper) // Evicted app files must not be called ready.
+  // Reinstall the active build over a different pending build. A waiting worker
+  // exists, but it does not represent a different version from this page's.
+  candidate = 0
+  await keeper.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update() })
+  await expect.poll(() => shellVersion(keeper, 'waiting'), { timeout: 15_000 }).toBe(currentVersion)
+  await expectNoUpdate(keeper)
+  await freshContext.close()
   await page.reload()
   assert.equal(await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL), url + 'sw.js')
   const cached = await page.evaluate(async () => {
@@ -126,7 +177,7 @@ try {
   assert(avatarRequests.length > 0); assert(avatarRequests.every(path => path.endsWith('/attentive-v1.png')))
   await page.getByRole('textbox', { name: 'Message to Zheng' }).fill('Keep this pending draft through the update.')
   const documentIdentity = await page.evaluate(() => performance.timeOrigin)
-  candidate = true
+  candidate = 1
   await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update() })
   await page.waitForFunction(async () => (await navigator.serviceWorker.getRegistration())?.waiting?.state === 'installed')
   assert.equal(await page.evaluate(() => performance.timeOrigin), documentIdentity)
@@ -143,24 +194,36 @@ try {
   await page.getByRole('heading', { name: 'Update ready — your lesson will not reload', exact: true }).waitFor()
   await page.getByRole('button', { name: 'Save & prepare to update' }).click()
   await page.getByRole('status').filter({ hasText: 'Drafts are saved' }).waitFor()
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  // Keep an old client open so reloading cannot activate the waiting worker.
+  const otherTab = await context.newPage()
+  await otherTab.goto(url)
+  await otherTab.getByText('Saved on this device', { exact: false }).waitFor()
+  await page.reload()
+  await page.getByText('Saved on this device', { exact: false }).waitFor()
+  await page.getByRole('button', { name: 'More tools', exact: true }).click()
+  await page.getByRole('button', { name: 'App updates', exact: true }).click()
+  await page.getByRole('heading', { name: 'Update ready — your lesson will not reload', exact: true }).waitFor()
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  assert.equal(await page.getByRole('button', { name: 'App update ready', exact: true }).count(), 0)
+  assert.equal(await otherTab.getByRole('button', { name: 'App update ready', exact: true }).count(), 0)
+  assert.equal(await page.getByRole('textbox', { name: 'Message to Zheng' }).inputValue(), 'Keep this pending draft through the update.')
+  candidate = 2
+  await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update() })
+  await expect.poll(() => shellVersion(page, 'waiting'), { timeout: 15_000 }).toMatch(/^candidate-2-/)
+  await page.getByRole('button', { name: 'App update ready', exact: true }).waitFor()
+  await page.getByRole('button', { name: 'Dismiss update notice', exact: true }).click()
+  await otherTab.close()
   assert.equal(await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).waiting.state), 'installed')
   await page.close() // Explicitly close the last app window, as the update UI instructs.
   const reopened = await context.newPage()
   await reopened.goto(url)
   await reopened.getByText('Saved on this device', { exact: false }).waitFor()
   assert.equal(await reopened.getByRole('textbox', { name: 'Message to Zheng' }).inputValue(), 'Keep this pending draft through the update.')
-  const version = await reopened.evaluate(async () => {
-    const registration = await navigator.serviceWorker.ready, channel = new MessageChannel()
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('Shell status timed out')), 5000)
-      channel.port1.onmessage = event => { clearTimeout(timeout); resolve(event.data.version) }
-      registration.active.postMessage({ type: 'SHELL_STATUS' }, [channel.port2])
-    })
-  })
-  assert(String(version).startsWith('candidate-'))
+  assert(String(await shellVersion(reopened)).startsWith('candidate-2-'))
   assert.equal(await reopened.evaluate(async () => (await caches.keys()).filter(k => k.startsWith('visual-language-shell:')).length), 2)
   assert.deepEqual(errors, []); assert.deepEqual(external, [])
-  console.log(`Pages subpath rehearsal passed: exact ${budget.shell.bytes}-byte shell inventory without portrait precache, preserved masters, install despite missing artwork, scoped manifest/icons/About credits, waiting update and recovered draft. No deployment or live provider calls.`)
+  console.log(`Pages subpath rehearsal passed: exact ${budget.shell.bytes}-byte shell inventory without portrait precache, preserved masters, install despite missing artwork, scoped manifest/icons/About credits, no update for first-load/same-build/evicted workers, update dismissal across reload/tabs, a fresh notice for the next version, and recovered draft. No deployment or live provider calls.`)
 } finally {
   await browser?.close()
   if (server) await new Promise(resolve => server.close(resolve))

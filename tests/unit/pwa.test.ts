@@ -16,6 +16,7 @@ function workerFixture() {
       }
     },
     async keys() { return [...records.keys()] },
+    async has(key: string) { return records.has(key) },
     async delete(key: string) { deleted.push(key); return records.delete(key) },
   }
   const fetch = vi.fn(async () => new Response('network')), skipWaiting = vi.fn(), claim = vi.fn()
@@ -23,7 +24,12 @@ function workerFixture() {
   runInNewContext(readFileSync('scripts/service-worker.js', 'utf8'), { self, caches, fetch, Request, Response, URL, __BUILD_VERSION__: 'new', __SHELL_FILES__: ['index.html', 'assets/app.js', 'icons/app-192.png'] })
   async function lifecycle(type: string) { let pending: Promise<unknown> | undefined; handlers.get(type)!({ waitUntil(value: Promise<unknown>) { pending = value } }); await pending }
   async function request(url: string, options?: RequestInit) { let result: Promise<Response> | undefined; handlers.get('fetch')!({ request: new Request(url, options), respondWith(value: Promise<Response>) { result = value } }); return result }
-  return { handlers, records, prefix, name, added, deleted, fetch, skipWaiting, claim, lifecycle, request, fail: () => { failInstall = true } }
+  async function status() {
+    let result: unknown, pending: Promise<unknown> | undefined
+    handlers.get('message')!({ data: { type: 'SHELL_STATUS' }, ports: [{ postMessage(value: unknown) { result = value } }], waitUntil(value: Promise<unknown>) { pending = value } })
+    await pending; return result
+  }
+  return { handlers, records, prefix, name, added, deleted, fetch, skipWaiting, claim, lifecycle, request, status, fail: () => { failInstall = true } }
 }
 
 describe('strict app-shell worker policy', () => {
@@ -54,5 +60,19 @@ describe('strict app-shell worker policy', () => {
     const h = workerFixture(); h.records.set(`${h.prefix}previous`, new Map()); h.fail()
     await expect(h.lifecycle('install')).rejects.toThrow('quota')
     expect(h.deleted).toEqual([h.name]); expect(h.records.has(`${h.prefix}previous`)).toBe(true)
+  })
+  it('a failed reinstall of the same build preserves its existing offline shell', async () => {
+    const h = workerFixture(); await h.lifecycle('install')
+    h.fail()
+    await expect(h.lifecycle('install')).rejects.toThrow('quota')
+    expect(h.deleted).toEqual([])
+    expect(await (await h.request('https://example.org/visual-language/assets/app.js'))!.text()).toContain('cached:')
+    expect(h.fetch).not.toHaveBeenCalled()
+  })
+  it('reports its own cached build readiness rather than another active worker state', async () => {
+    const h = workerFixture()
+    expect(await h.status()).toEqual({ version: 'new', ready: false })
+    await h.lifecycle('install')
+    expect(await h.status()).toEqual({ version: 'new', ready: true })
   })
 })
