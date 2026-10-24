@@ -199,7 +199,7 @@ test('long-response controls stay reachable on short screens and an edit resets 
     await openTool(page, 'Node tools')
     await page.getByRole('button', { name: 'Show on canvas', exact: true }).click()
     const next = page.getByRole('button', { name: 'Next part', exact: true })
-    await expect(next).toBeInViewport({ ratio: 1 })
+    await expect(next).toBeInViewport({ ratio: .999 }) // Allow subpixel graph-transform rounding.
     await expect.poll(() => next.evaluate(element => { const rect = element.getBoundingClientRect(); return element.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)) })).toBe(true)
     expect(await region.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
     expect(await region.evaluate(element => element.clientHeight)).toBeLessThanOrEqual(228)
