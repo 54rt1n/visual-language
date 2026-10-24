@@ -13,17 +13,23 @@ function workerFixture() {
       return {
         async addAll(requests: Request[]) { if (failInstall) throw new Error('Fixture cache quota failure'); for (const r of requests) { added.push(r); records.get(key)!.set(r.url, new Response(`cached:${r.url}`)) } },
         async match(url: string) { return records.get(key)!.get(url)?.clone() },
+        async keys() { return [...records.get(key)!.keys()].map(url => new Request(url)) },
       }
     },
     async keys() { return [...records.keys()] },
     async has(key: string) { return records.has(key) },
     async delete(key: string) { deleted.push(key); return records.delete(key) },
   }
-  const fetch = vi.fn(async () => new Response('network')), skipWaiting = vi.fn(), claim = vi.fn()
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response('network')), skipWaiting = vi.fn(), claim = vi.fn()
   const self = { registration: { scope: 'https://example.org/visual-language/', active: { state: 'activated' } }, skipWaiting, clients: { claim }, addEventListener(type: string, callback: (event: unknown) => void) { handlers.set(type, callback) } }
-  runInNewContext(readFileSync('scripts/service-worker.js', 'utf8'), { self, caches, fetch, Request, Response, URL, __BUILD_VERSION__: 'new', __SHELL_FILES__: ['index.html', 'assets/app.js', 'icons/app-192.png'] })
+  runInNewContext(readFileSync('scripts/service-worker.js', 'utf8'), { self, caches, fetch, Request, Response, URL, AbortController, setTimeout, clearTimeout, __BUILD_VERSION__: 'new', __SHELL_FILES__: ['index.html', 'assets/app.js', 'icons/app-192.png'] })
   async function lifecycle(type: string) { let pending: Promise<unknown> | undefined; handlers.get(type)!({ waitUntil(value: Promise<unknown>) { pending = value } }); await pending }
-  async function request(url: string, options?: RequestInit) { let result: Promise<Response> | undefined; handlers.get('fetch')!({ request: new Request(url, options), respondWith(value: Promise<Response>) { result = value } }); return result }
+  async function request(url: string, options?: RequestInit, navigation = false) {
+    const request = new Request(url, options)
+    if (navigation) Object.defineProperty(request, 'mode', { value: 'navigate' })
+    let result: Promise<Response> | undefined
+    handlers.get('fetch')!({ request, respondWith(value: Promise<Response>) { result = value } }); return result
+  }
   async function status() {
     let result: unknown, pending: Promise<unknown> | undefined
     handlers.get('message')!({ data: { type: 'SHELL_STATUS' }, ports: [{ postMessage(value: unknown) { result = value } }], waitUntil(value: Promise<unknown>) { pending = value } })
@@ -74,5 +80,27 @@ describe('strict app-shell worker policy', () => {
     expect(await h.status()).toEqual({ version: 'new', ready: false })
     await h.lifecycle('install')
     expect(await h.status()).toEqual({ version: 'new', ready: true })
+    h.records.get(h.name)!.delete('https://example.org/visual-language/assets/app.js')
+    expect(await h.status()).toEqual({ version: 'new', ready: false })
+  })
+  it('loads current HTML on navigation while preserving the cached offline generation', async () => {
+    const h = workerFixture(); await h.lifecycle('install')
+    expect(await (await h.request('https://example.org/visual-language/', undefined, true))!.text()).toBe('network')
+    expect((h.fetch.mock.calls[0]![0] as Request).cache).toBe('no-store')
+    expect(await (await h.request('https://example.org/visual-language/index.html'))!.text()).toContain('cached:')
+  })
+  it.each(['offline', 'unavailable', 'timeout'])('uses saved HTML when the navigation is %s', async failure => {
+    vi.useFakeTimers()
+    try {
+      const h = workerFixture(); await h.lifecycle('install')
+      if (failure === 'offline') h.fetch.mockRejectedValue(new Error('Offline'))
+      else if (failure === 'unavailable') h.fetch.mockResolvedValue(new Response('Unavailable', { status: 503 }))
+      else h.fetch.mockImplementation(async input => new Promise((_resolve, reject) => {
+        (input as Request).signal.addEventListener('abort', () => { reject(new Error('Aborted')) }, { once: true })
+      }))
+      const pending = h.request('https://example.org/visual-language/', undefined, true)
+      if (failure === 'timeout') await vi.advanceTimersByTimeAsync(3000)
+      expect(await (await pending)!.text()).toContain('cached:https://example.org/visual-language/index.html')
+    } finally { vi.useRealTimers() }
   })
 })

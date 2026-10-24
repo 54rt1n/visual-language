@@ -35,6 +35,7 @@ export class PwaLifecycle {
   private refreshUpdate?: () => void
   start() {
     let disposed = false, checkSequence = 0
+    const pageVersion = document.querySelector<HTMLMetaElement>('meta[name="visual-language-build"]')?.content
     const status = new AbortController()
     const watchedWorkers = new Set<ServiceWorker>()
     const display = matchMedia('(display-mode: standalone)')
@@ -50,10 +51,10 @@ export class PwaLifecycle {
       if (waiting !== this.noticedWorker) {
         const sequence = ++checkSequence
         this.noticedWorker = waiting; this.noticedVersion = undefined; this.updateNoticeDismissed = true; this.updateAvailable = false
-        this.updateCheck = waiting && controller ? Promise.all([workerStatus(waiting, status.signal), workerStatus(controller, status.signal)]).then(([next, current]) => {
+        this.updateCheck = waiting ? workerStatus(waiting, status.signal).then(next => {
           if (disposed || sequence !== checkSequence || waiting !== this.noticedWorker || controller !== navigator.serviceWorker.controller) return
           this.noticedVersion = next?.version
-          this.updateAvailable = Boolean(next?.ready && current && next.version !== current.version)
+          this.updateAvailable = Boolean(next?.ready && pageVersion && next.version !== pageVersion)
           try { this.updateNoticeDismissed = !this.updateAvailable || localStorage.getItem(`vl-app-update-dismissed:${this.registration!.scope}`) === next?.version }
           catch { this.updateNoticeDismissed = false }
         }) : Promise.resolve()

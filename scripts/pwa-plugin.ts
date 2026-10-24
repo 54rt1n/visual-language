@@ -93,6 +93,11 @@ export function pwaPlugin(): Plugin {
       const template = readFileSync(join(root, 'scripts/service-worker.js'), 'utf8')
       hash.update(template) // A policy-only worker update also needs its own cache version.
       const version = hash.digest('hex').slice(0, 16)
+      // Hash with a fixed-width placeholder, then stamp the same build ID into
+      // the page and worker. Equal widths preserve the measured HTML budget.
+      const index = bundle['index.html'], marker = 'name="visual-language-build" content="VL_BUILD_VERSION"'
+      if (index?.type !== 'asset' || typeof index.source !== 'string' || !index.source.includes(marker)) throw new Error('The app page is missing its build marker.')
+      index.source = index.source.replace(marker, `name="visual-language-build" content="${version}"`)
       const source = template
         .replace('__BUILD_VERSION__', JSON.stringify(version)).replace('__SHELL_FILES__', JSON.stringify(shellFiles.map(entry => entry.file)))
       this.emitFile({ type: 'asset', fileName: 'sw.js', source })

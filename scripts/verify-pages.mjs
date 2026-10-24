@@ -9,8 +9,9 @@ import { chromium, expect } from '@playwright/test'
 
 // A local subpath rehearsal, never a publication or authenticated provider test.
 const output = await mkdtemp(join(tmpdir(), 'visual-language-pages-check-'))
+const previousOutput = join(output, 'previous')
 const base = '/visual-language/'
-let server, browser, candidate = 0
+let server, browser, candidate = 0, previousRelease = false
 const avatarRequests = []
 async function shellVersion(page, slot = 'active') {
   return page.evaluate(async slot => {
@@ -34,6 +35,10 @@ async function expectNoUpdate(page) {
 }
 try {
   await build({ base, logLevel: 'error', build: { outDir: output, emptyOutDir: true } })
+  await build({ base, logLevel: 'error', build: { outDir: previousOutput, emptyOutDir: true },
+    plugins: [{ name: 'previous-release-rehearsal', transformIndexHtml: html => html.replace('<title>', '<title>Previous build: ') }] })
+  const releaseVersion = (await readFile(join(output, 'index.html'), 'utf8')).match(/name="visual-language-build" content="([a-f0-9]{16})"/)?.[1]
+  assert(releaseVersion)
   const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.webmanifest': 'application/manifest+json' }
   server = createServer(async (request, response) => {
     try {
@@ -42,16 +47,52 @@ try {
       // Deliberately unavailable optional artwork must not prevent shell install.
       if (pathname.startsWith(base + 'avatars/')) { avatarRequests.push(pathname); response.writeHead(404).end(); return }
       if (pathname.startsWith(base + 'reading-model/')) { response.writeHead(404).end(); return }
-      const file = resolve(output, pathname.slice(base.length) || 'index.html')
-      if (!file.startsWith(output + sep)) { response.writeHead(404).end(); return }
+      const root = previousRelease ? previousOutput : output
+      const file = resolve(root, pathname.slice(base.length) || 'index.html')
+      if (!file.startsWith(root + sep)) { response.writeHead(404).end(); return }
       let content = await readFile(file)
-      if (candidate && file === join(output, 'sw.js')) content = Buffer.from(content.toString().replace('const VERSION = "', `const VERSION = "candidate-${candidate}-`))
+      if (candidate && file === join(root, 'sw.js')) content = Buffer.from(content.toString().replace('const VERSION = "', `const VERSION = "candidate-${candidate}-`))
       response.writeHead(200, { 'Content-Type': mime[extname(file)] ?? 'application/octet-stream', 'Cache-Control': 'no-store' }); response.end(content)
     } catch { response.writeHead(404).end() }
   })
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
   const origin = `http://127.0.0.1:${server.address().port}`, url = origin + base
   browser = await chromium.launch()
+  // Two complete builds reproduce a newer page running under an older worker.
+  // A worker-only version substitution cannot catch this upgrade-path bug.
+  previousRelease = true
+  const upgradeContext = await browser.newContext(), upgradePage = await upgradeContext.newPage()
+  await upgradePage.goto(url)
+  await upgradePage.getByRole('dialog', { name: 'Welcome to Visual Language', exact: true }).getByRole('button', { name: 'Close dialog', exact: true }).click()
+  const previousVersion = await shellVersion(upgradePage)
+  assert.notEqual(previousVersion, releaseVersion)
+  await upgradePage.reload()
+  await upgradePage.getByText('Saved on this device', { exact: false }).waitFor()
+  await upgradePage.getByRole('textbox', { name: 'Message to Zheng' }).fill('Keep my draft through the release upgrade.')
+  await upgradePage.getByRole('button', { name: 'More tools', exact: true }).click()
+  await upgradePage.getByRole('button', { name: 'App updates', exact: true }).click()
+  await upgradePage.getByRole('button', { name: 'Save & prepare to update' }).click()
+  await upgradePage.getByRole('status').filter({ hasText: 'Drafts are saved' }).waitFor()
+  await upgradePage.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  const heldPage = await upgradeContext.newPage()
+  await heldPage.goto(url)
+  await heldPage.getByText('Saved on this device', { exact: false }).waitFor()
+  previousRelease = false
+  await upgradePage.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update() })
+  await expect.poll(() => shellVersion(upgradePage, 'waiting'), { timeout: 15_000 }).toBe(releaseVersion)
+  for (const target of [url, url + '?cb=1']) {
+    await upgradePage.goto(target)
+    await upgradePage.getByText('Saved on this device', { exact: false }).waitFor()
+    assert.equal(await upgradePage.locator('meta[name="visual-language-build"]').getAttribute('content'), releaseVersion)
+    assert.equal(await shellVersion(upgradePage), previousVersion)
+    await expectNoUpdate(upgradePage)
+    assert.equal(await upgradePage.getByRole('textbox', { name: 'Message to Zheng' }).inputValue(), 'Keep my draft through the release upgrade.')
+  }
+  await upgradeContext.setOffline(true)
+  await upgradePage.goto(url)
+  await upgradePage.getByText('Saved on this device', { exact: false }).waitFor()
+  assert.equal(await upgradePage.locator('meta[name="visual-language-build"]').getAttribute('content'), previousVersion)
+  await upgradeContext.close()
   const context = await browser.newContext(), page = await context.newPage(), errors = [], external = []
   page.on('pageerror', error => errors.push(error.message))
   page.on('request', request => { if (!request.url().startsWith(origin)) external.push(request.url()) })
@@ -223,7 +264,7 @@ try {
   assert(String(await shellVersion(reopened)).startsWith('candidate-2-'))
   assert.equal(await reopened.evaluate(async () => (await caches.keys()).filter(k => k.startsWith('visual-language-shell:')).length), 2)
   assert.deepEqual(errors, []); assert.deepEqual(external, [])
-  console.log(`Pages subpath rehearsal passed: exact ${budget.shell.bytes}-byte shell inventory without portrait precache, preserved masters, install despite missing artwork, scoped manifest/icons/About credits, no update for first-load/same-build/evicted workers, update dismissal across reload/tabs, a fresh notice for the next version, and recovered draft. No deployment or live provider calls.`)
+  console.log(`Pages subpath rehearsal passed: two-build upgrades on normal/query navigation with the old worker still active, coherent offline fallback, preserved drafts, exact ${budget.shell.bytes}-byte shell inventory, optional artwork, scoped credits, first-load/same-build/evicted worker checks, remembered dismissal and fresh update notices. No deployment or live provider calls.`)
 } finally {
   await browser?.close()
   if (server) await new Promise(resolve => server.close(resolve))
