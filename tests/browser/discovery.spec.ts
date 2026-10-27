@@ -42,7 +42,7 @@ async function result(route: Route, value: unknown, name?: string) {
   await route.fulfill({ contentType: 'text/event-stream', body: frames.map(frame => `data: ${JSON.stringify(frame)}\n\n`).join('') + 'data: [DONE]\n\n' })
 }
 async function fixtures(page: Page) {
-  const controls = { failSearch: false, failDraft: false, failReview: false, published: '2026-09-10' }, calls: string[] = [], searches: { query: string; topic: string }[] = []
+  const controls = { failSearch: false, failDraft: false, failReview: false, failQuestion: false, published: '2026-09-10' }, calls: string[] = [], searches: { query: string; topic: string }[] = []
   await page.route('https://api.tavily.com/search', async route => {
     const body = route.request().postDataJSON(); searches.push(body)
     if (controls.failSearch) { await route.abort('internetdisconnected'); return }
@@ -57,6 +57,10 @@ async function fixtures(page: Page) {
     for (const message of [...body.messages].reverse()) if (message.role === 'user') try { input = parseToolContext(message.content); break } catch { /* repair instructions */ }
     if (!sourceFixtureTools.includes(body.tools?.[0]?.function.name ?? '')) {
       calls.push(input.generationMode ?? body.tools?.[0]?.function.name ?? 'guidance-review')
+      if (controls.failQuestion && body.tools?.[0]?.function.name === 'verify_correct_question') {
+        await route.abort('internetdisconnected')
+        return
+      }
       const generated = topicFixture({ ...body, handlers: {} })
       if (generated.toolCalls.length) {
         const delta = { tool_calls: generated.toolCalls.map((call, index) => ({ ...call, index })) }
@@ -179,6 +183,46 @@ test('current-interest reading refuses undated news and shows dates after an exp
   await close(page); const saved = await download(page)
   expect(saved.state.cards).toHaveLength(1); expect(saved.state.events).toHaveLength(0)
   expect(saved.state.drafts.filter((d: { kind: string }) => d.kind === 'discovery')).toHaveLength(2)
+})
+
+test('accepted source resumes interrupted preparation through the creation service after reload', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 })
+  await ready(page); const f = await fixtures(page)
+  f.controls.failQuestion = true
+  await discovery(page)
+  await page.getByRole('button', { name: 'Create lesson', exact: true }).click()
+  let dialog = page.getByRole('dialog', { name: 'Explore a topic', exact: true })
+  await expect(dialog.getByRole('alert')).toBeVisible()
+  const stages = dialog.getByRole('progressbar', { name: 'Lesson preparation stages' })
+  await expect(stages).toHaveAttribute('aria-valuenow', '1')
+  await expect(stages).toBeInViewport()
+  await expect(dialog.getByRole('heading', { name: 'Continue preparation', exact: true })).toBeFocused()
+  await expect(dialog.getByRole('combobox', { name: 'Saved lesson', exact: true })).toHaveCount(0)
+  await expect(dialog.getByRole('button', { name: 'Continue to lesson', exact: true })).toHaveCount(0)
+  const sourceCalls = f.calls.filter(call => call === 'lesson-draft' || call === 'lesson-review').length
+  const calls = f.calls.length
+  await close(page); await page.reload()
+  await page.getByRole('button', { name: 'Explore a topic', exact: true }).click()
+  dialog = page.getByRole('dialog', { name: 'Explore a topic', exact: true })
+  await expect(dialog.getByRole('progressbar', { name: 'Lesson preparation stages' })).toHaveAttribute('aria-valuenow', '1')
+  await expect(dialog.locator('.milestones li').last()).toBeInViewport({ ratio: 0.99 })
+  await dialog.getByText('Other lessons', { exact: true }).click()
+  const savedLesson = dialog.getByRole('combobox', { name: 'Saved lesson', exact: true })
+  const savedId = await savedLesson.inputValue()
+  await dialog.getByRole('button', { name: 'New lesson', exact: true }).click()
+  await expect(dialog.getByLabel('Topic or scenario', { exact: true })).toBeEditable()
+  await dialog.getByRole('combobox', { name: 'Saved lesson', exact: true }).selectOption(savedId)
+  await expect(dialog.getByRole('heading', { name: 'Continue preparation', exact: true })).toBeFocused()
+  expect(f.calls).toHaveLength(calls)
+  f.controls.failQuestion = false
+  await dialog.getByRole('button', { name: 'Continue preparation', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: 'Your lesson', exact: true }).getByRole('region', { name: 'Lesson material' })).toBeVisible()
+  expect(f.searches).toHaveLength(1)
+  expect(f.calls.filter(call => call === 'lesson-draft' || call === 'lesson-review')).toHaveLength(sourceCalls)
+  await close(page)
+  const saved = await download(page)
+  expect(saved.state.lessons).toHaveLength(1)
+  expect(saved.state.sessions).toHaveLength(1)
 })
 
 test('interrupted lesson creation stays editable and resumes saved work without another search', async ({ page }) => {

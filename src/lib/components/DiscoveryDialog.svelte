@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { onMount, untrack } from 'svelte'
+  import { onMount, tick, untrack } from 'svelte'
   import Modal from './Modal.svelte'
   import SourceList from './SourceList.svelte'
   import PinyinText from './PinyinText.svelte'
   import SpeechButton from './SpeechButton.svelte'
   import TeacherPortrait from './TeacherPortrait.svelte'
+  import LessonCreationProgress from './LessonCreationProgress.svelte'
   import { TeacherActivity } from '../teacher/activity'
   import { teacherExpression } from '../teacher/portrait'
   import type { DiscoveryRequest } from '../domain/discovery'
@@ -12,7 +13,7 @@
   import type { WorkspaceState } from '../state/workspace.svelte'
   import type { WorkspaceSnapshot } from '../storage/repository'
   import { teacherHost, workspaceClock } from '../teacher/host'
-  import { DiscoveryService } from '../teacher/discoveryService'
+  import { LessonCreationPauseError, LessonCreationService, type LessonCreationResult } from '../teacher/lessonCreationService'
   import { learningPreferences } from '../graph/graphService'
   import { quizLevels } from '../domain/lessonSettings'
   import { envApiKey } from '../settings'
@@ -21,12 +22,13 @@
   const host = untrack(() => teacherHost(workspace, onChanged)), clock = untrack(() => workspaceClock(workspace))
   let pendingRequests = $state(0)
   const activity = new TeacherActivity(count => { pendingRequests = count })
-  const service = new DiscoveryService(host, () => settings, { clock, transport: activity.transport, onTavilyRequest: activity.begin,
-    onProgress: stage => { label = { sources: 'Finding Mandarin examples…', planning: 'Planning useful language for your lesson…', draft: 'Writing your lesson…', review: 'Checking your lesson…' }[stage] } })
+  const service = new LessonCreationService(host, () => settings, { clock, transport: activity.transport, onTavilyRequest: activity.begin,
+    onProgress: progress => { label = progress.phase === 'lesson' ? progress.stage : { sources: 'Finding Mandarin examples…', planning: 'Planning useful language for your lesson…', draft: 'Writing your lesson…', review: 'Checking your lesson…' }[progress.stage] } })
   const document = $derived(workspace.snapshot!.state)
   const drafts = $derived(document.drafts.filter(d => d.kind === 'discovery').reverse())
   let selectedId = $state(untrack(() => draftId ?? drafts[0]?.id ?? ''))
   const selected = $derived(drafts.find(d => d.id === selectedId))
+  const creation = $derived(service.status({ draftId: selectedId }))
   let request = $state<DiscoveryRequest>(untrack(() => ({ ...structuredClone(selected?.discoveryRequest ?? { kind: 'topic' as const, publicTopic: '', rootId: document.view.activeRootId, extract: false, refresh: false }), quizLevel: selected?.discoveryRequest?.quizLevel ?? 'meaningPinyin' })))
   let lastSaved = untrack(() => selected ? JSON.stringify(request) : '')
   const material = $derived(selected?.status === 'validated' ? selected.discovery : undefined)
@@ -35,7 +37,18 @@
   const editable = $derived(!material)
   const unfinished = $derived(Boolean(selected && selected.status !== 'editing' && !material))
   const createLabel = $derived(unfinished ? (selected?.sourceIds.length || selected?.discoveryPlanning) ? 'Continue creating lesson' : 'Try again' : 'Create lesson')
-  let busy = $state(false), label = $state(''), error = $state(''), notice = $state('')
+  let busy = $state(false), label = $state(''), error = $state(''), notice = $state(''), pauseFailed = $state(false)
+  const showPreparation = $derived(Boolean(creation.lesson && (busy || creation.phase === 'lesson')))
+  let heading = $state<HTMLHeadingElement>(), previousPhase = ''
+  $effect(() => {
+    const phase = showPreparation ? busy ? 'preparing' : 'paused' : busy ? 'source' : 'setup'
+    const changed = previousPhase && previousPhase !== phase
+    previousPhase = phase
+    if (changed) void tick().then(() => {
+      heading?.focus({ preventScroll: true })
+      heading?.closest('.modal-body')?.scrollTo({ top: 0 })
+    })
+  })
   const usesWeb = $derived(Boolean(settings.tavily.apiKey.trim() || envApiKey('tavily')))
   const teacherPortraits = $derived(document.view.teacherPortraits ?? true)
   const expression = $derived(teacherExpression({ pending: pendingRequests > 0, failed: Boolean(error), welcoming: true }))
@@ -55,57 +68,60 @@
     if (!editable || (!request.publicTopic.trim() && !selectedId)) return
     const value = $state.snapshot(request), signature = JSON.stringify(value), id = selectedId
     if (signature === lastSaved) return
-    // Editing an unfinished generated request starts a new version, preserving
-    // its saved sources and candidate under the original request.
-    const editingId = selected?.status === 'editing' ? id : undefined
-    saveTask = (async () => { selectedId = await service.saveRequest(value, editingId || undefined); lastSaved = signature })()
+    saveTask = (async () => { selectedId = await service.saveRequest(value, id || undefined); lastSaved = signature })()
     try { await saveTask } finally { saveTask = undefined }
   }
   function work(message: string, action: (signal: AbortSignal) => Promise<void>) {
     if (busy) return Promise.resolve()
-    busy = true; label = message; error = ''; notice = ''; controller = new AbortController()
+    busy = true; label = message; error = ''; notice = ''; pauseFailed = false; controller = new AbortController()
     const signal = controller.signal
     activeTask = (async () => {
       try { await flushRequest(); await action(signal) }
-      catch (cause) { if (signal.aborted) notice = 'Paused. Your progress is saved.'; else error = cause instanceof Error ? cause.message : 'The lesson action could not complete.' }
+      catch (cause) {
+        pauseFailed = cause instanceof LessonCreationPauseError
+        if (signal.aborted && !pauseFailed) notice = 'Paused. Your progress is saved.'
+        else error = cause instanceof Error ? cause.message : 'The lesson action could not complete.'
+      }
       finally { busy = false; controller = undefined; activeTask = undefined }
     })()
     return activeTask
   }
   async function choose(id: string) {
     try {
-      await flushRequest(); selectedId = id
+      await service.pause(); await flushRequest(); selectedId = id; pauseFailed = false
       const value = drafts.find(d => d.id === id)?.discoveryRequest
       request = { ...structuredClone(value ?? { kind: request.kind, publicTopic: '', rootId: document.view.activeRootId, extract: false, refresh: false }), quizLevel: value?.quizLevel ?? 'meaningPinyin' }
       lastSaved = id ? JSON.stringify(request) : ''; error = ''; notice = ''
-    } catch (cause) { error = cause instanceof Error ? cause.message : 'The current request could not be saved.' }
+    } catch (cause) { pauseFailed = cause instanceof LessonCreationPauseError; error = cause instanceof Error ? cause.message : 'The current request could not be saved.' }
   }
   async function savePhrase(phraseId: string) {
     await work('Saving this phrase for multiple-choice practice…', async () => {
-      await service.capturePhrase(selectedId, phraseId, ['recognition'])
+      await service.capturePhrase(selectedId, phraseId)
       notice = 'Saved for practice. Zheng will introduce new words before scheduling reviews.'
     })
   }
   async function createLesson() {
-    let created: { nodeId: string; sessionId: string } | undefined
+    let created: LessonCreationResult | undefined
     await work('Preparing your lesson topic…', async signal => {
-      await service.resume(selectedId, signal)
-      signal.throwIfAborted()
-      created = await service.startLesson(selectedId, { quizLevel: request.quizLevel ?? 'meaningPinyin', complexity: 'simple', scope: 'everyday', focus: 'characters', topic: request.publicTopic.slice(0, 200) })
+      created = await service.createFromRequest(selectedId, { signal })
     })
-    if (created) { const next = created; await close(() => onLesson(next.nodeId, next.sessionId)) }
+    if (created) { const next = created; await close(() => onLesson(next.anchorId, next.sessionId)) }
   }
   async function close(after = onClose) {
-    controller?.abort(); await activeTask
-    try { await flushRequest(); after() } catch (cause) { error = `The request could not be safely saved. ${cause instanceof Error ? cause.message : ''}` }
+    controller?.abort()
+    try { await service.pause(); await activeTask; await flushRequest(); after() } catch (cause) { pauseFailed = cause instanceof LessonCreationPauseError; error = `The request could not be safely saved. ${cause instanceof Error ? cause.message : ''}` }
   }
 </script>
 
+{#snippet savedLessons()}
+  <div class="saved-lessons"><label>Saved lesson<select value={selectedId} disabled={busy} onchange={event => void choose(event.currentTarget.value)}><option value="">New lesson</option>{#each drafts as draft}<option value={draft.id}>{(draft.discovery?.title ?? draft.discoveryRequest?.publicTopic) || 'Untitled lesson'} · {service.status({ draftId: draft.id }).phase === 'ready' ? 'Ready' : draft.status === 'editing' ? 'Draft' : 'Unfinished'}</option>{/each}</select></label><button type="button" class="ghost" disabled={busy} onclick={() => void choose('')}>New lesson</button></div>
+{/snippet}
+
 <Modal title="Explore a topic" onClose={() => void close()}>
   <div class="discovery">
-    <header class="teacher-heading">{#if teacherPortraits}<TeacherPortrait state={expression} variant="discovery" />{/if}<div><h3>What would you like to learn?</h3><p class="small">Turn a topic you care about into a Mandarin lesson.</p></div></header>
+    <header class="teacher-heading">{#if teacherPortraits && !showPreparation}<TeacherPortrait state={expression} variant="discovery" />{/if}<div><h3 tabindex="-1" bind:this={heading}>{showPreparation ? busy ? 'Creating your lesson' : 'Continue preparation' : busy ? 'Creating your lesson' : 'What would you like to learn?'}</h3><p class="small">{showPreparation ? creation.lesson?.title : 'Turn a topic you care about into a Mandarin lesson.'}</p></div></header>
     {#if prerecorded}<p class="notice">Creating your own lesson needs an AI connection. Switch to live AI in Demo options, or try the ready-made sample lesson.</p>{/if}
-    {#if drafts.length}<div class="saved-lessons"><label>Saved lesson<select value={selectedId} disabled={busy} onchange={event => void choose(event.currentTarget.value)}><option value="">New lesson</option>{#each drafts as draft}<option value={draft.id}>{(draft.discovery?.title ?? draft.discoveryRequest?.publicTopic) || 'Untitled lesson'} · {draft.status === 'validated' ? 'Ready' : draft.status === 'editing' ? 'Draft' : 'Unfinished'}</option>{/each}</select></label><button type="button" class="ghost" disabled={busy} onclick={() => void choose('')}>New lesson</button></div>{/if}
+    {#if drafts.length && !showPreparation}{@render savedLessons()}{/if}
     {#if !material}
       {#if unfinished && !busy && !error}<p class="notice" role="status">Your unfinished lesson is saved. Continue where you left off, or edit the topic to start a new version.</p>{/if}
       <form id="discovery-request" onsubmit={event => { event.preventDefault(); void createLesson() }}>
@@ -119,7 +135,13 @@
         </div></details>
       </form>
     {/if}
-    {#if material && selected}
+    {#if showPreparation && creation.lesson && creation.readiness}
+      <LessonCreationProgress {busy} {pauseFailed} status={label} teachingReady={creation.readiness.teaching}
+        practiceReady={creation.readiness.practice?.status === 'validated'} checkReady={creation.readiness.check?.status === 'validated'}
+        waypointCount={creation.lesson.preparation?.lesson.graph.waypoints.length ?? creation.lesson.waypointDraft?.graph.waypoints.length ?? 0}
+        practiceCount={creation.lesson.preparation?.practice?.questions.length ?? 0} checkCount={creation.lesson.preparation?.check?.questions.length ?? 0} />
+      {#if !busy}<details><summary>Other lessons</summary><div class="options-body">{@render savedLessons()}</div></details>{/if}
+    {:else if material && selected}
       <article aria-label="Reviewed discovery lesson">
         <p class="small">{kindName[request.kind]}</p>
         <h3>{material.title}</h3><p>{material.explanation}</p>
@@ -143,12 +165,12 @@
   </div>
   {#snippet footer()}
     <div class="discovery-footer">
-      <div class="action-status">{#if busy}<p role="status">{label}</p>{/if}{#if notice}<p role="status" class="notice">{notice}</p>{/if}{#if error}<p role="alert" class="error">We couldn’t finish your lesson. You can try again or edit the topic.</p><details><summary>Details</summary><p class="small">{error}</p><button type="button" class="ghost" onclick={() => void close(onSettings)}>AI connection</button></details>{/if}</div>
+      <div class="action-status">{#if busy && !showPreparation}<p role="status">{label}</p>{/if}{#if notice && !showPreparation}<p role="status" class="notice">{notice}</p>{/if}{#if error}<p role="alert" class="error">{pauseFailed ? error : material ? 'We couldn’t finish preparing your lesson.' : 'We couldn’t finish your lesson. You can try again or edit the topic.'}</p>{#if !pauseFailed}<details><summary>Details</summary><p class="small">{error}</p><button type="button" class="ghost" onclick={() => void close(onSettings)}>AI connection</button></details>{/if}{/if}</div>
       <div class="footer-actions">
-        <button type="button" class="ghost" onclick={() => void close()}>Close</button>
+        <button type="button" class="ghost" onclick={() => void close()}>{pauseFailed ? 'Retry save & close' : 'Close'}</button>
         {#if busy}<button type="button" onclick={() => controller?.abort()}>Pause</button>
         {:else if !material}<button type="submit" form="discovery-request" disabled={prerecorded || !request.publicTopic.trim()}>{createLabel}</button>
-        {:else}<button type="button" onclick={() => void createLesson()}>Continue to lesson</button>{/if}
+        {:else}<button type="button" onclick={() => void createLesson()}>{creation.phase === 'ready' ? 'Continue to lesson' : 'Continue preparation'}</button>{/if}
       </div>
     </div>
   {/snippet}

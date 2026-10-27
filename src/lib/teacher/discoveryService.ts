@@ -185,7 +185,7 @@ export class DiscoveryService {
     if (draft.status !== 'validated' || !draft.discovery) throw new Error('Finish preparing the source material first.')
     for (const phrase of draft.discovery.phrases) await this.capturePhrase(id, phrase.id, ['recognition'])
     const state = this.host.current().state
-    const existing = state.sessions.find(s => s.status !== 'completed' && state.lessons.some(l => l.id === s.lessonAttempt?.lessonId && l.source?.draftId === id))
+    const existing = state.sessions.find(s => s.status !== 'completed' && s.learnerId === state.activeLearnerId && state.lessons.some(l => l.id === s.lessonAttempt?.lessonId && l.source?.draftId === id))
     if (existing) {
       if (existing.status !== 'active') await this.host.apply((s, r) => new LearningService(r, this.clock).setSessionStatus(s, existing.id, 'active'))
       return { nodeId: draft.discovery.nodeId, sessionId: existing.id }

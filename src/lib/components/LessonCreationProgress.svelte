@@ -1,8 +1,8 @@
 <script lang="ts">
-  let { busy, status, teachingReady, practiceReady, checkReady, waypointCount, practiceCount, checkCount, checkOnly = false }: {
+  let { busy, status, teachingReady, practiceReady, checkReady, waypointCount, practiceCount, checkCount, checkOnly = false, pauseFailed = false }: {
     busy: boolean; status: string; teachingReady: boolean; practiceReady: boolean; checkReady: boolean;
     waypointCount: number; practiceCount: number; checkCount: number;
-    checkOnly?: boolean;
+    checkOnly?: boolean; pauseFailed?: boolean;
   } = $props()
 
   const stages = $derived(([
@@ -29,8 +29,8 @@
   <div class="scene" class:working={busy} aria-hidden="true">
     <span class="spark left">✦</span><span class="diamond"></span><span class="spark right">✧</span>
   </div>
-  <p class="flavor" aria-hidden="true">{busy ? flavors[flavor] : 'Your next “aha!” can wait.'}</p>
-  <p class="status" role="status">{busy ? status : 'Creation paused. Your saved progress is here.'}</p>
+  {#if busy}<p class="flavor" aria-hidden="true">{flavors[flavor]}</p>{/if}
+  <p class="status" role="status">{busy ? status : pauseFailed ? 'Pause not saved.' : 'Creation paused.'}</p>
   <div class="progress-summary"><span>{completed} of {stages.length} stages ready</span><span>{checkOnly ? 'Saved lesson → Fresh quiz' : 'Learn & practice → Quiz'}</span></div>
   <div class="track" role="progressbar" aria-label="Lesson preparation stages" aria-valuemin="0" aria-valuemax={stages.length} aria-valuenow={completed} aria-valuetext={`${completed} of ${stages.length} stages ready${current >= 0 ? `; ${stages[current].title} ${busy ? 'in progress' : 'next'}` : ''}`}>
     {#each stages as stage, index}
@@ -75,6 +75,12 @@
     .creation { padding: 16px 12px; } .scene { height: 36px; } .diamond { width: 20px; height: 30px; }
     .flavor { font-size: 16px; min-height: 48px; } .status { min-height: 0; margin-bottom: 12px; }
     .milestones { gap: 12px; margin-top: 16px; } li:not(.current) p { display: none; }
+  }
+  @media (max-width: 520px) and (max-height: 640px) {
+    .creation { padding-block: 12px; } .scene { display: none; }
+    .flavor { font-size: 14px; min-height: 42px; }
+    .status { font-size: 12px; line-height: 1.35; margin: 4px 0 10px; }
+    .milestones { gap: 8px; margin-top: 12px; } strong { font-size: 13px; }
   }
   @media (prefers-reduced-motion: reduce) { .working .diamond, .working .spark, .track .active { animation: none; } }
 </style>

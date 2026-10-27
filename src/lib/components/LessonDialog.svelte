@@ -12,8 +12,8 @@
   import { lessonKindLabels, quizLevels, complexityLabels, scopeLabels, focusLabels, type QuizLevel, type LessonSettings } from '../domain/lessonPlan'
   import { lessonStep, lessonReadiness, growthEvidence } from '../learning/lessonProgress'
   import { LearningService } from '../learning/learningService'
-  import { LessonService } from '../learning/lessonService'
   import { TeacherService } from '../teacher/teacherService'
+  import { LessonCreationPauseError, LessonCreationService, lessonCreationSetup } from '../teacher/lessonCreationService'
   import { RehearsalTeacher } from '../demo/rehearsalTeacher'
   import { teacherHost, workspaceClock } from '../teacher/host'
   import { feedbackMaterial } from '../teacher/feedback'
@@ -32,17 +32,21 @@
   const host = untrack(() => teacherHost(workspace, onChanged)), clock = untrack(() => workspaceClock(workspace))
   const prerecorded = untrack(() => workspace.mode === 'demo' && workspace.snapshot?.state.demo?.contentMode === 'fixtures')
   const teacher = prerecorded ? new RehearsalTeacher(host, clock) : new TeacherService(host, () => settings, { clock })
+  const creation = new LessonCreationService(host, () => settings, { clock, teacher, onProgress: progress => {
+    busyLabel = progress.stage
+    if (progress.phase === 'lesson') sessionId = progress.sessionId
+  } })
   const document = $derived(workspace.snapshot!.state)
   const selection = $derived(conversationSelection(document, anchorId))
-  let selectedItems = $state<string[]>(untrack(() => selection.source?.scope ? selection.items.map(i => i.id) : initialItemId ? [initialItemId] : selection.items.slice(0, 9).map(i => i.id)))
-  const previousSettings = untrack(() => document.lessons.filter(l => l.anchorId === anchorId).at(-1)?.settings)
+  const setup = untrack(() => lessonCreationSetup(document, anchorId, initialItemId))
+  let selectedItems = $state<string[]>(setup.itemIds)
   const previousLesson = $derived(document.sessions.filter(s => s.status === 'completed' && lessonForSession(document, s)?.kind === selection.kind && lessonForSession(document, s)!.cardIds.length === selectedItems.length && lessonForSession(document, s)!.cardIds.every(id => selectedItems.includes(document.cards.find(c => c.id === id)!.itemId))).at(-1))
   const suggested = $derived(previousLesson ? growthEvidence(document, previousLesson).suggestion : undefined)
-  let goal = $state(untrack(() => selection.source?.scenario?.objective ?? (selection.kind === 'reading' ? 'Understand the selected phrases in this passage and a fresh short reading.' : 'Understand these phrases and choose appropriate uses in conversation.')))
-  let quizLevel = $state<QuizLevel>(previousSettings?.quizLevel ?? 'meaningPinyin')
-  let complexity = $state<LessonSettings['complexity']>(previousSettings?.complexity ?? 'simple'), scope = $state<LessonSettings['scope']>(previousSettings?.scope ?? 'everyday'), focus = $state<LessonSettings['focus']>(previousSettings?.focus ?? 'characters')
-  let topic = $state(untrack(() => previousSettings?.topic ?? selection.title))
-  let sessionId = $state(untrack(() => initialSessionId)), resumed = $state(untrack(() => autoStart)), busy = $state(false), error = $state(''), busyLabel = $state('')
+  let goal = $state(setup.goal)
+  let quizLevel = $state<QuizLevel>(setup.settings.quizLevel)
+  let complexity = $state<LessonSettings['complexity']>(setup.settings.complexity), scope = $state<LessonSettings['scope']>(setup.settings.scope), focus = $state<LessonSettings['focus']>(setup.settings.focus)
+  let topic = $state(setup.settings.topic)
+  let sessionId = $state(untrack(() => initialSessionId)), resumed = $state(untrack(() => autoStart)), busy = $state(false), error = $state(''), busyLabel = $state(''), pauseFailed = $state(false)
   const session = $derived(document.sessions.find(s => s.id === sessionId))
   const plan = $derived(lessonView(document, session))
   const readiness = $derived(session && plan ? lessonReadiness(document, session) : undefined)
@@ -76,7 +80,7 @@
   let lastDraft = ''
   onMount(() => {
     if (autoStart && sessionId) void work(readiness?.ready ? 'Opening your lesson…' : 'Preparing your quiz…', async signal => {
-      if (!readiness?.ready) await teacher.prepareLesson(sessionId!, signal, label => { busyLabel = label })
+      await creation.resume(sessionId!, { signal })
       await openQuestion(signal)
     })
     return () => { controller?.abort(); clearTimeout(timer) }
@@ -109,7 +113,7 @@
   }
   async function work(label: string, action: (signal: AbortSignal) => Promise<void>, focus: 'content' | 'feedback' = 'content') {
     if (busy) return
-    busy = true; error = ''; busyLabel = label; controller = new AbortController()
+    busy = true; error = ''; pauseFailed = false; busyLabel = label; controller = new AbortController()
     const signal = controller.signal
     pending = (async () => {
       try {
@@ -120,24 +124,27 @@
         if (focus === 'feedback') target?.scrollIntoView({ block: 'start' })
         else journey?.closest('.modal-body')?.scrollTo({ top: 0 })
       }
-      catch (cause) { error = signal.aborted ? 'Paused. Your saved progress is ready when you return.' : cause instanceof Error ? cause.message : 'Practice could not continue.' }
+      catch (cause) {
+        pauseFailed = cause instanceof LessonCreationPauseError
+        error = signal.aborted && !pauseFailed ? 'Paused. Your saved progress is ready when you return.' : cause instanceof Error ? cause.message : 'Practice could not continue.'
+      }
       finally { busy = false; pending = undefined }
     })()
     await pending
   }
   async function start() {
     await work('Saving your lesson plan…', async signal => {
-      const next = await host.apply((s, r) => new LearningService(r, clock).startLesson(s, anchorId, selectedItems, goal, { quizLevel, complexity, scope, focus, topic }))
-      sessionId = next.state.sessions.at(-1)!.id; resumed = true
-      await teacher.prepareLesson(sessionId, signal, label => { busyLabel = label })
+      resumed = true
+      const result = await creation.createFromSelection({ anchorId, itemIds: selectedItems, goal, settings: { quizLevel, complexity, scope, focus, topic } }, { signal })
+      sessionId = result.sessionId; resumed = true
       await openQuestion(signal)
     })
   }
   async function retry() {
     await work('Preparing a fresh quiz…', async signal => {
-      const next = await host.apply((s, r) => new LessonService(r, clock).startActivity(s, plan!.id))
-      sessionId = next.state.sessions.find(s => s.status === 'active' && s.lessonAttempt?.lessonId === plan!.id)!.id; resumed = true
-      await teacher.prepareLesson(sessionId, signal, label => { busyLabel = label })
+      resumed = true
+      const result = await creation.retry(plan!.id, { signal })
+      sessionId = result.sessionId; resumed = true
       await openQuestion(signal)
     })
   }
@@ -180,12 +187,13 @@
     await teacher.gradeAttempt(saved.id, signal)
   }
   async function close(after = onClose) {
-    controller?.abort(); await pending
+    controller?.abort()
     try {
+      await creation.pause(); await pending
       await saveAnswer()
       if (session && session.status !== 'completed') await host.apply((s, r) => new LearningService(r, clock).setSessionStatus(s, session!.id, 'paused'))
       after()
-    } catch (cause) { error = `Your practice could not be saved. ${cause instanceof Error ? cause.message : ''}` }
+    } catch (cause) { pauseFailed = cause instanceof LessonCreationPauseError; error = `Your practice could not be saved. ${cause instanceof Error ? cause.message : ''}` }
   }
   async function showHelp() {
     if (step?.stage !== 'practice' || !exercise || attempt) return
@@ -223,7 +231,7 @@
       {:else}<p>No phrases saved on this branch yet. Select a word in the conversation and choose <strong>Save for practice</strong>.</p>{/if}
     {:else if plan && !readiness?.ready}
       <h3 tabindex="-1" bind:this={heading}>{plan.checkPreparation ? busy ? 'Preparing your fresh quiz' : 'Continue preparing your quiz' : busy ? 'Creating your lesson' : 'Continue creating your lesson'}</h3>
-      <LessonCreationProgress {busy} status={busyLabel}
+      <LessonCreationProgress {busy} {pauseFailed} status={busyLabel}
         checkOnly={Boolean(plan.checkPreparation)} teachingReady={Boolean(readiness?.teaching)} practiceReady={readiness?.practice?.status === 'validated'} checkReady={readiness?.check?.status === 'validated'}
         waypointCount={plan.preparation?.lesson.graph.waypoints.length ?? plan.waypointDraft?.graph.waypoints.length ?? 0}
         practiceCount={plan.preparation?.practice?.questions.length ?? 0} checkCount={plan.preparation?.check?.questions.length ?? 0} />
@@ -264,12 +272,12 @@
       {#if busy && !(plan && !readiness?.ready)}<p role="status">{busyLabel}</p>{/if}{#if error}<p role="alert">{error}</p>{/if}
       <div class="actions">
         {#if session?.status === 'completed'}{#if session.lessonAttempt?.completion?.passed === false && session.lessonAttempt.activity !== 'practice'}<button type="button" disabled={busy} onclick={() => void retry()}>Try quiz again</button>{/if}<button type="button" class="ghost" onclick={() => void close(onLessons)}>Back to lessons</button>{/if}
-        {#if session?.status !== 'completed' || !autoStart}<button type="button" class="ghost" onclick={() => void close(autoStart ? onLessons : () => onReturn(plan?.anchorId ?? anchorId))}>{autoStart ? 'Pause & back to lessons' : session && step ? 'Pause & return' : 'Return to source'}</button>{/if}
+        {#if session?.status !== 'completed' || !autoStart}<button type="button" class="ghost" onclick={() => void close(autoStart ? onLessons : () => onReturn(plan?.anchorId ?? anchorId))}>{pauseFailed ? 'Retry save & close' : autoStart ? 'Pause & back to lessons' : session && step ? 'Pause & return' : 'Return to source'}</button>{/if}
         {#if !session && selection.items.length}<button type="button" disabled={busy || !goal.trim() || !selectedItems.length || selectedItems.length > 9 || !topic.trim()} onclick={() => void start()}>Prepare lesson</button>
         {:else if session && plan && !readiness?.ready}
           {#if busy}<button type="button" class="ghost" onclick={() => controller?.abort()}>Pause creation</button>
           {:else if !resumed}<button type="button" onclick={() => void resume(session!.id)}>Resume lesson</button>
-          {:else}<button type="button" disabled={busy} onclick={() => void work('Continuing preparation…', async signal => { await teacher.prepareLesson(sessionId!, signal, label => { busyLabel = label }); await openQuestion(signal) })}>Continue preparation</button>{/if}
+          {:else}<button type="button" disabled={busy} onclick={() => void work('Continuing preparation…', async signal => { await creation.resume(sessionId!, { signal }); await openQuestion(signal) })}>Continue preparation</button>{/if}
         {:else if session && step}
           {#if !resumed}<button type="button" disabled={busy} onclick={() => void resume(session!.id)}>Resume lesson</button>
           {:else if exercise && inQuiz}<button type="submit" form="lesson-answer" disabled={busy || (!attempt && !optionId)}>{quizIndex === quizCount ? 'Submit quiz' : 'Next'}</button>
