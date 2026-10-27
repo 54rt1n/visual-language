@@ -39,18 +39,20 @@ async function addWord(page: Page) {
   return word
 }
 const responseBody = (text: string) => `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: text }, finish_reason: null }] })}\n\ndata: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n`
-async function speechFixture(page: Page) {
-  await page.addInitScript(() => {
+async function speechFixture(page: Page, hold = false) {
+  await page.addInitScript(hold => {
     const utterances: string[] = []; Object.assign(window, { wordAudioFixture: utterances })
+    const control = { cancellations: 0 }
+    Object.assign(window, { wordAudioControl: control })
     class Speech extends EventTarget {
       getVoices() { return [{ name: 'Mandarin', lang: 'zh-CN', localService: true, default: true, voiceURI: 'fixture' }] }
-      cancel() {}
-      speak(utterance: SpeechSynthesisUtterance) { utterances.push(utterance.text); setTimeout(() => utterance.onend?.(new Event('end') as SpeechSynthesisEvent), 20) }
+      cancel() { control.cancellations++ }
+      speak(utterance: SpeechSynthesisUtterance) { utterances.push(utterance.text); if (!hold) setTimeout(() => utterance.onend?.(new Event('end') as SpeechSynthesisEvent), 20) }
     }
     class Utterance { constructor(public text: string) {} }
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: new Speech() })
     Object.defineProperty(window, 'SpeechSynthesisUtterance', { configurable: true, value: Utterance })
-  })
+  }, hold)
 }
 
 test('simple word card uses automatic audio and replay, remains keyboard accessible on mobile, and makes no model request', async ({ page }) => {
@@ -121,6 +123,55 @@ test('hover exploration is optional, keeps focus and audio quiet, and persists a
   await page.setViewportSize({ width: 320, height: 568 })
   await expect(toggle).toBeInViewport({ ratio: 1 })
   await page.screenshot({ path: 'test-results/hover-explore-320.png' })
+})
+
+test('hovering another word or reply preserves ongoing playback until an explicit audio action', async ({ page }) => {
+  await speechFixture(page, true)
+  const requests = await setup(page)
+  await page.getByRole('textbox', { name: 'Message to Zheng' }).fill('Another tea example.')
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
+  await expect(page.locator('.assistant')).toHaveCount(2)
+  const toggle = page.getByRole('checkbox', { name: 'Hover to explore', exact: true })
+  await toggle.check(); await expect(toggle).toBeEnabled()
+  const first = page.locator('.assistant').first(), second = page.locator('.assistant').last()
+  await page.getByRole('button', { name: 'Fit View', exact: true }).click()
+  await expect(first.getByRole('button', { name: 'Explore 咖啡', exact: true })).toBeInViewport()
+  await first.getByRole('button', { name: 'Explore 咖啡', exact: true }).click()
+  const card = page.getByRole('region', { name: 'Word details' })
+  await expect(card.getByRole('button', { name: 'Stop audio', exact: true })).toBeVisible()
+  const cancellations = () => page.evaluate(() => (window as unknown as { wordAudioControl: { cancellations: number } }).wordAudioControl.cancellations)
+  const before = await cancellations()
+  await first.getByRole('button', { name: 'Explore 谢谢', exact: true }).hover()
+  await expect(card.getByRole('heading')).toHaveText('谢谢')
+  await expect(card.getByRole('button', { name: 'Stop audio', exact: true })).toBeVisible()
+  expect(await cancellations()).toBe(before)
+  await second.getByRole('button', { name: 'Explore 谢谢', exact: true }).hover()
+  await expect(second.getByRole('button', { name: 'Explore 谢谢', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  expect(await cancellations()).toBe(before)
+  expect(await page.evaluate(() => (window as unknown as { wordAudioFixture: string[] }).wordAudioFixture)).toEqual(['咖啡'])
+  await card.getByRole('button', { name: 'Play Mandarin audio', exact: true }).click()
+  await expect(card.getByRole('button', { name: 'Stop audio', exact: true })).toBeVisible()
+  expect(await page.evaluate(() => (window as unknown as { wordAudioFixture: string[] }).wordAudioFixture)).toEqual(['咖啡', '谢谢'])
+  expect(await cancellations()).toBeGreaterThan(before)
+  const playing = await cancellations()
+  await card.getByRole('button', { name: 'Stop audio', exact: true }).click()
+  await expect(card.getByRole('button', { name: 'Play Mandarin audio', exact: true })).toBeVisible()
+  expect(await cancellations()).toBe(playing + 1)
+  await card.getByRole('button', { name: 'Close word details', exact: true }).click()
+  await second.getByRole('button', { name: 'Read response', exact: true }).click()
+  const reader = page.getByRole('region', { name: 'Response reader', exact: true })
+  await reader.getByRole('button', { name: 'Play full response', exact: true }).click()
+  await expect(reader.getByRole('button', { name: 'Stop full response', exact: true })).toBeVisible()
+  const fullPlayback = await cancellations()
+  await reader.getByRole('button', { name: 'Explore 咖啡', exact: true }).hover()
+  await expect(reader.getByRole('region', { name: 'Selected word definition', exact: true })).toContainText('咖啡')
+  await reader.getByRole('button', { name: 'Explore 谢谢', exact: true }).hover()
+  await expect(reader.getByRole('region', { name: 'Selected word definition', exact: true })).toContainText('谢谢')
+  await expect(reader.getByRole('button', { name: 'Stop full response', exact: true })).toBeVisible()
+  expect(await cancellations()).toBe(fullPlayback)
+  await reader.getByRole('button', { name: 'Stop full response', exact: true }).click()
+  expect(await cancellations()).toBe(fullPlayback + 1)
+  expect(requests).toHaveLength(2)
 })
 
 test('dropping a word creates a durable keyless node with audio and pinyin without enrolling it', async ({ page }) => {

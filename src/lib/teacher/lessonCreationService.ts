@@ -1,9 +1,12 @@
 import { sameRecord } from '../domain/common'
+import { nid } from '../id'
+import { effectiveConfiguration } from '../graph/contracts'
+import { resolveProviderAccess } from '../settings'
 import { discoveryRequestSchema, MAX_LESSON_POINTS, type DiscoveryRequest } from '../domain/discovery'
 import { lessonForSession } from '../domain/lesson'
 import { lessonSettingsSchema, type LessonSettings } from '../domain/lessonSettings'
 import type { Workspace } from '../domain/workspace'
-import { conversationSelection } from '../learning/conversationPractice'
+import { conversationSelection, lessonConversation } from '../learning/conversationPractice'
 import { LearningService } from '../learning/learningService'
 import { LessonService } from '../learning/lessonService'
 import { lessonReadiness } from '../learning/lessonProgress'
@@ -14,6 +17,19 @@ import { TeacherService, type TeacherHost, type TeacherOptions } from './teacher
 
 export function lessonCreationSettings(topic: string, overrides: Partial<LessonSettings> = {}): LessonSettings {
   return lessonSettingsSchema.parse({ quizLevel: 'meaningPinyin', complexity: 'simple', scope: 'everyday', focus: 'characters', topic: topic.slice(0, 200), ...overrides })
+}
+
+export function lessonConversationSetup(state: Workspace, nodeId: string, startNodeId?: string) {
+  const source = lessonConversation(state, nodeId, startNodeId)
+  return { ...source, settings: lessonCreationSettings(source.title) }
+}
+
+export function lessonCreationConnected(state: Workspace, settings: Settings, nodeId: string) {
+  try {
+    const configuration = state.nodes.some(node => node.id === nodeId) ? effectiveConfiguration(nodeId, state.nodes, state.edges) : {}
+    const provider = configuration.modelConfig?.type === 'modelConfig' ? configuration.modelConfig.data.provider : settings.selected
+    return Boolean(resolveProviderAccess(settings, provider).apiKey)
+  } catch { return false }
 }
 
 /** Initial form values are shared with non-modal creation screens. */
@@ -72,15 +88,46 @@ export class LessonCreationService {
     return this.discovery.capturePhrase(draftId, phraseId, ['recognition'])
   }
 
+  async saveConversationRequest(nodeId: string, input: { kind: DiscoveryRequest['kind']; settings: LessonSettings; startNodeId?: string }, draftId?: string) {
+    const settings = lessonSettingsSchema.parse(input.settings)
+    let result = ''
+    await this.host.apply(async (snapshot, repository) => {
+      const state = snapshot.state, old = draftId ? state.drafts.find(draft => draft.id === draftId && draft.kind === 'discovery') : undefined
+      if (draftId && (!old?.discoveryRequest?.origin || old.discoveryRequest.origin.anchorId !== nodeId || old.discoveryRequest.origin.learnerId !== state.activeLearnerId)) throw new Error('Choose your saved conversation lesson request.')
+      const previous = old?.discoveryRequest?.origin, frozenSource = state.sources.find(source => source.id === previous?.sourceId), frozen = frozenSource?.conversation
+      if (old && old.discoveryRequest?.kind === input.kind && sameRecord(old.creationSettings, settings)
+        && (!input.startNodeId || frozen?.messages[0]?.nodeId === input.startNodeId)) { result = old.id; return snapshot }
+      const first = input.startNodeId && frozen ? frozen.messages.findIndex(message => message.nodeId === input.startNodeId) : 0
+      if (first < 0) throw new Error('Choose a starting message from the saved conversation.')
+      const source = frozen ? { ...frozen, title: frozenSource!.title, messages: frozen.messages.slice(first) } : lessonConversation(state, nodeId, input.startNodeId)
+      const at = this.clock.now(), sourceId = nid('conversation-source')
+      const id = old?.status === 'editing' ? old.id : nid('discovery')
+      const request = discoveryRequestSchema.parse({ kind: input.kind, publicTopic: settings.topic.trim() || source.title, rootId: source.rootId,
+        extract: false, refresh: false, quizLevel: settings.quizLevel, origin: { kind: 'conversation', anchorId: nodeId, sourceId, learnerId: state.activeLearnerId } })
+      const next = await repository.mutate(snapshot.version, { id: nid('op'), kind: 'save-conversation-lesson', intent: { id, request, settings }, at }, document => {
+        document.sources.push({ id: sourceId, kind: 'conversation', title: source.title.slice(0, 200), excerpt: source.messages.at(-1)!.text.slice(0, 2000),
+          retrievedAt: at, nodeId, conversation: { rootId: source.rootId, anchorId: nodeId, messages: source.messages } })
+        const draft = { id, kind: 'discovery' as const, text: '', status: 'editing' as const, sourceIds: [sourceId], cardIds: [],
+          discoveryRequest: request, creationSettings: settings, createdAt: old?.createdAt ?? at, updatedAt: at }
+        const index = document.drafts.findIndex(saved => saved.id === id)
+        if (index >= 0) document.drafts[index] = draft; else document.drafts.push(draft)
+      })
+      result = id
+      return next
+    })
+    return result
+  }
+
   /** A saved request becomes a complete lesson without a component handoff. */
   createFromRequest(draftId: string, options: RunOptions & { settings?: LessonSettings } = {}) {
     return this.run(options, async (signal, operation) => {
-      const request = this.host.current().state.drafts.find(draft => draft.id === draftId && draft.kind === 'discovery')?.discoveryRequest
+      const draft = this.host.current().state.drafts.find(draft => draft.id === draftId && draft.kind === 'discovery'), request = draft?.discoveryRequest
       if (!request) throw new Error('Choose an existing lesson request.')
       const status = this.status({ draftId }), saved = status.completed ? undefined : status.lesson
-      const settings = options.settings ? lessonSettingsSchema.parse(options.settings) : saved?.settings
+      const settings = options.settings ? lessonSettingsSchema.parse(options.settings) : saved?.settings ?? draft?.creationSettings
         ?? lessonCreationSettings(request.publicTopic, { quizLevel: request.quizLevel ?? 'meaningPinyin' })
       if (saved && !sameRecord(saved.settings, settings)) throw new Error('Start a new lesson request to change the saved lesson settings.')
+      if (draft?.creationSettings && !sameRecord(draft.creationSettings, settings)) throw new Error('Save a new lesson request to change its settings.')
       await this.discovery.resume(draftId, signal)
       signal.throwIfAborted()
       const created = await this.discovery.startLesson(draftId, settings)

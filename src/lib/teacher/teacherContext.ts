@@ -16,7 +16,9 @@ export function teacherContext(state: Workspace, cardId: string, now = Date.now(
   const card = state.cards.find(c => c.id === cardId)
   if (!card) throw new Error('Choose an existing learning card.')
   const item = state.items.find(i => i.id === card.itemId)!, learner = state.learners.find(l => l.id === card.learnerId)!
-  const sourceNode = item.sourceNodeIds.map(id => state.nodes.find(n => n.id === id && ['root', 'user', 'assistant'].includes(n.type))).find(Boolean) ?? state.nodes.find(n => n.type === 'root' && item.sourceRootIds.includes(n.id))
+  const request = sourceLessonId ? state.drafts.find(draft => draft.id === sourceLessonId)?.discoveryRequest : undefined, origin = request?.origin
+  const sourceNode = origin ? state.nodes.find(node => node.id === origin.anchorId) ?? state.nodes.find(node => node.id === request.rootId)
+    : item.sourceNodeIds.map(id => state.nodes.find(n => n.id === id && ['root', 'user', 'assistant'].includes(n.type))).find(Boolean) ?? state.nodes.find(n => n.type === 'root' && item.sourceRootIds.includes(n.id))
   const configuration = sourceNode ? effectiveConfiguration(sourceNode.id, state.nodes, state.edges) : {}
   const effectiveLearner = configuration.learningConfig?.type === 'learningConfig' ? { ...learner, ...configuration.learningConfig.data } : learner
   const citedIds = new Set([

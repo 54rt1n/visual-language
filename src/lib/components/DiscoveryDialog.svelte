@@ -25,7 +25,7 @@
   const service = new LessonCreationService(host, () => settings, { clock, transport: activity.transport, onTavilyRequest: activity.begin,
     onProgress: progress => { label = progress.phase === 'lesson' ? progress.stage : { sources: 'Finding Mandarin examples…', planning: 'Planning useful language for your lesson…', draft: 'Writing your lesson…', review: 'Checking your lesson…' }[progress.stage] } })
   const document = $derived(workspace.snapshot!.state)
-  const drafts = $derived(document.drafts.filter(d => d.kind === 'discovery').reverse())
+  const drafts = $derived(document.drafts.filter(d => d.kind === 'discovery' && !d.discoveryRequest?.origin).reverse())
   let selectedId = $state(untrack(() => draftId ?? drafts[0]?.id ?? ''))
   const selected = $derived(drafts.find(d => d.id === selectedId))
   const creation = $derived(service.status({ draftId: selectedId }))

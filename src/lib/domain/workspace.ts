@@ -12,7 +12,8 @@ import { generationSchema, teachingMaterialSchema, quizTargetSchema } from '../t
 import { identifier, ids, policyVersion, revision, sameRecord, shortText, timestamp, uniqueIds } from './common'
 import { edgeSchema, graphNodeSchema, graphViewSchema } from './graph'
 import { attemptSchema, cardSchema, eventSchema, exerciseSchema, itemSchema, learnerSchema, learningContextSchema, sessionSchema, type LearningEvent } from './learning'
-import { discoveryMaterialSchema, discoveryRequestSchema, discoveryPlanningSchema } from './discovery'
+import { conversationSnapshotSchema, discoveryMaterialSchema, discoveryRequestSchema, discoveryPlanningSchema } from './discovery'
+import { lessonSettingsSchema } from './lessonSettings'
 import { workedExampleSchema } from './workedExample'
 import { readingNoteSchema } from './reading'
 import { preparedLessonSteps } from './lessonPlan'
@@ -28,16 +29,19 @@ export const preferencesSchema = z.strictObject({
     minimax: publicProfile.default(() => ({ ...providerDefaults.minimax })) }),
 })
 export const sourceSchema = z.strictObject({
-  id: identifier, kind: z.enum(['web', 'local']), title: shortText(200),
+  id: identifier, kind: z.enum(['web', 'local', 'conversation']), title: shortText(200),
   url: z.string().max(4000).refine(value => { try { publicSourceUrl(value); return true } catch { return false } }, 'Unsafe source URL.').optional(),
   excerpt: z.string().max(2000), retrievedAt: timestamp, publishedAt: z.string().max(100).optional(), query: z.string().max(300).optional(),
   nodeId: identifier.optional(), cardId: identifier.optional(), adapted: z.boolean().optional(),
+  conversation: conversationSnapshotSchema.optional(),
 }).refine(source => source.kind !== 'web' || Boolean(source.url), 'Web sources require a citation URL.')
+  .refine(source => (source.kind === 'conversation') === Boolean(source.conversation), 'Conversation evidence requires its frozen dialogue.')
 export const draftSchema = z.strictObject({
   id: identifier, kind: z.enum(['composer', 'answer', 'quiz', 'teaching', 'discovery', 'feedback', 'reading']), exerciseId: identifier.optional(), sessionId: identifier.optional(), selectedOptionId: identifier.optional(), text: z.string().max(12_000),
   quiz: quizDraftSchema.optional(), status: z.enum(['editing', 'pending', 'validated', 'rejected']), sourceIds: ids(20), cardIds: ids(27),
   lesson: teachingMaterialSchema.optional(), generation: generationSchema.optional(),
   discoveryPlanning: discoveryPlanningSchema.optional(), discoveryRequest: discoveryRequestSchema.optional(), discovery: discoveryMaterialSchema.optional(),
+  creationSettings: lessonSettingsSchema.optional(),
   sourceLessonId: identifier.optional(),
   lessonPhase: z.enum(['practice', 'check']).optional(),
   attemptId: identifier.optional(), workedExample: workedExampleSchema.optional(),
@@ -376,6 +380,13 @@ export function validateWorkspace(value: unknown): Workspace {
     }
     if (draft.kind === 'discovery') {
       if (!draft.discoveryRequest) throw new Error('A discovery lesson needs its saved request.')
+      const origin = draft.discoveryRequest.origin
+      if (origin) {
+        const source = state.sources.find(saved => saved.id === origin.sourceId)
+        requireRef('learners', origin.learnerId, 'Conversation lesson')
+        if (!draft.creationSettings || source?.kind !== 'conversation' || source.conversation?.anchorId !== origin.anchorId || source.conversation.rootId !== draft.discoveryRequest.rootId || !draft.sourceIds.includes(source.id)) throw new Error('A conversation lesson must preserve its frozen dialogue and settings.')
+        if (draft.discovery && draft.discovery.nodeId !== origin.anchorId) throw new Error('A conversation lesson must retain its original response anchor.')
+      }
       if (draft.status === 'validated' && (!draft.discovery || !draft.generation || draft.contentReview?.verdict !== 'supported')) throw new Error('A published discovery lesson needs content, provenance and a supported review.')
       const planning = draft.discoveryPlanning
       if (planning?.accepted) {
@@ -391,7 +402,7 @@ export function validateWorkspace(value: unknown): Workspace {
           return !phrase || phrase.hanzi !== p.expression || phrase.meaning !== p.meaning || phrase.explanation !== p.purpose
         }))) throw new Error('Lesson material must preserve every accepted teaching point.')
         if (planning?.reading && (lesson.passageHanzi !== planning.reading.passage || lesson.passageMeaning !== planning.reading.translation)) throw new Error('Reading material must preserve the frozen passage.')
-        if (!lesson.sourceIds.some(id => state.sources.some(s => s.id === id && (s.kind === 'web' || s.kind === 'local' && s.adapted)))) throw new Error('A lesson must retain its web sources or clearly labeled AI-written material.')
+        if (!lesson.sourceIds.some(id => state.sources.some(s => s.id === id && (s.kind === 'web' || s.kind === 'conversation' || s.kind === 'local' && s.adapted)))) throw new Error('A lesson must retain its conversation, web sources or clearly labeled AI-written material.')
         distinct(lesson.phrases.map(p => p.id), 'Lesson phrase IDs'); distinct(lesson.captures.map(c => c.phraseId), 'Captured lesson phrases')
         if ((draft.discoveryRequest.kind === 'roleplay') !== Boolean(lesson.roleplay)) throw new Error('Role-play material must match its requested lesson kind.')
         for (const id of [...lesson.sourceIds, ...lesson.phrases.flatMap(p => p.sourceIds)]) if (!draft.sourceIds.includes(id)) throw new Error('A lesson cites a source outside its frozen evidence.')

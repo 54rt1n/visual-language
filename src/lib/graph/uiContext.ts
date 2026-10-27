@@ -14,6 +14,7 @@ export type CanvasUI = {
   deleteNode(nodeId: string): void
   generateReply(nodeId: string): void
   readResponse(nodeId: string): void
+  createLesson(nodeId: string): void
   ensureNodeVisible(nodeId: string): Promise<void>
   addLearningWord(nodeId: string, sourceText: string, start: number, end: number, pinyin: string): Promise<void>
   saveForPractice(nodeId: string, text: string, meaning: string, details: ReadingCaptureDetails): void

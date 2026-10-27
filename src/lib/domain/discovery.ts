@@ -2,10 +2,16 @@ import { z } from 'zod'
 import { identifier, ids, shortText, quizLevelSchema } from './common'
 
 export const discoveryKindSchema = z.enum(['topic', 'roleplay', 'interest'])
+export const conversationSnapshotSchema = z.strictObject({
+  rootId: identifier, anchorId: identifier,
+  messages: z.array(z.strictObject({ nodeId: identifier, role: z.enum(['user', 'assistant']), text: z.string().max(100_000) })).min(1).max(1000),
+}).refine(value => value.messages.at(-1)?.nodeId === value.anchorId && new Set(value.messages.map(message => message.nodeId)).size === value.messages.length,
+  'The frozen conversation must end at its selected response and preserve distinct messages.')
 export const discoveryRequestSchema = z.strictObject({
   kind: discoveryKindSchema, publicTopic: z.string().max(300), rootId: identifier,
   extract: z.boolean(), refresh: z.boolean(),
   quizLevel: quizLevelSchema.optional(),
+  origin: z.strictObject({ kind: z.literal('conversation'), anchorId: identifier, sourceId: identifier, learnerId: identifier }).optional(),
 })
 /** A bounded lesson may contain fewer points; the ceiling is not a curriculum size. */
 export const MAX_LESSON_POINTS = 9

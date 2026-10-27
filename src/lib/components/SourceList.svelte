@@ -4,7 +4,7 @@
 </script>
 {#if sources.length}
   <section class="sources" aria-label="Saved sources"><h4>Sources</h4>{#each sources as source (source.id)}
-    <details><summary>{source.kind === 'web' ? 'Web' : 'Saved learning'} · {source.title}</summary>
+    <details><summary>{source.kind === 'web' ? 'Web' : source.kind === 'conversation' ? 'Conversation' : 'Saved learning'} · {source.title}</summary>
       <p>{source.excerpt}</p><small>{source.adapted ? 'Teacher-adapted material. ' : ''}Retrieved {new Date(source.retrievedAt).toLocaleString()}{source.publishedAt ? ` · Published ${source.publishedAt}` : ''}</small>
       {#if source.url}<a href={source.url} target="_blank" rel="noopener noreferrer">Open cited page ↗</a>{/if}
       {#if source.nodeId && onReveal}<button type="button" class="ghost" onclick={() => onReveal?.(source.nodeId!)}>Reveal graph source</button>{/if}

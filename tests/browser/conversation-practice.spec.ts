@@ -2,9 +2,10 @@ import { parseToolContext } from '../fixtures/tool-context'
 import { expect, test, type Page } from '@playwright/test'
 import { openTool } from './navigation'
 import { topicFixture } from '../fixtures/topic-lesson'
+import { lessonSourceFixture, sourceFixtureTools } from '../fixtures/lesson-source'
 import { quizLevels, englishAnswers, withPinyin, type QuizLevel } from '../../src/lib/domain/lessonPlan'
 
-async function fixture(page: Page, controls: { interruptCheckReview: boolean; beforeStage?: (input: Record<string, any>) => Promise<void> } = { interruptCheckReview: false }) {
+async function fixture(page: Page, controls: { interruptCheckReview: boolean; failSource?: boolean; searchKey?: boolean; beforeStage?: (input: Record<string, any>) => Promise<void> } = { interruptCheckReview: false }) {
   const inputs: Record<string, any>[] = []
   await page.route('https://api.journey-fixture.example/v1/chat/completions', async route => {
     const body = route.request().postDataJSON()
@@ -15,20 +16,114 @@ async function fixture(page: Page, controls: { interruptCheckReview: boolean; be
       controls.interruptCheckReview = false; inputs.push(input)
       await route.fulfill({status:400,contentType:'application/json',body:JSON.stringify({error:{message:'Fixture interrupted check review'}})}).catch(() => { /* The learner may have paused this held request. */ }); return
     }
-    const result = input ? topicFixture(body) : { content: '谢谢。请给我一杯茶。', toolCalls: [], finishReason: 'stop' }
+    const tool = body.tools?.[0]?.function.name
+    if (tool === 'propose_lesson_points' && controls.failSource) {
+      if (input) inputs.push(input)
+      await route.fulfill({ status: 400, json: { error: { message: 'Authored source interruption' } } }); return
+    }
+    const result = sourceFixtureTools.includes(tool) ? { content: '', toolCalls: [{ id: 'source-fixture', type: 'function', function: { name: tool, arguments: JSON.stringify(lessonSourceFixture(tool)) } }], finishReason: 'tool_calls' }
+      : input ? topicFixture(body) : { content: '谢谢。请给我一杯茶。', toolCalls: [], finishReason: 'stop' }
     if (input) inputs.push(input)
     const delta = result.toolCalls.length ? { tool_calls: result.toolCalls.map((call, index) => ({ ...call, index })) } : { content: result.content }
     await route.fulfill({ status:200,contentType:'text/event-stream',body:`data: ${JSON.stringify({model:'journey-fixture',choices:[{index:0,delta,finish_reason:null}]})}\n\ndata: ${JSON.stringify({choices:[{index:0,delta:{},finish_reason:result.finishReason}]})}\n\ndata: [DONE]\n\n` })
   })
-  await openTool(page,'AI connection')
+  if (!await page.getByRole('dialog', { name: 'AI connection', exact: true }).isVisible()) await openTool(page,'AI connection')
   await page.getByRole('combobox',{name:'Provider',exact:true}).selectOption('custom')
   await page.getByLabel('API endpoint').fill('https://api.journey-fixture.example/v1')
   await page.getByLabel('Model ID').fill('journey-fixture')
   await page.getByLabel('Custom endpoint API key').fill('fixture-key')
+  if (controls.searchKey) {
+    await page.getByText('Optional web search', { exact: true }).click()
+    await page.getByLabel('Tavily API key', { exact: true }).fill('must-not-search-conversations')
+  }
   await page.getByRole('button',{name:'Save connection',exact:true}).click()
   await expect(page.getByRole('dialog',{name:'AI connection'})).toHaveCount(0)
   return inputs
 }
+
+for (const width of [1440, 320]) test(`node checklist creates a complete lesson from an older reply without saved cards at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: width === 320 ? 568 : 900 })
+  await page.goto('/'); await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
+  const inputs = await fixture(page, { interruptCheckReview: false, searchKey: true })
+  const searches: string[] = []
+  await page.route('https://api.tavily.com/**', async route => { searches.push(route.request().url()); await route.abort() })
+  const composer = page.getByRole('textbox', { name: 'Message to Zheng' })
+  await composer.fill('OLDER_REPLY_SOURCE: Help me order tea.'); await page.getByRole('button', { name: 'Send', exact: true }).click()
+  await expect(page.locator('.assistant')).toHaveCount(1)
+  await composer.fill('LATER_MESSAGE_EXCLUDED: Another topic.'); await page.getByRole('button', { name: 'Send', exact: true }).click()
+  await expect(page.locator('.assistant')).toHaveCount(2)
+  await expect(page.locator('.assistant').last().getByRole('button', { name: 'Create lesson', exact: true })).toBeEnabled()
+  await expect(page.locator('.assistant').last().getByRole('button', { name: 'Create lesson', exact: true })).toBeInViewport()
+  await page.getByRole('button', { name: 'Fit View', exact: true }).click()
+  const create = page.locator('.assistant').first().getByRole('button', { name: 'Create lesson', exact: true })
+  await create.click()
+  const dialog = page.getByRole('dialog', { name: 'Create lesson from conversation', exact: true })
+  await expect(dialog.getByRole('button', { name: 'Create lesson', exact: true })).toBeInViewport({ ratio: 1 })
+  await dialog.getByText('Conversation · 2 messages', { exact: true }).click()
+  await expect(dialog.getByLabel('Selected conversation')).toContainText('OLDER_REPLY_SOURCE')
+  await expect(dialog).not.toContainText('LATER_MESSAGE_EXCLUDED')
+  expect(inputs).toHaveLength(0)
+  await page.screenshot({ path: `test-results/conversation-create-setup-${width}.png` })
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click()
+  expect(inputs).toHaveLength(0)
+  await create.click()
+  await dialog.getByRole('button', { name: 'Create lesson', exact: true }).click()
+  await expect(dialog.getByRole('button', { name: 'Start lesson', exact: true })).toBeVisible()
+  await expect(dialog.getByRole('heading', { name: 'Your lesson is ready', exact: true })).toBeFocused()
+  await expect(dialog.getByLabel('Prepared lesson')).toContainText('Lesson quiz')
+  await expect(page.getByRole('dialog', { name: 'Your lesson', exact: true })).toHaveCount(0)
+  expect(JSON.stringify(inputs.filter(input => input.originalRequest))).toContain('OLDER_REPLY_SOURCE')
+  expect(JSON.stringify(inputs.filter(input => input.originalRequest))).not.toContain('LATER_MESSAGE_EXCLUDED')
+  expect(searches).toEqual([])
+  await page.screenshot({ path: `test-results/conversation-create-ready-${width}.png` })
+  await dialog.getByRole('button', { name: 'Start lesson', exact: true }).click()
+  const lesson = page.getByRole('dialog', { name: 'Your lesson', exact: true })
+  await expect(lesson.getByRole('region', { name: 'Lesson material', exact: true })).toBeVisible()
+  await lesson.getByRole('button', { name: 'Close dialog', exact: true }).click()
+  await page.getByRole('dialog', { name: 'Lessons', exact: true }).getByRole('button', { name: 'Close dialog', exact: true }).click()
+  await expect(page.locator('.svelte-flow__node-assistant')).toHaveCount(2)
+  await expect(page.locator('.svelte-flow__node-lesson, .svelte-flow__node-chunk')).toHaveCount(0)
+})
+
+test('unfinished conversation acquisition resumes from Lessons after reload and connection setup preserves the form', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 568 })
+  await page.goto('/'); await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
+  const controls = { interruptCheckReview: false, failSource: true }
+  const inputs = await fixture(page, controls)
+  await page.getByRole('textbox', { name: 'Message to Zheng' }).fill('Help me order tea.')
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
+  await expect(page.locator('.assistant')).toHaveCount(1)
+  await expect(page.locator('.assistant').getByRole('button', { name: 'Create lesson', exact: true })).toBeEnabled()
+  await page.locator('.assistant').getByRole('button', { name: 'Create lesson', exact: true }).click()
+  await page.getByRole('dialog', { name: 'Create lesson from conversation', exact: true }).getByRole('button', { name: 'Cancel', exact: true }).click()
+  await page.evaluate(() => localStorage.removeItem('vl-settings-v2')); await page.reload()
+  await page.locator('.assistant').getByRole('button', { name: 'Create lesson', exact: true }).click()
+  let dialog = page.getByRole('dialog', { name: 'Create lesson from conversation', exact: true })
+  await dialog.getByRole('combobox', { name: 'Lesson type', exact: true }).selectOption('roleplay')
+  await dialog.getByRole('button', { name: 'Set up AI connection', exact: true }).click()
+  await fixture(page, controls)
+  dialog = page.getByRole('dialog', { name: 'Create lesson from conversation', exact: true })
+  await expect(dialog.getByRole('combobox', { name: 'Lesson type', exact: true })).toHaveValue('roleplay')
+  await dialog.getByRole('combobox', { name: 'Lesson type', exact: true }).selectOption('topic')
+  await dialog.getByRole('button', { name: 'Create lesson', exact: true }).click()
+  await expect(dialog.getByRole('alert')).toBeVisible()
+  await page.screenshot({ path: 'test-results/conversation-create-source-recovery-390.png' })
+  await dialog.getByRole('button', { name: 'Back to lessons', exact: true }).click()
+  let lessons = page.getByRole('dialog', { name: 'Lessons', exact: true })
+  await expect(lessons.getByRole('button', { name: 'Continue creating', exact: true })).toBeVisible()
+  await page.reload()
+  await page.getByRole('button', { name: 'Lessons', exact: true }).click()
+  lessons = page.getByRole('dialog', { name: 'Lessons', exact: true })
+  await lessons.getByRole('button', { name: 'Continue creating', exact: true }).click()
+  dialog = page.getByRole('dialog', { name: 'Create lesson from conversation', exact: true })
+  await expect(dialog.getByRole('button', { name: 'Continue preparation', exact: true })).toBeVisible()
+  const before = inputs.length
+  await expect(dialog.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0')
+  expect(inputs).toHaveLength(before)
+  controls.failSource = false
+  await dialog.getByRole('button', { name: 'Continue preparation', exact: true }).click()
+  await expect(dialog.getByRole('button', { name: 'Start lesson', exact: true })).toBeVisible()
+})
 async function saveFromResponse(page: Page, word: string, meaning: string) {
   await expect(page.getByRole('button',{name:'Settings',exact:true})).toBeEnabled()
   await page.getByRole('button',{name:'Fit View',exact:true}).click()

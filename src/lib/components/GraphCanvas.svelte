@@ -37,6 +37,8 @@
   import GraphToolsDialog from './GraphToolsDialog.svelte'
   import DemoDialog from './DemoDialog.svelte'
   import DiscoveryDialog from './DiscoveryDialog.svelte'
+  import ConversationLessonDialog from './ConversationLessonDialog.svelte'
+  import { lessonConversationSetup } from '../teacher/lessonCreationService'
   import { modeFromHash, type WorkspaceMode } from '../domain/workspaceMode'
   import { PwaLifecycle } from '../pwa/lifecycle.svelte'
   import Modal from './Modal.svelte'
@@ -113,7 +115,8 @@
   let streaming = $state(false)
   let conversationRequests = $state(0)
   const conversationActivity = new TeacherActivity(count => { conversationRequests = count })
-  let modal = $state<'welcome' | 'lessons' | 'conversation-practice' | 'settings' | 'providers' | 'more' | 'topics' | 'data' | 'capture' | 'library' | 'teacher' | 'history' | 'search' | 'source-help' | 'pwa' | 'graph' | 'delete-node' | 'demo' | 'discovery' | 'about' | null>(null)
+  let modal = $state<'welcome' | 'lessons' | 'conversation-lesson' | 'conversation-practice' | 'settings' | 'providers' | 'more' | 'topics' | 'data' | 'capture' | 'library' | 'teacher' | 'history' | 'search' | 'source-help' | 'pwa' | 'graph' | 'delete-node' | 'demo' | 'discovery' | 'about' | null>(null)
+  let conversationLessonNodeId = $state(''), conversationLessonDraftId = $state<string | undefined>(), returnToCreation = $state(false)
   // Auxiliary setup can sit above an activity without unmounting its unsaved form.
   let languageSetupOpen = $state(false)
   let practiceItemId = $state<string | undefined>()
@@ -158,6 +161,7 @@
     openGraphTools: nodeId => { void openGraphTools(nodeId) }, deleteNode: nodeId => { void requestDeleteNode(nodeId) }, toggleCollapse: nodeId => { void toggleCollapse(nodeId) },
     generateReply: nodeId => { void generateReply(nodeId) }, requestBusy: () => !ready || streaming || startingRequest || graphBusy || prerecorded || workspace.status === 'conflict',
     readResponse: nodeId => { void openResponseReader(nodeId) },
+    createLesson: nodeId => { void openConversationLesson(nodeId) },
     ensureNodeVisible,
     addLearningWord,
     saveForPractice: (nodeId, text, meaning, details) => { readingFocusId = undefined; void openCapture(nodeId, { text, meaning, details }) },
@@ -589,6 +593,17 @@
       })
     } catch (cause) { status = cause instanceof Error ? cause.message : 'Could not open conversation practice.' }
   }
+  async function openConversationLesson(nodeId: string, draftId?: string) {
+    if (!ready || streaming || graphBusy || startingRequest || workspace.status === 'conflict') return
+    try {
+      await flushDraft()
+      if (!draftId) lessonConversationSetup(workspace.snapshot!.state, nodeId)
+      requestSourceAction(() => {
+        conversationLessonNodeId = nodeId; conversationLessonDraftId = draftId; returnToCreation = false
+        readingFocusId = undefined; modal = 'conversation-lesson'
+      })
+    } catch (cause) { status = cause instanceof Error ? cause.message : 'The lesson screen could not open.' }
+  }
   async function openTeacher(cardId?: string) {
     if (!ready || streaming) return
     try { await flushDraft(); targetCardId = cardId; modal = 'teacher' } catch (error) { status = error instanceof Error ? error.message : 'Could not save before opening the teacher.' }
@@ -899,8 +914,15 @@
 
 {#if !modal && !languageSetupOpen && !recallProtected && (readingFocusNode?.type === 'assistant' || readingFocusNode?.type === 'chunk')}{#key readingFocusNode.id}<ResponseReader nodeId={readingFocusNode.id} text={readingFocusNode.data.text} passage={readingFocusNode.type === 'chunk'} originalWordSegments={readingFocusNode.type === 'chunk' ? readingFocusNode.data.originalWordSegments : undefined} onClose={() => { readingFocusId = undefined }} />{/key}{/if}
 
+{#if conversationLessonNodeId && (modal === 'conversation-lesson' || (modal === 'providers' && returnToCreation))}
+  <ConversationLessonDialog {workspace} {settings} nodeId={conversationLessonNodeId} draftId={conversationLessonDraftId} onChanged={applySaved}
+    onConnection={() => { returnToCreation = true; modal = 'providers' }}
+    onStart={result => { returnToCreation = false; void openConversationPractice(result.sessionId, result.anchorId, undefined, true) }}
+    onLessons={() => { returnToCreation = false; modal = 'lessons' }} onClose={() => { returnToCreation = false; modal = null }} />
+{/if}
+
 {#if modal === 'welcome'}<WelcomeDialog onConnect={() => dismissWelcome('providers')} onDemo={async () => { rememberWelcome(); await switchWorkspace('demo') }} onClose={() => dismissWelcome()} />
-{:else if modal === 'lessons'}<LessonsDialog {workspace} onChanged={applySaved} onOpen={(sessionId, anchorId) => { practiceAnchorId = anchorId; practiceSessionId = sessionId; practiceItemId = undefined; practiceAutoStart = true; modal = 'conversation-practice' }} onCreate={() => { void openDiscovery() }} onClose={() => { modal = null }} />
+{:else if modal === 'lessons'}<LessonsDialog {workspace} onChanged={applySaved} onOpen={(sessionId, anchorId) => { practiceAnchorId = anchorId; practiceSessionId = sessionId; practiceItemId = undefined; practiceAutoStart = true; modal = 'conversation-practice' }} onCreate={() => { void openDiscovery() }} onRequest={(id, nodeId) => { void openConversationLesson(nodeId, id) }} onClose={() => { modal = null }} />
 {:else if modal === 'conversation-practice'}<LessonDialog {workspace} {settings} anchorId={practiceAnchorId} initialSessionId={practiceSessionId} initialItemId={practiceItemId} autoStart={practiceAutoStart} onChanged={applySaved} onClose={() => { modal = null }} onReturn={id => { modal = null; if (workspace.snapshot?.state.nodes.some(n => n.id === id)) void revealNode(id) }} onDailyReview={() => { void openTeacher() }} onLessons={() => { modal = 'lessons' }} />
 {:else if modal === 'providers'}<SettingsDialog {settings} allowNetwork={!prerecorded} onSave={async (value) => {
   settings = value
@@ -908,7 +930,7 @@
   const preferences = publicProviderPreferences(value)
   await workspace.mutate('provider-preferences', preferences, state => { state.preferences = preferences as Workspace['preferences'] })
   status = 'Provider settings saved.'
-}} onClose={() => { modal = null }} />
+}} onClose={() => { modal = returnToCreation ? 'conversation-lesson' : null; returnToCreation = false }} />
 {:else if modal === 'settings'}<SettingsHub {workspace} onChanged={applySaved} portraits={teacherPortraits} onPortraits={togglePortraits} onProviders={() => { modal = 'providers' }} onAudio={() => { modal = null; languageSetupOpen = true }} onClose={() => { modal = null }} />
 {:else if modal === 'topics'}<TopicsDialog {workspace} onChanged={applySaved} onReveal={id => { void revealNode(id) }} onClose={() => { modal = null }} />
 {:else if modal === 'more'}<Modal title="More tools" onClose={() => { modal = null }}>
@@ -937,6 +959,7 @@
 {#if languageSetupOpen}<LanguageSetupDialog onClose={() => { languageSetupOpen = false }} />{/if}
 
 <style>
+  :global(.svelte-flow__controls.horizontal) { align-items: center; }
   .hover-mode { display: flex; align-items: center; gap: 7px; padding: 0 10px; min-height: 34px; background: #1a1d26; color: #c4d7f5; font-size: 12px; white-space: nowrap; cursor: pointer; }
   .hover-mode input { width: 16px; height: 16px; margin: 0; accent-color: #9ec4ff; cursor: inherit; }
   .hover-mode:has(input:disabled) { opacity: .55; cursor: default; }

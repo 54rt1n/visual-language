@@ -48,14 +48,17 @@ export class DiscoveryService {
   private draft(id: string) {
     const draft = this.host.current().state.drafts.find(d => d.id === id && d.kind === 'discovery')
     if (!draft?.discoveryRequest) throw new Error('Save a discovery request first.')
+    if (draft.discoveryRequest.origin && draft.discoveryRequest.origin.learnerId !== this.host.current().state.activeLearnerId) throw new Error('This lesson request belongs to another learner.')
     return draft
   }
   private context(id: string) {
     const state = this.host.current().state, draft = this.draft(id), request = draft.discoveryRequest!
     if (state.demo?.enabled && state.demo.contentMode === 'fixtures') throw new Error('Prerecorded rehearsal has no generated discovery lessons. Switch to live mode explicitly.')
     if (!state.nodes.some(n => n.id === request.rootId && n.type === 'root')) throw new Error('This lesson’s topic was removed. Create a new request in an existing topic.')
-    const configuration = effectiveConfiguration(request.rootId, state.nodes, state.edges)
-    return { draft, request, configuration, learner: learningPreferences(state, request.rootId), provider: teacherProvider(this.settings(), { configuration }) }
+    if (request.origin && request.origin.learnerId !== state.activeLearnerId) throw new Error('This lesson request belongs to another learner.')
+    const anchorId = request.origin?.anchorId ?? request.rootId
+    const configuration = effectiveConfiguration(state.nodes.some(node => node.id === anchorId) ? anchorId : request.rootId, state.nodes, state.edges)
+    return { draft, request, configuration, learner: learningPreferences(state, anchorId), provider: teacherProvider(this.settings(), { configuration }) }
   }
   async saveRequest(request: DiscoveryRequest, draftId?: string) {
     const value = discoveryRequestSchema.parse({ ...request, publicTopic: request.publicTopic.trim() })
@@ -95,11 +98,13 @@ export class DiscoveryService {
       budget.signal.throwIfAborted()
       await this.save('begin-discovery-generation', { id }, state => {
         const draft = state.drafts.find(d => d.id === id)!
-        draft.status = 'pending'; draft.text = ''; draft.sourceIds = []; delete draft.discovery; delete draft.generation; delete draft.contentReview
+        draft.status = 'pending'; draft.text = ''; draft.sourceIds = draft.discoveryRequest?.origin ? [draft.discoveryRequest.origin.sourceId] : []; delete draft.discovery; delete draft.generation; delete draft.contentReview
       })
-      let sources = useSavedSources ? this.host.current().state.sources.filter(s => context.draft.sourceIds.includes(s.id)).slice(0, 3) : []
+      let sources = context.request.origin ? this.host.current().state.sources.filter(source => source.id === context.request.origin!.sourceId)
+        : useSavedSources ? this.host.current().state.sources.filter(s => context.draft.sourceIds.includes(s.id)).slice(0, 3) : []
+      if (context.request.origin && sources.length !== 1) throw new Error('The saved conversation is unavailable. Create a lesson from the response again.')
       let key = ''
-      if (!useSavedSources) { try { key = resolveTavilyKey(this.settings()) } catch { /* AI-written lessons need no search account. */ } }
+      if (!useSavedSources && !context.request.origin) { try { key = resolveTavilyKey(this.settings()) } catch { /* AI-written lessons need no search account. */ } }
       if (key) {
         this.options.onProgress?.('sources')
         const input = { query: `${context.request.publicTopic} Mandarin language examples`.slice(0, 300), purpose: 'Language examples for the requested lesson', current: context.request.kind === 'interest' }
@@ -121,7 +126,7 @@ export class DiscoveryService {
       this.options.onProgress?.('planning')
       const result = await prepareLessonSource(context.request, context.learner, sources, { provider: context.provider, transport: async request => { budget.use('model'); return this.transport(request) }, signal: budget.signal,
         modelProfile: this.options.lessonModelProfile, inputTokenCounter: this.options.inputTokenCounter, onSubmission: this.options.onSubmission, onCheckpointCommitted: this.options.onCheckpointCommitted,
-        checkpoint: this.draft(id).discoveryPlanning,
+        checkpoint: this.draft(id).discoveryPlanning, settings: context.draft.creationSettings,
         onStage: name => this.options.onProgress?.(name.startsWith('prepare_') ? 'draft' : 'planning'),
         onPlanning: planning => this.save('checkpoint-discovery-scope', { id }, state => {
           const draft = state.drafts.find(d => d.id === id)!
@@ -136,7 +141,7 @@ export class DiscoveryService {
         for (const phrase of proposal.phrases) phrase.sourceIds = [...proposal.sourceIds]
       }
       validateProposal(proposal, context.request, sources)
-      const at = this.clock.now(), material = discoveryMaterialSchema.parse({ ...proposal, nodeId: nid('lesson-node'), passagePinyin: mandarinPinyin(proposal.passageHanzi), captures: [],
+      const at = this.clock.now(), material = discoveryMaterialSchema.parse({ ...proposal, nodeId: context.request.origin?.anchorId ?? nid('lesson-node'), passagePinyin: mandarinPinyin(proposal.passageHanzi), captures: [],
         phrases: proposal.phrases.map((p, index) => ({ ...p, id: result.planning.accepted!.points[index]!.id, pinyin: mandarinPinyin(p.hanzi), examplePinyin: mandarinPinyin(p.exampleHanzi) })) })
       budget.signal.throwIfAborted()
       await this.save('save-discovery-candidate', { id }, state => {
@@ -160,7 +165,7 @@ export class DiscoveryService {
     this.options.onProgress?.('review')
     const result = await reviewLessonSource(context.request, context.learner, draft.discovery, sources, { provider: context.provider, transport: async request => { budget.use('model'); return this.transport(request) }, signal: budget.signal,
       modelProfile: this.options.lessonModelProfile, inputTokenCounter: this.options.inputTokenCounter, onSubmission: this.options.onSubmission,
-      checkpoint: draft.discoveryPlanning })
+      checkpoint: draft.discoveryPlanning, settings: draft.creationSettings })
     const supported = result.value.accepted
     budget.signal.throwIfAborted()
     await this.save('review-discovery-material', { id, supported }, state => {
@@ -168,7 +173,7 @@ export class DiscoveryService {
       if (current.status === 'validated' || current.discovery?.nodeId !== draft.discovery!.nodeId) throw new Error('The lesson changed. Reopen the saved version.')
       current.status = supported ? 'validated' : 'rejected'; current.updatedAt = this.clock.now()
       current.contentReview = { verdict: supported ? 'supported' : 'rejected', reasons: result.value.reason, provider: context.provider.provider, model: result.model, promptVersion: 'lesson-source-review-v2' }
-      if (supported) {
+      if (supported && !context.request.origin) {
         const root = state.nodes.find(n => n.id === context.request.rootId && n.type === 'root')
         if (!root) throw new Error('The destination topic was removed.')
         const bottom = Math.max(root.position.y, ...state.nodes.filter(n => n.rootId === root.id).map(n => n.position.y + 260))
@@ -191,7 +196,7 @@ export class DiscoveryService {
       return { nodeId: draft.discovery.nodeId, sessionId: existing.id }
     }
     const next = await this.host.apply((s, r) => new LearningService(r, this.clock).startLesson(s, draft.discovery!.nodeId,
-      s.state.drafts.find(d => d.id === id)!.discovery!.captures.map(c => c.itemId), draft.discovery!.roleplay?.objective ?? `Learn useful Mandarin for ${draft.discoveryRequest!.publicTopic}.`, settings))
+      s.state.drafts.find(d => d.id === id)!.discovery!.captures.map(c => c.itemId), draft.discovery!.roleplay?.objective ?? `Learn useful Mandarin for ${draft.discoveryRequest!.publicTopic}.`, settings, id))
     return { nodeId: draft.discovery.nodeId, sessionId: next.state.sessions.at(-1)!.id }
   }
 }

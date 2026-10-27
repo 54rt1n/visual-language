@@ -5,7 +5,8 @@ import { defaultSettings } from '../../src/lib/settings'
 import { WorkspaceRepository } from '../../src/lib/storage/repository'
 import { exportBackup, parseBackup } from '../../src/lib/storage/backup'
 import { LearningService } from '../../src/lib/learning/learningService'
-import { LessonCreationPauseError, LessonCreationService, lessonCreationSettings, lessonCreationSetup, type LessonCreationProgress } from '../../src/lib/teacher/lessonCreationService'
+import { GraphService } from '../../src/lib/graph/graphService'
+import { LessonCreationPauseError, LessonCreationService, lessonCreationSettings, lessonCreationSetup, lessonConversationSetup, lessonCreationConnected, type LessonCreationProgress } from '../../src/lib/teacher/lessonCreationService'
 import type { TeacherHost } from '../../src/lib/teacher/teacherService'
 import type { ChatOptions } from '../../src/lib/ai/types'
 import { lessonSourceFixture, sourceFixtureTools } from '../fixtures/lesson-source'
@@ -44,10 +45,110 @@ async function setup() {
   const createService = () => new LessonCreationService(host, () => settings, options)
   const service = createService()
   const request = { kind: 'topic' as const, rootId: 'root', publicTopic: 'Ordering tea', quizLevel: 'meaningPinyin' as const, extract: false, refresh: false }
-  return { repository, host, clock, service, createService, transport, controls, progress, request, blocked }
+  return { repository, host, clock, settings, service, createService, transport, controls, progress, request, blocked }
+}
+
+async function conversation(h: Awaited<ReturnType<typeof setup>>) {
+  await h.host.apply((snapshot, repository) => repository.mutate(snapshot.version, { id: nid('op'), kind: 'conversation-fixture', intent: {}, at: NOW }, state => {
+    const common = { rootId: 'root', position: { x: 0, y: 0 }, bookmarked: false, collapsed: false }
+    state.nodes.push({ ...common, id: 'question', type: 'user', data: { text: 'Teach me how to order tea. EARLIER_MESSAGE' } },
+      { ...common, id: 'tea-reply', type: 'assistant', data: { text: '请给我一杯茶。不要加糖。再来一杯。', reasoning: 'PRIVATE_REASONING', state: 'complete', error: '', provider: 'fixture', model: 'fixture' } },
+      { ...common, id: 'sibling', type: 'assistant', data: { text: '旅行。SIBLING_CONTENT', reasoning: '', state: 'complete', error: '', provider: 'fixture', model: 'fixture' } },
+      { ...common, id: 'later', type: 'user', data: { text: 'UNRELATED_LATER_MESSAGE' } })
+    for (const [source, target] of [['root', 'question'], ['question', 'tea-reply'], ['question', 'sibling'], ['tea-reply', 'later']]) state.edges.push({ id: nid('edge'), source: source!, target: target!, data: { kind: 'conversation' } })
+    state.view.selectedNodeIds = ['sibling']
+  }))
 }
 
 describe('shared lesson creation application workflow', () => {
+  it('rejects another learner’s validated conversation request before capture or generation', async () => {
+    const h = await setup(); await conversation(h)
+    const id = await h.service.saveConversationRequest('tea-reply', { kind: 'topic', settings: lessonCreationSettings('Tea') })
+    await h.service.createFromRequest(id)
+    await h.host.apply((snapshot, repository) => repository.mutate(snapshot.version, { id: nid('op'), kind: 'switch-learner', intent: {}, at: NOW }, state => {
+      state.learners.push({ ...structuredClone(state.learners[0]!), id: 'other-learner' }); state.activeLearnerId = 'other-learner'
+    }))
+    const before = structuredClone(h.host.current().state), calls = h.transport.mock.calls.length
+    await expect(h.service.createFromRequest(id)).rejects.toThrow('another learner')
+    expect(h.host.current().state).toEqual(before)
+    expect(h.transport).toHaveBeenCalledTimes(calls)
+  })
+
+  it('keeps the clicked branch provider throughout generation when its phrase already exists elsewhere', async () => {
+    const h = await setup(); await conversation(h)
+    await h.host.apply((snapshot, repository) => new GraphService(repository, h.clock).setConfiguration(snapshot, 'root', 'modelConfig', { provider: 'featherless', model: 'model-earlier', temperature: 0.7, maxTokens: 4096 }))
+    await h.host.apply((snapshot, repository) => new LearningService(repository, h.clock).addItem(snapshot, {
+      language: 'zh', kind: 'phrase', canonicalText: '请给我一杯茶', pinyin: 'qǐng gěi wǒ yì bēi chá', meaning: 'please give me a cup of tea', senseKey: 'please give me a cup of tea', sourceNodeIds: ['question'], sourceRootIds: ['root'],
+    }, ['recognition']))
+    await h.host.apply((snapshot, repository) => new GraphService(repository, h.clock).setConfiguration(snapshot, 'tea-reply', 'modelConfig', { provider: 'featherless', model: 'model-clicked', temperature: 0.7, maxTokens: 4096 }))
+    h.settings.selected = 'openai'
+    expect(lessonCreationConnected(h.host.current().state, h.settings, 'tea-reply')).toBe(true)
+    const id = await h.service.saveConversationRequest('tea-reply', { kind: 'topic', settings: lessonCreationSettings('Tea') })
+    await h.service.createFromRequest(id)
+    expect(new Set(h.transport.mock.calls.map(([request]) => request.model))).toEqual(new Set(['model-clicked']))
+  })
+
+  it.each(['topic', 'roleplay', 'interest'] as const)('prepares a %s lesson from frozen dialogue with no saved cards, web search or canvas publication', async kind => {
+    const h = await setup()
+    await conversation(h)
+    h.settings.tavily.apiKey = 'must-not-be-used'
+    const before = structuredClone(h.host.current().state)
+    const preview = lessonConversationSetup(before, 'tea-reply')
+    expect(preview.messages.map(message => message.nodeId)).toEqual(['question', 'tea-reply'])
+    const id = await h.service.saveConversationRequest('tea-reply', { kind, settings: lessonCreationSettings('Ordering tea') })
+    expect(h.transport).not.toHaveBeenCalled()
+    expect(h.host.current().state.cards).toHaveLength(0)
+    const source = h.host.current().state.sources.find(source => source.kind === 'conversation')!
+    expect(source.conversation!.messages).toEqual(preview.messages)
+    await h.host.apply((snapshot, repository) => repository.mutate(snapshot.version, { id: nid('op'), kind: 'edit-after-source-freeze', intent: {}, at: NOW }, state => {
+      const node = state.nodes.find(node => node.id === 'tea-reply')!
+      if (node.type === 'assistant') node.data.text = '你好。EDITED_AFTER_FREEZE'
+    }))
+    const canvas = structuredClone({ nodes: h.host.current().state.nodes, edges: h.host.current().state.edges })
+    const result = await h.service.createFromRequest(id)
+    const status = h.service.status({ draftId: id }), state = h.host.current().state
+    expect(status.phase).toBe('ready')
+    expect(result.anchorId).toBe('tea-reply')
+    expect(status.lesson!.source!.draftId).toBe(id)
+    expect(status.lesson!.kind).toBe(kind === 'roleplay' ? 'scenario' : kind === 'interest' ? 'reading' : 'topic')
+    expect(status.lesson!.preparation!.practice!.questions.length).toBeGreaterThan(0)
+    expect(status.lesson!.preparation!.check!.questions.length).toBeGreaterThan(0)
+    const planning = h.transport.mock.calls.filter(([request]) => request.tools?.[0]?.function.name === 'ground_lesson').map(([request]) => JSON.stringify(request.messages)).join('')
+    expect(planning).toContain('EARLIER_MESSAGE')
+    expect(planning).toContain('请给我一杯茶')
+    expect(planning).not.toMatch(/SIBLING_CONTENT|UNRELATED_LATER_MESSAGE|PRIVATE_REASONING|EDITED_AFTER_FREEZE/)
+    expect({ nodes: state.nodes, edges: state.edges }).toEqual(canvas)
+    expect(state.exercises).toEqual([]); expect(state.events).toEqual([])
+    expect(parseBackup(JSON.stringify(exportBackup(h.host.current(), NOW))).data).toEqual(state)
+  })
+
+  it('resumes frozen conversation acquisition and distinguishes two requests on the same reply', async () => {
+    const h = await setup(); await conversation(h)
+    const settings = lessonCreationSettings('Ordering tea')
+    const id = await h.service.saveConversationRequest('tea-reply', { kind: 'topic', settings })
+    h.controls.fail = 'propose_lesson_points'
+    await expect(h.service.createFromRequest(id)).rejects.toThrow('Interrupted question preparation')
+    expect(h.host.current().state.lessons).toHaveLength(0)
+    expect(h.host.current().state.drafts.find(draft => draft.id === id)!.discoveryPlanning?.outline).toBeTruthy()
+    h.controls.fail = ''
+    const resumed = h.createService()
+    expect(await resumed.saveConversationRequest('tea-reply', { kind: 'topic', settings }, id)).toBe(id)
+    await resumed.createFromRequest(id)
+    expect(h.transport.mock.calls.filter(([request]) => request.tools?.[0]?.function.name === 'ground_lesson')).toHaveLength(1)
+    await h.host.apply((snapshot, repository) => repository.mutate(snapshot.version, { id: nid('op'), kind: 'edit-frozen-origin', intent: {}, at: NOW }, state => {
+      const node = state.nodes.find(node => node.id === 'tea-reply')!
+      if (node.type === 'assistant') node.data.text = '你好。EDITED_AFTER_FROZEN_REQUEST'
+    }))
+    const other = await resumed.saveConversationRequest('tea-reply', { kind: 'roleplay', settings }, id)
+    expect(other).not.toBe(id)
+    const origin = h.host.current().state.drafts.find(draft => draft.id === other)!.discoveryRequest!.origin!
+    expect(h.host.current().state.sources.find(source => source.id === origin.sourceId)!.conversation!.messages.at(-1)!.text).toBe('请给我一杯茶。不要加糖。再来一杯。')
+    await resumed.createFromRequest(other)
+    expect(resumed.status({ draftId: id }).lesson!.kind).toBe('topic')
+    expect(resumed.status({ draftId: other }).lesson!.kind).toBe('scenario')
+    expect(h.host.current().state.nodes).toHaveLength(5)
+  })
+
   it('creates source, lesson and both quizzes without mounting a view or presenting a question', async () => {
     const h = await setup(), id = await h.service.saveRequest(h.request)
     expect(h.transport).not.toHaveBeenCalled()

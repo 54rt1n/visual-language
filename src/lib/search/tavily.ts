@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { boundedJsonResponse, publicSourceUrl, requestSignal, responseError } from '../ai/http'
 import { nid } from '../id'
+import type { SourceSnapshot } from '../domain/workspace'
+export type { SourceSnapshot } from '../domain/workspace'
 
 export const searchInputSchema = z.strictObject({
   query: z.string().trim().min(1).max(300),
@@ -10,11 +12,6 @@ export const searchInputSchema = z.strictObject({
 })
 export const extractInputSchema = z.strictObject({ sourceIds: z.array(z.string().min(1).max(200)).min(1).max(2) })
 export type SearchInput = z.infer<typeof searchInputSchema>
-export type SourceSnapshot = {
-  id: string; kind: 'web' | 'local'; title: string; url?: string; excerpt: string
-  retrievedAt: number; publishedAt?: string; query?: string; nodeId?: string; cardId?: string
-  adapted?: boolean
-}
 export type SearchCache = { key: string; expiresAt: number; sources: SourceSnapshot[] }
 export type TavilyOptions = { apiKey: string; signal?: AbortSignal; fetcher?: typeof fetch; now?: () => number; onRequest?: () => () => void }
 

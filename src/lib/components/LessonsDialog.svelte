@@ -9,9 +9,10 @@
   import type { WorkspaceSnapshot } from '../storage/repository'
   import type { Lesson } from '../domain/lesson'
 
-  let { workspace, onChanged, onOpen, onCreate, onClose }: {
+  let { workspace, onChanged, onOpen, onCreate, onRequest, onClose }: {
     workspace: WorkspaceState; onChanged: (snapshot: WorkspaceSnapshot) => void;
     onOpen: (sessionId: string, anchorId: string) => void; onCreate: () => void; onClose: () => void;
+    onRequest: (draftId: string, nodeId: string) => void;
   } = $props()
   const clock = untrack(() => workspaceClock(workspace))
   const kinds = { topic: 'Topic', scenario: 'Scenario', reading: 'Reading' }
@@ -19,6 +20,8 @@
   const now = $derived(workspace.learningNow)
   let archived = $state(false), busy = $state(false), error = $state(''), status = $state('')
   const lessons = $derived(document.lessons.filter(l => l.learnerId === document.activeLearnerId))
+  const requests = $derived(document.drafts.filter(draft => draft.discoveryRequest?.origin?.learnerId === document.activeLearnerId
+    && !document.lessons.some(lesson => lesson.source?.draftId === draft.id)))
   const rows = $derived(lessons.filter(l => (l.archivedAt !== undefined) === archived).map(lesson => ({
     lesson, progress: lessonProgression(document, lesson.id), action: lessonActivity(document, lesson, now), history: lessonHistory(document, lesson.id),
   })).sort((a, b) => Number(b.action.due) - Number(a.action.due) || Number(Boolean(b.action.session)) - Number(Boolean(a.action.session)) || b.lesson.createdAt - a.lesson.createdAt))
@@ -56,6 +59,10 @@
       <p>{streak.today ? 'You’ve completed a learning activity today.' : 'Complete a lesson, practice or review to add today.'}</p>
     </section>
     <div class="collection-tools"><button type="button" class:ready={!hasDue} disabled={busy} onclick={onCreate}>Create a lesson</button><label><input type="checkbox" bind:checked={archived} /> Show archived ({lessons.filter(l => l.archivedAt !== undefined).length})</label></div>
+    {#if !archived}{#each requests as request (request.id)}<article aria-label={request.discoveryRequest!.publicTopic}>
+      <h3>{request.discoveryRequest!.publicTopic}</h3><p class="muted">In progress</p>
+      <button type="button" disabled={busy} onclick={() => onRequest(request.id, request.discoveryRequest!.origin!.anchorId)}>Continue creating</button>
+    </article>{/each}{/if}
     {#if error}<p role="alert">{error}</p>{/if}{#if status}<p role="status">{status}</p>{/if}
     {#if !rows.length}<p>{archived ? 'No archived lessons.' : 'Your saved lessons will appear here. Create one from a conversation or explore a topic to begin.'}</p>{/if}
     {#each rows as { lesson, progress, action, history } (lesson.id)}

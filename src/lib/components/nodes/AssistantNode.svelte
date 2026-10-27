@@ -7,7 +7,7 @@
   import MandarinReader from '../MandarinReader.svelte'
   import { containsHanzi } from '../../mandarin/chineseParser'
   import { unusableReplyReason } from '../../ai/replyQuality'
-  import { BookOpen } from '@lucide/svelte'
+  import { BookOpen, ListChecks } from '@lucide/svelte'
 
   let { id, data, selected }: NodeProps<AssistantNodeType> = $props()
   const ui = getContext<CanvasUI | undefined>(CANVAS_UI)
@@ -23,7 +23,10 @@
       {#if data.editedAt}<span class="provenance" title="This text was edited locally after generation">edited locally</span>{:else if data.regeneratedFrom}<span class="provenance">alternative reply</span>{/if}
       {#if data.streaming}<span class="pulse" title="streaming"></span>{/if}
     </span>
-    {#if !data.streaming && containsHanzi(data.text) && !ui?.concealed()}<button type="button" class="ghost nodrag nopan read-response" aria-label="Read response" title="Read response" disabled={ui?.readingBusy()} onclick={event => { event.stopPropagation(); ui?.readResponse(id) }}><BookOpen size={20} /></button>{/if}
+    {#if !data.streaming && containsHanzi(data.text) && !ui?.concealed()}<div class="response-actions">
+      <button type="button" class="ghost nodrag nopan read-response" aria-label="Read response" title="Read response" disabled={ui?.readingBusy()} onclick={event => { event.stopPropagation(); ui?.readResponse(id) }}><BookOpen size={20} /></button>
+      {#if data.state === 'complete'}<button type="button" class="ghost nodrag nopan read-response" aria-label="Create lesson" title="Create lesson" disabled={ui?.readingBusy()} onclick={event => { event.stopPropagation(); ui?.createLesson(id) }}><ListChecks size={20} /></button>{/if}
+    </div>{/if}
   </h3>
   <div class="body">
     {#if ui?.concealed()}
@@ -62,7 +65,8 @@
   .model-info { color: #a9b2c4; font-size: 11px; margin: 10px 0 0; overflow-wrap: anywhere; }
   h3 { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .read-response { flex: 0 0 auto; min-width: 44px; min-height: 44px; margin: 0; padding: 11px; display: grid; place-items: center; }
-  :global(.assistant .bookmark) { right: 62px; }
+  .response-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+  :global(.assistant .bookmark) { right: 114px; }
   .configuration { margin-top: 8px; }
   .configuration:not([open]) { width: max-content; max-width: 100%; margin-left: auto; }
   .configuration > summary { width: max-content; min-height: 36px; margin-left: auto; padding: 0 8px; display: flex; align-items: center; color: #a9b2c4; font-size: 11px; cursor: pointer; }

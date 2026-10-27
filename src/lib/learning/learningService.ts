@@ -75,9 +75,10 @@ export class LearningService {
       }
       // Capture is one transaction: item/card identities, visible derived chunk, and source snapshot.
       const source = state.nodes.find(n => proposed.sourceNodeIds.includes(n.id)) ?? state.nodes.find(n => item.sourceNodeIds.includes(n.id)) ?? state.nodes.find(n => n.type === 'root' && item.sourceRootIds.includes(n.id))
+      const publishCapture = !discoveryCapture || !state.drafts.find(draft => draft.id === discoveryCapture.draftId)?.discoveryRequest?.origin
       if (source?.type === 'chunk' && source.data.wordSource && source.data.text === item.canonicalText && (!source.data.itemId || source.data.itemId === item.id)) {
         source.data.itemId = item.id; source.data.meaning = item.meaning; source.data.pinyin = item.pinyin ?? source.data.pinyin
-      } else if (source && !state.nodes.some(n => n.type === 'chunk' && n.data.itemId === item.id && state.edges.some(e => e.source === source.id && e.target === n.id && e.data.kind === 'derived'))) {
+      } else if (publishCapture && source && !state.nodes.some(n => n.type === 'chunk' && n.data.itemId === item.id && state.edges.some(e => e.source === source.id && e.target === n.id && e.data.kind === 'derived'))) {
         const id = nid('chunk'), siblings = state.edges.filter(e => e.source === source.id && e.data.kind === 'derived').length
         state.nodes.push({ id, rootId: source.rootId, type: 'chunk', position: { x: source.position.x + 380, y: source.position.y + siblings * 150 }, bookmarked: false, collapsed: false,
           data: { text: item.canonicalText, pinyin: item.pinyin ?? '', meaning: item.meaning, itemId: item.id } })
@@ -150,10 +151,10 @@ export class LearningService {
         maxReviewCards: learner.maxReviewCards, maxNewItems: learner.maxNewItems, goal: explicitGoal ?? learner.goal })
     }, operationId, at)
   }
-  startLesson(snapshot: WorkspaceSnapshot, anchorId: string, itemIds: string[], goal: string, input: LessonSettings) {
+  startLesson(snapshot: WorkspaceSnapshot, anchorId: string, itemIds: string[], goal: string, input: LessonSettings, sourceDraftId?: string) {
     const settings = lessonSettingsSchema.parse(input), at = this.clock.now()
-    return this.change(snapshot.version, 'start-lesson', { anchorId, itemIds, goal, settings }, state => {
-      const selection = conversationSelection(state, anchorId)
+    return this.change(snapshot.version, 'start-lesson', { anchorId, itemIds, goal, settings, ...(sourceDraftId ? { sourceDraftId } : {}) }, state => {
+      const selection = conversationSelection(state, anchorId, sourceDraftId)
       if (!itemIds.length || itemIds.length > 9 || new Set(itemIds).size !== itemIds.length || itemIds.some(id => !selection.items.some(i => i.id === id))) throw new Error('Choose one to nine saved phrases from this lesson source.')
       if (selection.source?.scope && (itemIds.length !== selection.source.scope.points.length || selection.items.some(i => !itemIds.includes(i.id)))) throw new Error('Use every teaching point in this reviewed lesson scope.')
       if (!goal.trim()) throw new Error('Enter a learning goal.')

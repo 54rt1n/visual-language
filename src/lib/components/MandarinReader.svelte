@@ -58,11 +58,14 @@
     }
   }
 
+  function clearSelection() {
+    sequence++; selected = null; error = ''; busy = false; speechError = ''
+    focusedMeaning = null; focusedMeaningLoading = false; focusedMeaningError = ''
+  }
   function close(focus = false) {
     const start = selected?.start
     const focusStart = start === undefined ? undefined : words.find(word => word.start <= start && word.end > start)?.start ?? start
-    sequence++; speechController?.abort(); selected = null; error = ''; busy = false; speakingWord = ''; speechError = ''
-    focusedMeaning = null; focusedMeaningLoading = false; focusedMeaningError = ''
+    clearSelection(); speechController?.abort(); speakingWord = ''
     if (focus && focusStart !== undefined) void tick().then(() => (readerElement?.querySelector<HTMLElement>(`[data-word-start="${focusStart}"]`) ?? readerElement?.querySelector<HTMLElement>('.word-text'))?.focus({ preventScroll: true }))
   }
   $effect(() => {
@@ -134,7 +137,7 @@
 
   async function choose(start: number, end: number, focusDetails = false) {
     try { readingSelection(text, start, end) } catch (cause) { error = cause instanceof Error ? cause.message : 'Choose a shorter phrase.'; return }
-    close(); selected = { source: text, start, end }; const request = ++sequence; focusedMeaningLoading = true
+    clearSelection(); selected = { source: text, start, end }; const request = ++sequence; focusedMeaningLoading = true
     await tick()
     if (sequence !== request) return
     if (!focused && details) {
@@ -262,7 +265,7 @@
       <button type="button" disabled={busy || ui.readingBusy()} onclick={saveForPractice}>Save for practice</button>
     </section>
   {:else if selection}
-    <section class="word-details nodrag nopan nowheel" popover="auto" aria-label="Word details" tabindex="-1" bind:this={details} use:present ontoggle={event => { if (event.newState === 'closed') close() }}>
+    <section class="word-details nodrag nopan nowheel" popover="auto" aria-label="Word details" tabindex="-1" bind:this={details} use:present ontoggle={event => { if (event.newState === 'closed') clearSelection() }}>
       <header><div class="word-title"><h4 lang="zh">{selection.text}</h4><p class="pronunciation" lang="zh-Latn">{selectedPronunciation?.pinyin || 'Pronunciation unavailable'}</p></div><button type="button" class="ghost" aria-label="Close word details" onclick={() => close(true)}>✕</button></header>
       {#if focusedMeaningLoading}<p role="status">Finding a definition…</p>{:else if focusedMeaning}<p>{focusedMeaning.meaning}</p><p class="reading-hint">Check which meaning fits this sentence when saving.</p>{:else}<p class="reading-hint">No saved meaning yet. You can add one when saving.</p>{/if}
       {#if savedForPractice}<p class="reading-hint">Already saved from this response. Save a different meaning to keep another use.</p>{/if}

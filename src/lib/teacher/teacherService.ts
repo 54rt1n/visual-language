@@ -174,7 +174,7 @@ export class TeacherService {
   private async prepareLessonCheck(sessionId: string, signal?: AbortSignal, onStage?: (stage: string) => void) {
     const state = this.host.current().state, session = state.sessions.find(s => s.id === sessionId)!, lesson = lessonForSession(state, session)!
     if (!lesson.preparation?.check?.complete) throw new Error('Prepare the original lesson before a new check.')
-    const provider = teacherProvider(this.settings(), teacherContext(state, lesson.cardIds[0]!, this.clock.now()))
+    const provider = teacherProvider(this.settings(), teacherContext(state, lesson.cardIds[0]!, this.clock.now(), lesson.source?.draftId))
     let expected = session.lessonAttempt!.checkPreparation!
     await buildWaypointQuiz(lesson.preparation.input, lesson.preparation.lesson, 'check', {
       maxQuestions: lesson.preparation.check.questions.length,

@@ -4,6 +4,7 @@ import type { DiscoveryProposal, DiscoveryRequest, DiscoveryPlanning } from '../
 import { lessonScopePointSchema, MAX_LESSON_POINTS } from '../../domain/discovery'
 import type { SourceSnapshot } from '../../domain/workspace'
 import type { LearnerProfile } from '../../domain/learning'
+import type { LessonSettings } from '../../domain/lessonSettings'
 import { containsHanzi } from '../../mandarin/chineseParser'
 import { executeLessonStage, type LessonGenerationOptions } from './executeStage'
 import type { LessonStage, LessonStageContext } from './stages'
@@ -15,7 +16,7 @@ const scenarioSchema = z.strictObject({ situation: text(500), partnerRole: text(
 const pointsSchema = z.strictObject({ points: z.array(lessonScopePointSchema.omit({ id: true })).min(1).max(MAX_LESSON_POINTS) })
 const reviewSchema = z.strictObject({ accepted: z.boolean(), reason: text(1500) })
 export type SourceOptions = LessonGenerationOptions & {
-  checkpoint?: DiscoveryPlanning; onPlanning?: (planning: DiscoveryPlanning) => Promise<void>;
+  checkpoint?: DiscoveryPlanning; onPlanning?: (planning: DiscoveryPlanning) => Promise<void>; settings?: LessonSettings;
   additionalContext?: { learnerInstruction?: string; vocabularyPreferences?: unknown }
 }
 const pointExamples = [
@@ -28,9 +29,9 @@ const concretePointExample = { context: { topic: 'Ordering tea', outline: 'Make 
 ] } }
 function context(request: DiscoveryRequest, learner: LearnerProfile, sources: SourceSnapshot[], options: SourceOptions): LessonStageContext {
   return { kind: request.kind === 'roleplay' ? 'scenario' : request.kind === 'interest' ? 'reading' : 'topic',
-    settings: { quizLevel: request.quizLevel ?? 'meaningPinyin', complexity: 'simple', scope: 'topic', focus: 'characters', topic: request.publicTopic.slice(0, 200) },
+    settings: options.settings ?? { quizLevel: request.quizLevel ?? 'meaningPinyin', complexity: 'simple', scope: 'topic', focus: 'characters', topic: request.publicTopic.slice(0, 200) },
     originalRequest: request, learner: { level: learner.level, explanationLanguage: learner.explanationLanguage, goal: learner.goal, languageBalance: learner.languageBalance ?? 'balanced' },
-    ...options.additionalContext, sources: sources.map(({ title, excerpt }) => ({ title, excerpt })),
+    ...options.additionalContext, sources: sources.map(source => source.conversation ? { title: source.title, conversation: source.conversation.messages } : { title: source.title, excerpt: source.excerpt }),
     material: sources.length ? 'Adapt the supplied sources faithfully for language learning.' : 'Create an everyday illustrative example.' }
 }
 function run<T extends z.ZodType>(id: LessonStage<T>['id'], name: string, schema: T, task: string, c: LessonStageContext,
