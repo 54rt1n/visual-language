@@ -141,6 +141,8 @@
   const dueCount = $derived(workspace.snapshot?.state.cards.filter(c => isDue(c, workspace.snapshot?.state.demo?.enabled ? workspace.snapshot.state.demo.now : wallTime)).length ?? 0)
   const teacherCollapsed = $derived(workspace.snapshot?.state.view.teacherCollapsed ?? false)
   const teacherPortraits = $derived(workspace.snapshot?.state.view.teacherPortraits ?? true)
+  const hoverToExplore = $derived(workspace.snapshot?.state.view.hoverToExplore ?? false)
+  let hoverSaving = $state(false)
   const prerecorded = $derived(workspace.mode === 'demo' && workspace.snapshot?.state.demo?.contentMode === 'fixtures')
   const showConnectionEntry = $derived(ready && !hasKey && !prerecorded && !nodes.some(node => node.type === 'user' || node.type === 'assistant'))
   const savedLesson = $derived(workspace.snapshot?.state.sessions.find(s => !s.lessonAttempt && s.learnerId === workspace.snapshot!.state.activeLearnerId && s.status !== 'completed'))
@@ -152,6 +154,7 @@
   setContext<CanvasUI>(CANVAS_UI, {
     concealed: () => recallProtected, revealMaterial: () => requestSourceAction(() => { modal = null }),
     pinyinDisplay: nodeId => workspace.snapshot ? learningPreferences(workspace.snapshot.state, nodeId).pinyinDisplay : 'always',
+    hoverToExplore: () => hoverToExplore,
     openGraphTools: nodeId => { void openGraphTools(nodeId) }, deleteNode: nodeId => { void requestDeleteNode(nodeId) }, toggleCollapse: nodeId => { void toggleCollapse(nodeId) },
     generateReply: nodeId => { void generateReply(nodeId) }, requestBusy: () => !ready || streaming || startingRequest || graphBusy || prerecorded || workspace.status === 'conflict',
     readResponse: nodeId => { void openResponseReader(nodeId) },
@@ -724,6 +727,14 @@
       await workspace.mutate('teacher-portrait-display', { visible: !teacherPortraits }, state => { state.view.teacherPortraits = !(state.view.teacherPortraits ?? true) })
     } catch (cause) { status = cause instanceof Error ? cause.message : 'The portrait preference could not be saved.' }
   }
+  async function setHoverToExplore(enabled: boolean) {
+    hoverSaving = true
+    try {
+      await flushDraft()
+      await workspace.mutate('hover-to-explore', { enabled }, state => { state.view.hoverToExplore = enabled })
+    } catch (cause) { status = cause instanceof Error ? cause.message : 'The hover preference could not be saved.' }
+    finally { hoverSaving = false }
+  }
   async function prepareUpdate() {
     if (streaming) throw new Error('Stop the current response and save its partial text before updating.')
     await flushDraft()
@@ -811,6 +822,7 @@
     <Background gap={18} size={1} />
     <Controls orientation="horizontal" showFitView={false} onclick={() => { followNodeId = undefined }}>
       <ControlButton title="Fit View" aria-label="Fit View" onclick={() => { void fitGraph() }}><Maximize size={16} /></ControlButton>
+      <label class="hover-mode nodrag nopan"><input type="checkbox" checked={hoverToExplore} disabled={!ready || hoverSaving || streaming || graphBusy || startingRequest} onchange={async event => { const input = event.currentTarget; await setHoverToExplore(input.checked); input.checked = hoverToExplore }} />Hover to explore</label>
     </Controls>
     <MiniMap pannable zoomable />
 
@@ -925,6 +937,9 @@
 {#if languageSetupOpen}<LanguageSetupDialog onClose={() => { languageSetupOpen = false }} />{/if}
 
 <style>
+  .hover-mode { display: flex; align-items: center; gap: 7px; padding: 0 10px; min-height: 34px; background: #1a1d26; color: #c4d7f5; font-size: 12px; white-space: nowrap; cursor: pointer; }
+  .hover-mode input { width: 16px; height: 16px; margin: 0; accent-color: #9ec4ff; cursor: inherit; }
+  .hover-mode:has(input:disabled) { opacity: .55; cursor: default; }
   .compact-caption { display: none; }
   .demo-entry { position: relative; z-index: 5; pointer-events: auto; min-height: 44px; background: #1a1d26; }
   .utility-options { display: grid; gap: 10px; }.utility-options button { display: grid; gap: 5px; text-align: left; padding: 14px; }.utility-options strong { font-size: 15px; color: #e8eaed; }.utility-options span { font-size: 13px; font-weight: 400; line-height: 1.5; }.utility-options button:hover { background: #263750; }

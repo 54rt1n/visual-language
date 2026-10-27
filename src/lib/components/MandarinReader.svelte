@@ -173,6 +173,11 @@
     void choose(start, end, true)
     if (autoPlayWords) void speakWord(text.slice(start, end))
   }
+  function hoverWord(event: PointerEvent, token: ReadingToken) {
+    if (event.pointerType !== 'mouse' || event.buttons || event.shiftKey || !ui.hoverToExplore() || ui.concealed()) return
+    if (selected?.source === text && selected.start === token.start && selected.end === token.end) return
+    void choose(token.start, token.end)
+  }
   async function speakWord(word: string) {
     speechController?.abort()
     const request = new AbortController(); speechController = request; speakingWord = word; speechError = ''
@@ -226,7 +231,7 @@
     {#if !originalWordSegments?.length}<p class="reading-hint">No segment records were supplied in the original.</p>{/if}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex (A labeled, bounded reading region needs keyboard scrolling.) -->
     <div class="word-text original-segments nodrag" class:with-pinyin={withPinyin} role="region" tabindex="0" aria-label="Imported Mandarin segments">
-      {#each importedTokens as token (token.start)}{#if token.hanzi && token.text.length <= 200}<button type="button" class="word" data-word-start={token.start} aria-label={focused && autoPlayWords ? `Play ${token.text}` : `Explore imported segment ${token.text}`} onclick={event => selectWord(event, token)}><ruby>{token.text}{#if withPinyin && token.pinyin}<rt title="Imported pinyin · not rechecked">{token.pinyin}</rt>{/if}</ruby></button>{:else if token.imported}<span class="original-segment"><span lang="zh">{token.text}</span>{#if withPinyin && token.pinyin}<span class="original-sound" lang="zh-Latn">{token.pinyin}</span>{/if}</span>{:else}{token.text}{/if}{/each}
+      {#each importedTokens as token (token.start)}{#if token.hanzi && token.text.length <= 200}<button type="button" class="word" data-word-start={token.start} aria-label={focused && autoPlayWords ? `Play ${token.text}` : `Explore imported segment ${token.text}`} onpointerenter={event => hoverWord(event, token)} onclick={event => selectWord(event, token)}><ruby>{token.text}{#if withPinyin && token.pinyin}<rt title="Imported pinyin · not rechecked">{token.pinyin}</rt>{/if}</ruby></button>{:else if token.imported}<span class="original-segment"><span lang="zh">{token.text}</span>{#if withPinyin && token.pinyin}<span class="original-sound" lang="zh-Latn">{token.pinyin}</span>{/if}</span>{:else}{token.text}{/if}{/each}
     </div>
   {:else if dictionaryLoading}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keep the loading fallback keyboard-scrollable too.) -->
@@ -236,7 +241,7 @@
     {#if !focused}<p class="reading-hint">Select a word to understand it or save it for practice. Shift-click another word to select a phrase.{#if !split.wordsAvailable} Word splitting is unavailable in this browser; characters are shown instead.{/if}</p>{:else if !split.wordsAvailable}<p class="reading-hint">Word splitting is unavailable in this browser; characters are shown instead.</p>{/if}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard scrolling and page-turn focus use this labeled region, not a fake button role.) -->
     <div class="word-text nodrag" class:with-pinyin={withPinyin} role="region" tabindex="0" aria-label="Mandarin response word view" bind:this={wordText}>
-      {#each displayedTokens as token (token.start)}{#if token.hanzi}<button type="button" class="word" class:active={selected && token.start >= selected.start && token.end <= selected.end} data-word-start={token.start} aria-label={focused && autoPlayWords ? `Play ${token.text}` : `Explore ${token.text}`} aria-pressed={Boolean(selected && token.start >= selected.start && token.end <= selected.end)} onclick={event => selectWord(event, token)}><ruby>{token.text}{#if withPinyin && token.pinyin}<rt title={pronunciationLabel(token.source)}>{token.pinyin}</rt>{/if}</ruby></button>{:else}{token.text}{/if}{/each}
+      {#each displayedTokens as token (token.start)}{#if token.hanzi}<button type="button" class="word" class:active={selected && token.start >= selected.start && token.end <= selected.end} data-word-start={token.start} aria-label={focused && autoPlayWords ? `Play ${token.text}` : `Explore ${token.text}`} aria-pressed={Boolean(selected && token.start >= selected.start && token.end <= selected.end)} onpointerenter={event => hoverWord(event, token)} onclick={event => selectWord(event, token)}><ruby>{token.text}{#if withPinyin && token.pinyin}<rt title={pronunciationLabel(token.source)}>{token.pinyin}</rt>{/if}</ruby></button>{:else}{token.text}{/if}{/each}
     </div>
     {#if pageIndex > 0 || split.end < text.length}<nav class="reading-pages" aria-label="Response parts"><button type="button" class="ghost nodrag" disabled={pageIndex === 0} onclick={() => void turnPage(-1)}>Previous part</button><span role="status">Part {pageIndex + 1}{split.end === text.length ? ' · end' : ''}</span><button type="button" class="ghost nodrag" disabled={split.end === text.length} onclick={() => void turnPage(1)}>Next part</button></nav>{#if !focused}<p class="reading-hint">Read this part by scrolling inside the text. Plain text shows the complete original response.</p>{/if}{/if}
   {/if}

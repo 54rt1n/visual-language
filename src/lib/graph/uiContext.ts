@@ -9,6 +9,7 @@ export type CanvasUI = {
   concealed(): boolean
   revealMaterial(): void
   pinyinDisplay(nodeId?: string): LearnerProfile['pinyinDisplay']
+  hoverToExplore(): boolean
   openGraphTools(nodeId: string): void
   deleteNode(nodeId: string): void
   generateReply(nodeId: string): void

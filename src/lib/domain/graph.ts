@@ -37,6 +37,7 @@ export const graphViewSchema = z.strictObject({
   viewport: z.strictObject({ x: z.number().finite(), y: z.number().finite(), zoom: z.number().min(0.05).max(8) }),
   teacherCollapsed: z.boolean(), composerDraft: z.string().max(8000),
   teacherPortraits: z.boolean().optional(), // Missing in legacy backups means visible.
+  hoverToExplore: z.boolean().optional(),
 })
 export type GraphNode = z.infer<typeof graphNodeSchema>
 export type GraphEdge = z.infer<typeof edgeSchema>
