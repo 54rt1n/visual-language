@@ -193,7 +193,8 @@ describe('sourced discovery lessons', () => {
       }
       if (name === 'verify_lesson_waypoint' && c.candidate.cardIds.length === 4) {
         reviewedNominalLinks = true
-        expect(o.messages.some(m => m.role === 'assistant' && m.tool_calls?.some(t => JSON.parse(t.function.arguments).decision === 'revise'))).toBe(true)
+        expect(o.messages.map(m => m.role)).toEqual(['system', 'user'])
+        expect(o.messages[0]!.content).toContain('"decision":"revise"')
         expect(o.messages[0]!.content).toContain('actual content and purpose')
         return toolCall(name, { decision: 'revise', reason: 'The explanation and example teach only the drink request. Retain that target and teach the other purposes subsequently.' })
       }

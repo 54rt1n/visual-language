@@ -77,8 +77,11 @@ export type WaypointGraphOptions = LessonGenerationOptions & {
 function scopeProjection(input: WaypointLessonInput, graph: { waypoints: LessonGraph['waypoints'] }) {
   const taught = new Set(graph.waypoints.flatMap(w => w.cardIds))
   const scope = input.sourceMaterial?.scope
-  const sourceMaterial = input.sourceMaterial ? { ...input.sourceMaterial, scope: undefined } : undefined
-  return { ...(scope ? { sourceMaterial, originalRequest: scope.request, acceptedScope: { outline: scope.outline, points: scope.points } } : {}),
+  const sourceMaterial = input.sourceMaterial ? { passageHanzi: input.sourceMaterial.passageHanzi,
+    passageMeaning: input.sourceMaterial.passageMeaning, scenario: input.sourceMaterial.scenario } : undefined
+  return { ...(scope ? { sourceMaterial, originalRequest: scope.request.origin
+    ? 'Create a lesson from the selected conversation using the accepted scope.'
+    : { kind: scope.request.kind, publicTopic: scope.request.publicTopic }, acceptedScope: { outline: scope.outline, points: scope.points } } : {}),
     missingTeachingPoints: input.targets.filter(t => !taught.has(t.cardId)) }
 }
 
@@ -127,6 +130,7 @@ export async function prepareWaypointGraph(value: WaypointLessonInput, options: 
       const built = await stage(options, draft.revision?.waypointId ? lessonStages.reviseWaypoint : lessonStages.buildWaypoint,
         context, value => { validateCandidate(proposalWaypoint(value, id)) })
       await save({ ...draft, pending: { candidate: proposalWaypoint(built.value, id), reviewRound: 0,
+        ...(draft.revision ? { requestedChange: draft.revision.reason } : {}),
         stateHash: lessonPreparationHash(input, draft.graph) } })
     }
     for (;;) {
@@ -141,12 +145,15 @@ export async function prepareWaypointGraph(value: WaypointLessonInput, options: 
           })
         candidate = proposalWaypoint(revised.value, id)
         await save({ ...draft, pending: { candidate, reviewRound: draft.pending!.reviewRound + 1,
+          requestedChange: draft.pending!.revision,
           stateHash: lessonPreparationHash(input, draft.graph) } })
       }
       let validationIssue: string | undefined
       try { validateCandidate(candidate) } catch (error) { validationIssue = (error as Error).message }
       const checked = await stage(options, lessonStages.reviewWaypoint,
         { ...input, ...scopeProjection(input, draft.graph), graph: draft.graph, candidate,
+          ...(draft.pending!.requestedChange ? { requestedChange: draft.pending!.requestedChange } : {}),
+          ...(draft.revision ? { graphRevision: draft.revision } : {}),
           ...(nextTeachingPoint ? { nextTeachingPoint } : {}), ...(validationIssue ? { validationIssue } : {}) }, value => {
           if (value.decision === 'accept') validateCandidate(candidate)
         })

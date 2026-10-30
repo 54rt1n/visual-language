@@ -78,7 +78,7 @@ try {
     codeFiles.push('src/lib/teacher/lessonGeneration/sourcePreparation.ts', 'src/lib/domain/discovery.ts', 'tests/fixtures/lesson-source.ts', 'src/lib/teacher/lessonGeneration/teachingExamples.ts', 'src/lib/teacher/lessonGeneration/planningExamples.ts', 'tests/evaluation/model-matrix.ts', 'src/lib/ai/providers.ts', 'src/lib/ai/chatRequest.ts', 'src/lib/ai/completionEvent.ts', 'src/lib/ai/inferenceFailure.ts', 'src/lib/ai/providerDiagnostics.ts',
       'src/lib/ai/requestProtocol.ts', 'src/lib/ai/requestRecovery.ts', 'src/lib/ai/contextBudget.ts', 'src/lib/ai/featherlessTokenCounter.ts', 'src/lib/ai/generationBudget.ts', 'src/lib/ai/qwenToolProtocol.ts', 'src/lib/teacher/lessonGeneration/graphConstruction.ts', 'src/lib/teacher/lessonGeneration/checkpoint.ts', 'src/lib/teacher/lessonGeneration/assessmentPlan.ts', 'src/lib/teacher/lessonGeneration/workflowBudget.ts')
     if (suite === 'lessons') codeFiles.push('src/lib/teacher/lessonGeneration/executionPolicy.ts', 'src/lib/teacher/lessonGeneration/stageSubmission.ts')
-    if (suite === 'lessons') codeFiles.push('src/lib/teacher/lessonGeneration/profiles/nemotron-lightning-v2.json', 'src/lib/ai/modelIdentity.ts', 'src/lib/teacher/lessonGeneration/providerProtocol.ts')
+    if (suite === 'lessons') codeFiles.push('src/lib/teacher/lessonGeneration/profiles/nemotron-lightning-v3.json', 'src/lib/ai/modelIdentity.ts', 'src/lib/teacher/lessonGeneration/providerProtocol.ts')
     codeFiles.push('src/lib/ai/qwenToolEnvelope.ts')
     codeFiles.push('src/lib/ai/http.ts', 'src/lib/ai/requestQueue.ts')
     if (suite === 'lessons') codeFiles.push('tests/evaluation/provider-capacity.ts', 'tests/evaluation/request-failure.ts')

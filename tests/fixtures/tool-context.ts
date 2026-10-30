@@ -8,6 +8,15 @@ export function currentToolMessage<T extends { role: string }>(messages: readonl
 }
 
 export function parseToolProjection(content: string) {
+  if (content.startsWith('Current lesson\n')) {
+    const evidence = content.split('\n\nCurrent task:', 1)[0]!
+    const fields = [...evidence.matchAll(/^## (.+)\n([\s\S]*?)(?=\n\n## |$(?![\s\S]))/gm)]
+    return Object.fromEntries(fields.map(([, label, text]) => {
+      const key = label![0]!.toLowerCase() + label!.slice(1).replace(/ ([A-Za-z])/g, (_, letter: string) => letter.toUpperCase())
+      const value = text!.trim()
+      return [key, value.startsWith('```json\n') ? JSON.parse(value.slice(8, -3)) : value]
+    }))
+  }
   return JSON.parse(content.split('\n\nTool call:\n', 1)[0]!)
 }
 

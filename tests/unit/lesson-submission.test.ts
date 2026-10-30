@@ -17,6 +17,22 @@ const verdict = { decision: 'accept', reason: 'Supported fixture point.' }
 const noCall = (content: string): ChatResult => ({ content, reasoning: 'Not submitted.', toolCalls: [], finishReason: 'stop', model: 'fixture' })
 
 describe('fresh lesson submission corrections', () => {
+  it('requests one native call and reports multiple proposals without validating or applying either', async () => {
+    const validate = vi.fn()
+    const transport = vi.fn(async (request: ChatOptions) => {
+      expect(request.parallelToolCalls).toBe(false)
+      const result = waypointResult(request, verdict)
+      result.toolCalls.push({ ...structuredClone(result.toolCalls[0]!), id: 'second-proposal' })
+      return result
+    })
+    await expect(executeLessonStage({ provider, transport, executionPolicy: { submissionAttempts: 1 } },
+      lessonStages.reviewWaypoint, context, validate)).rejects.toMatchObject({
+      failure: { category: 'tool_unexpected', message: expect.stringContaining('received 2 tool calls'),
+        fields: ['Returned tools: ["verify_lesson_waypoint","verify_lesson_waypoint"].'] },
+    })
+    expect(transport).toHaveBeenCalledOnce()
+    expect(validate).not.toHaveBeenCalled()
+  })
   it('keeps shared lesson and assessment context factual across stages and answer directions', () => {
     for (const kind of ['topic', 'scenario', 'reading'] as const) {
       for (const quizLevel of ['meaningHanzi', 'meaningPinyin', 'responseHanzi', 'responsePinyin'] as const) {
@@ -39,7 +55,7 @@ describe('fresh lesson submission corrections', () => {
     const c = { ...context, graph: { overview: 'A greeting.', waypoints: [{ id: 'w1' }] } }
     const stage = lessonStages.reviewGraph, schema = stage.schema(c)
     const examples = [...stage.instructions(c).matchAll(/Complete submission arguments: (\{[^\n]+\})/g)].map(match => JSON.parse(match[1]!))
-    expect(examples.map(value => schema.parse(value).decision)).toEqual(['add', 'revise', 'revise'])
+    expect(examples.map(value => schema.parse(value).decision)).toEqual(['add', 'revise', 'accept'])
     expect(schema.safeParse({ decision: 'revise', reason: 'Revise a future point.', waypointId: 'w2' }).success).toBe(false)
     expect(schema.parse({ decision: 'add', reason: 'Teach the remaining expression.' })).not.toHaveProperty('waypointId')
     const missing = lessonStages.reviewGraph.schema({ ...c, missingTeachingPoints: [{ cardId: 'not-taught' }] })

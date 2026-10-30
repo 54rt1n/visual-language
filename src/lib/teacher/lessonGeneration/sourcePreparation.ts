@@ -30,13 +30,26 @@ const concretePointExample = { context: { topic: 'Ordering tea', outline: 'Make 
 function context(request: DiscoveryRequest, learner: LearnerProfile, sources: SourceSnapshot[], options: SourceOptions): LessonStageContext {
   return { kind: request.kind === 'roleplay' ? 'scenario' : request.kind === 'interest' ? 'reading' : 'topic',
     settings: options.settings ?? { quizLevel: request.quizLevel ?? 'meaningPinyin', complexity: 'simple', scope: 'topic', focus: 'characters', topic: request.publicTopic.slice(0, 200) },
-    originalRequest: request, learner: { level: learner.level, explanationLanguage: learner.explanationLanguage, goal: learner.goal, languageBalance: learner.languageBalance ?? 'balanced' },
-    ...options.additionalContext, sources: sources.map(source => source.conversation ? { title: source.title, conversation: source.conversation.messages } : { title: source.title, excerpt: source.excerpt }),
+    originalRequest: request.origin ? 'Create a lesson from the selected conversation.' : request.publicTopic,
+    ...(request.origin ? { studentRequest: sources.flatMap(source => source.conversation?.messages ?? []).filter(message => message.role === 'user').at(-1)?.text } : {}),
+    learner: { level: learner.level, explanationLanguage: learner.explanationLanguage,
+      goal: learner.goal, languageBalance: learner.languageBalance ?? 'balanced' },
+    ...options.additionalContext, sources: sources.map(source => source.conversation
+      ? `${source.title}\n${source.conversation.messages.map(message => `${message.role === 'user' ? 'Student' : 'Tutor'}: ${message.text}`).join('\n')}`
+      : `${source.title}\n${source.excerpt}`).join('\n\n'),
     material: sources.length ? 'Adapt the supplied sources faithfully for language learning.' : 'Create an everyday illustrative example.' }
 }
 function run<T extends z.ZodType>(id: LessonStage<T>['id'], name: string, schema: T, task: string, c: LessonStageContext,
   example: { context: Record<string, unknown>; arguments: Record<string, unknown> } | Array<{ context: Record<string, unknown>; arguments: Record<string, unknown> }>, options: SourceOptions, validate?: (value: z.infer<T>) => void) {
-  return executeLessonStage(options, { id, toolName: name, description: task, schema: () => schema,
+  const descriptions: Record<string, string> = {
+    ground_lesson: 'Record the proposed lesson scope and learning order.',
+    propose_lesson_points: 'Submit the concrete Mandarin expressions selected for this lesson.',
+    review_lesson_scope: 'Accept the current lesson scope or identify a needed revision.',
+    prepare_reading_source: 'Submit a short Mandarin passage and its translation.',
+    prepare_scenario_source: 'Submit the roles, opening and goal for a Mandarin scenario.',
+    review_lesson_source: 'Review the current lesson material for accuracy and relevance.',
+  }
+  return executeLessonStage(options, { id, toolName: name, description: descriptions[name]!, schema: () => schema,
     instructions: () => task, preparation: true, nativeExamples: Array.isArray(example) ? example : [example] }, c, validate)
 }
 async function reading(c: LessonStageContext, options: SourceOptions) {
@@ -56,7 +69,7 @@ export async function prepareLessonSource(request: DiscoveryRequest, learner: Le
   }
   if (!plan) {
     const result = await run('groundLesson', 'ground_lesson', z.strictObject({ outline: text(1800) }),
-      'What useful Chinese language would you teach me for my request, at my level and in this context? Explain briefly what it helps me understand or do and a useful order to learn it. Give a compact coherent lesson outline with a manageable focus.', c,
+      'Choose the scope of a short lesson from my request and the supplied material. In two or three English sentences, name the useful Chinese expressions or distinctions to learn, what they let me do, and their learning order. This outline guides later steps that write the teaching examples and exercises.', c,
       [{ context: { topic: 'Visiting a library', learner: { level: 'beginner' } }, arguments: { outline: 'Learn to state that you want to borrow a book, then ask how long you may keep it. This prepares you for a short exchange at the lending desk.' } },
         { context: { topic: 'Ordering a meal', learner: { level: 'beginner' } }, arguments: { outline: 'Start by getting the menu so you can choose. Then order a dish and state how much you want. Finish by asking for the bill and thanking the waiter.' } }], options)
     model = result.model; await save({ outline: result.value.outline, rounds: 0 })
@@ -89,7 +102,7 @@ export async function prepareLessonSource(request: DiscoveryRequest, learner: Le
     if (checked.value.accepted) await save({ ...plan!, accepted: { request, outline: plan!.outline, points: plan!.candidate!, review: { reason: checked.value.reason, model } } })
     else await save({ ...plan!, revision: checked.value.reason })
   }
-  const scope = plan!.accepted!, sourceContext = { ...c, acceptedScope: scope }
+  const scope = plan!.accepted!, sourceContext = { ...c, acceptedScope: { outline: scope.outline, points: scope.points } }
   let passageHanzi: string, passageMeaning: string, roleplay: DiscoveryProposal['roleplay'] = null
   if (request.kind === 'interest') {
     passageHanzi = plan!.reading!.passage; passageMeaning = plan!.reading!.translation
@@ -114,6 +127,8 @@ export async function prepareLessonSource(request: DiscoveryRequest, learner: Le
 export function reviewLessonSource(request: DiscoveryRequest, learner: LearnerProfile, lesson: DiscoveryProposal, sources: SourceSnapshot[], options: SourceOptions) {
   return run('reviewSource', 'review_lesson_source', reviewSchema,
     'Check the proposed Mandarin material against the accepted scope: natural expressions, faithful translations, learner level and matching scenario roles. For web sources, verify the adaptation preserves supplied facts. For AI-written examples, assess the language as an illustration. Explain your decision briefly.',
-    { ...context(request, learner, sources, options), acceptedScope: options.checkpoint?.accepted, lesson },
+    { ...context(request, learner, sources, options), acceptedScope: options.checkpoint?.accepted && {
+      outline: options.checkpoint.accepted.outline, points: options.checkpoint.accepted.points,
+    }, lesson },
     { context: { expressions: pointExamples, material: '我想借书。可以借多久？', meaning: 'I would like to borrow books. How long may I borrow them?' }, arguments: { accepted: true, reason: 'The material preserves the reviewed request and loan-period language with faithful meanings.' } }, options)
 }

@@ -1,0 +1,6 @@
+{
+  "id": "nemotron-lightning",
+  "version": "3",
+  "generation": { "reasoning": "on" },
+  "protocol": { "toolResponseDialect": "native", "toolChoice": "auto" }
+}

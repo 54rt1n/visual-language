@@ -18,8 +18,13 @@ export function parseStageSubmission<T extends z.ZodType>(result: ChatResult, na
       message, retryable: false, finishReason: result.finishReason, ...(fields ? { fields } : {}) }, candidate)
   }
   if (!['stop', 'tool_calls'].includes(result.finishReason)) fail(result.finishReason === 'length' ? 'output_limit' : 'protocol_error', `${name} requires a completed native submission.`)
-  if (!result.toolCalls.length) fail(result.content.trim() ? 'tool_missing' : 'empty_output', `${name} requires exactly one completed native submission. No operation was applied.`)
-  if (result.toolCalls.length !== 1 || result.toolCalls[0]!.function.name !== name) fail('tool_unexpected', `${name} requires exactly one completed native submission. No operation was applied.`)
+  if (!result.toolCalls.length) fail(result.content.trim() ? 'tool_missing' : 'empty_output',
+    result.content.trim() ? `${name} received assistant text instead of a native tool call. No operation was applied.`
+      : `${name} received no tool call or answer text. No operation was applied.`)
+  const names = result.toolCalls.slice(0, 8).map(call => call.function.name.slice(0, 128))
+  if (result.toolCalls.length !== 1) fail('tool_unexpected', `${name} received ${result.toolCalls.length} tool calls; this step accepts one. No operation was applied.`,
+    [`Returned tools: ${JSON.stringify(names)}.`])
+  if (result.toolCalls[0]!.function.name !== name) fail('tool_unexpected', `${name} received a call to ${JSON.stringify(names[0])} instead. No operation was applied.`)
   const call = result.toolCalls[0]!
   if (!call.id || call.type !== 'function') fail('protocol_error', 'The native submission has no valid identity.')
   let candidate: unknown

@@ -72,7 +72,9 @@ export async function executeLessonStage<T extends z.ZodType>(options: LessonGen
           if (requestAttempt > 1) options.onStage?.(name)
           budget.use('model')
           const request: ChatOptions = { ...options.provider, messages: structuredClone(messages), tools: [tool],
-            toolChoice: { type: 'function', function: { name } }, ...lessonGenerationSettings(options.provider.compatibility, resolved.generation),
+            toolChoice: { type: 'function', function: { name } },
+            ...(resolved.protocol.toolResponseDialect === 'native' ? { parallelToolCalls: false } : {}),
+            ...lessonGenerationSettings(options.provider.compatibility, resolved.generation),
             generationTrace: { ...generationTrace, attempt: { submission: attempt, request: requestAttempt } },
             ...resolved.protocol, timeoutMs: policy.requestTimeoutMs, handlers: { signal } }
           validateChatRequest(request)

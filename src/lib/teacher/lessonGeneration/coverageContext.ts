@@ -2,7 +2,10 @@ import { InputValidationError } from '../../domain/validation'
 import { recognitionEligibleWaypoints, recognitionEligibleTargets, assertRecognitionCoverage } from '../../domain/coverageEvidence'
 import type { LessonGraph, WaypointLessonInput } from '../../domain/lessonGraph'
 type CoverageQuestion = Parameters<typeof recognitionEligibleWaypoints>[2] & { stem: string }
-type CompactContext = Pick<WaypointLessonInput, 'settings' | 'targets'> & Partial<Pick<WaypointLessonInput, 'sourceMaterial'>> & { plannedTargetIds?: string[] } & { graph: LessonGraph }
+type CompactContext = Pick<WaypointLessonInput, 'settings' | 'targets'> & {
+  sourceMaterial?: Partial<NonNullable<WaypointLessonInput['sourceMaterial']>>;
+  plannedTargetIds?: string[]; graph: LessonGraph;
+}
 /** Reuse compact lesson evidence; own eligibility and the key-free reviewed-question view. */
 export function projectCoverageContext<T extends CompactContext>(context: T, question: CoverageQuestion, questionId: string) {
   const { question: _oldQuestion, recognitionEligibleWaypointIds: _oldEligibility, ...base } = context as T & {

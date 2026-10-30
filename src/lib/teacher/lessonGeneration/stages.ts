@@ -10,8 +10,8 @@ import { questionDirectionsSchema, questionCoverageReviewSchema } from '../quest
 import { NEXT_WAYPOINT, REVIEW_WAYPOINT, REVIEW_GRAPH, proposeQuestionsInstructions, EVALUATE_COVERAGE,
   BLIND_QUESTION_INSTRUCTIONS, VISIBLE_QUESTION_INSTRUCTIONS, buildWaypointQuestionInstructions, verifyWaypointQuestionInstructions } from './prompts'
 
-export const LESSON_WORKFLOW_VERSION = 'lesson-generation-v42'
-export const LESSON_PROMPT_VERSION = 'lesson-guidance-v43'
+export const LESSON_WORKFLOW_VERSION = 'lesson-generation-v43'
+export const LESSON_PROMPT_VERSION = 'lesson-guidance-v46'
 export const lessonStageIds = ['groundLesson', 'planLesson', 'reviewLessonScope', 'prepareSource', 'reviewSource', 'buildWaypoint', 'reviseWaypoint', 'reviewWaypoint', 'reviewGraph',
   'proposeQuestions', 'buildQuestion', 'reviseQuestion', 'solveVisibleQuestion', 'reviewQuestion', 'solveEnglishQuestion', 'evaluateCoverage'] as const
 export type LessonStageId = typeof lessonStageIds[number]

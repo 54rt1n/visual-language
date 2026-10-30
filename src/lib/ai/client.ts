@@ -150,7 +150,11 @@ async function streamChatNow(options: ChatOptions): Promise<ChatResult> {
     // below still apply. Preserve the actual finish reason as provider evidence.
     const nativeToolStop = (options.compatibility === 'alibaba' || options.compatibility === 'featherless') && result.finishReason === 'stop' && finished
     if (result.toolCalls.length && result.finishReason !== 'tool_calls' && !nativeToolStop) throw new Error('Tool arguments arrived without a completed tool-call finish status.')
-    if (!result.toolCalls.length && result.finishReason === 'tool_calls') throw new Error('The provider completed a tool response without any tool calls.')
+    if (!result.toolCalls.length && result.finishReason === 'tool_calls') throw new InferenceFailure({
+      category: 'tool_missing', layer: 'protocol', retryable: false, finishReason: result.finishReason,
+      message: 'The provider completed a tool response without any native tool calls.',
+      fields: [`The response contained ${result.content.length} answer-text characters and ${result.reasoning.length} reasoning characters.`],
+    })
     const ids = new Set<string>()
     for (const call of result.toolCalls) {
       if (!call.id || !call.function.name || ids.has(call.id)) throw new Error('Missing or duplicate tool-call identity.')

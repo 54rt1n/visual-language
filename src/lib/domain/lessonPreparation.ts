@@ -122,7 +122,7 @@ export const lessonGraphDraftSchema = z.strictObject({
     states: z.array(z.string().regex(/^[a-f0-9]{64}$/)).min(1).max(15),
   }),
   pending: z.strictObject({ stateHash: z.string().regex(/^[a-f0-9]{64}$/), candidate: lessonWaypointSchema,
-    reviewRound: z.number().int().min(0).max(2), revision: text(1000).optional(),
+    reviewRound: z.number().int().min(0).max(2), revision: text(1000).optional(), requestedChange: text(1000).optional(),
   }).optional(),
 })
 export type LessonGraphDraft = z.infer<typeof lessonGraphDraftSchema>

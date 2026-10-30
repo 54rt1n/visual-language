@@ -542,6 +542,9 @@ describe('projected lesson graph workflow', () => {
         const { id: _id, ...fields } = d.candidateToRevise
         return submit(o, { ...fields, explanation: '我 identifies the speaker as the recipient of the tea.' })
       }
+      if (d.generationMode === 'verify_lesson_waypoint' && d.candidate.explanation === '我 identifies the speaker as the recipient of the tea.') {
+        expect(d.requestedChange).toBe('Clarify who is speaking.')
+      }
       return fixture(o)
     }
     await expect(prepareWaypointGraph(input, { provider, transport, signal: controller.signal, onCheckpoint: async draft => {
@@ -599,7 +602,13 @@ describe('projected lesson graph workflow', () => {
     })).rejects.toThrow()
     expect(checkpoint!.construction.operations).toBe(1)
     expect(checkpoint!.construction.states).toHaveLength(2)
-    await expect(prepareWaypointGraph(input, { provider, checkpoint, transport: async o => fixture(o) })).rejects.toMatchObject({
+    await expect(prepareWaypointGraph(input, { provider, checkpoint, transport: async o => {
+      if (data(o).generationMode === 'verify_lesson_waypoint') {
+        expect(data(o).graphRevision.reason).toBe('Revise the recipient explanation.')
+        expect(data(o).requestedChange).toBe('Revise the recipient explanation.')
+      }
+      return fixture(o)
+    } })).rejects.toMatchObject({
       failure: { category: 'budget_exhausted', message: expect.stringContaining('without progress') },
     })
   })
@@ -728,7 +737,7 @@ describe('projected lesson graph workflow', () => {
     const transport = vi.fn(async () => { throw new Error('Disconnected') })
     await expect(prepareWaypointGraph(input, { provider, transport })).rejects.toThrow('Disconnected')
     expect(transport).toHaveBeenCalledTimes(1)
-    await expect(prepareWaypointGraph(input, { provider, transport: async o => ({ ...fixture(o), toolCalls: [] }) })).rejects.toThrow('native submission')
+    await expect(prepareWaypointGraph(input, { provider, transport: async o => ({ ...fixture(o), toolCalls: [] }) })).rejects.toMatchObject({ failure: { category: 'empty_output', correctionExhausted: true } })
   })
 })
 

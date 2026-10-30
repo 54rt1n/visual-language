@@ -33,7 +33,7 @@ describe('lesson generation framework boundaries', () => {
     const routed = resolveLessonModelProfile(undefined, 'groundLesson', { model: 'nvidia/nemotron-3.5-lightning:free', compatibility })
     const canonical = resolveLessonModelProfile(undefined, 'groundLesson', { model: 'nvidia/Nemotron-3_5-Lightning', compatibility })
     expect(canonical).toEqual(routed)
-    expect(canonical).toMatchObject({ profile: { id: 'nemotron-lightning' }, generation: { reasoning: 'on' }, protocol: { toolResponseDialect: 'native' } })
+    expect(canonical).toMatchObject({ profile: { id: 'nemotron-lightning' }, generation: { reasoning: 'on' }, protocol: { toolResponseDialect: 'native', toolChoice: 'auto' } })
   })
   it('keeps identical Nemotron prompts while translating reasoning for Nebius and OpenRouter', async () => {
     const requests: ChatOptions[] = []
@@ -50,6 +50,7 @@ describe('lesson generation framework boundaries', () => {
     expect(openrouter).not.toHaveProperty('chat_template_kwargs')
     expect(nebius.tools).toEqual(openrouter.tools)
     expect(nebius.tool_choice).toEqual(openrouter.tool_choice)
+    expect(nebius.tool_choice).toBe('auto')
     expect(buildChatRequest({ ...requests[0]!, model: 'another-model' }).payload).not.toHaveProperty('chat_template_kwargs')
   })
   it('opts one stage into task placement without changing accepted work or correction dispatches', async () => {
@@ -186,6 +187,7 @@ describe('lesson generation framework boundaries', () => {
     expect(preparation.practice!.complete && preparation.check!.complete).toBe(true)
     expect(requests.every(request => request.generationTrace!.modelProfile.id === evaluatedProfile.id)).toBe(true)
     expect(requests.every(request => request.toolResponseDialect === 'qwen_xml')).toBe(true)
+    expect(requests.every(request => request.parallelToolCalls === undefined)).toBe(true)
     expect(requests.every(request => currentToolMessage(request.messages).content!.includes('<tool_call><function='))).toBe(true)
     expect(requests.filter(request => request.generationTrace!.stage === 'evaluateCoverage').every(request => request.featherlessThinking === false)).toBe(true)
   })
@@ -204,7 +206,7 @@ describe('lesson generation framework boundaries', () => {
       expect(resolved.guidance).not.toContain('<tool_call>')
     }
   })
-  it('completes a GLM fixture lesson with native demonstrations preserved through correction', async () => {
+  it('completes a GLM fixture lesson with reference examples preserved through correction', async () => {
     const selectedProvider = { ...provider, model: 'zai-org/GLM-5.3-Flash' }
     expect(selectLessonModelProfile(undefined, selectedProvider)).toEqual(lessonModelProfileSchema.parse(glmProfile))
     expect(selectLessonModelProfile(profile, selectedProvider)).toEqual(profile)
@@ -226,9 +228,11 @@ describe('lesson generation framework boundaries', () => {
       expect(request.generationTrace?.modelProfile.id).toBe(glmProfile.id)
       expect(request.messages[0]!.role).toBe('system')
       expect(request.messages.at(-1)!.role).toBe('user')
-      const examples = request.messages.slice(1, -1)
-      expect(examples.length).toBeGreaterThanOrEqual(6)
-      for (let i = 0; i < examples.length; i += 3) expect(examples.slice(i, i + 3).map(m => m.role)).toEqual(['user', 'assistant', 'tool'])
+      expect(request.messages.map(m => m.role)).toEqual(['system', 'user'])
+      expect(request.messages[0]!.content).toContain('Worked examples for this operation:')
+      for (const example of glmProfile.stages.reviewQuestion.nativeExamples) {
+        expect(request.messages[0]!.content).toContain(JSON.stringify(example.arguments))
+      }
       expect(buildChatRequest(request).payload.messages).toEqual(request.messages)
       const context = parseToolContext(request.messages.at(-1)!.content!)
       expect(context.generationMode).toBe('verify_correct_question')
@@ -262,7 +266,7 @@ describe('lesson generation framework boundaries', () => {
     const correction = parseToolContext(requests[1]!.messages.at(-1)!.content!)
     expect(correction.candidateSubmission).toEqual(candidate)
     expect(correction.nativeSubmissionIssue).toContain('2 separate Mandarin sentences')
-    expect(requests[1]!.messages.filter(m => m.role === 'assistant')).toHaveLength(2)
+    expect(requests[1]!.messages.map(m => m.role)).toEqual(['system', 'user'])
   })
   it('rejects malformed native example arguments before dispatch', async () => {
     const transport = vi.fn()
@@ -283,7 +287,8 @@ describe('lesson generation framework boundaries', () => {
     const parameters = requests[0]!.tools![0]!.function.parameters as { properties: { cardId: { enum: string[] }; waypointId: { enum: string[] } } }
     expect(parameters.properties.cardId.enum).toEqual(['c1', 'c2'])
     expect(parameters.properties.waypointId.enum).toEqual(['w1'])
-    expect(requests[0]!.messages[2]!.tool_calls![0]!.function.arguments).toBe(JSON.stringify(example.arguments))
+    expect(requests[0]!.messages[0]!.content).toContain(JSON.stringify(example.arguments))
+    expect(requests[0]!.messages.map(m => m.role)).toEqual(['system', 'user'])
     const transport = vi.fn()
     await expect(executeLessonStage({ provider, transport, modelProfile: { ...selected, stages: { proposeQuestions: {
       nativeExamples: [{ ...example, arguments: { ...example.arguments, cardId: 'c1' } }],

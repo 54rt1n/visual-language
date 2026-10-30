@@ -1,7 +1,7 @@
 import type { ChatOptions } from '../../ai/types'
 import qwenProfile from './profiles/qwen-v7.json'
 import glmProfile from './profiles/glm-native-v2.json'
-import nemotronProfile from './profiles/nemotron-lightning-v2.json'
+import nemotronProfile from './profiles/nemotron-lightning-v3.json'
 import { modelIdentity } from '../../ai/modelIdentity'
 import { lessonProviderProtocol } from './providerProtocol'
 import { z } from 'zod'
@@ -21,6 +21,7 @@ const adaptation = z.strictObject({
   replyGuidance: z.string().trim().min(1).max(4000).optional(),
   generation: generationSettings.optional(),
   protocol: z.strictObject({ toolResponseDialect: z.enum(['native', 'qwen_xml']), normalizeParameterNameQuotes: z.boolean().optional(),
+    toolChoice: z.enum(['auto', 'required']).optional(),
     allowAssistantPrefix: z.boolean().optional(), normalizeFunctionOpening: z.boolean().optional() }).optional(),
 })
 const nativeExample = z.strictObject({ context: z.record(z.string(), z.unknown()), arguments: z.record(z.string(), z.unknown()) })

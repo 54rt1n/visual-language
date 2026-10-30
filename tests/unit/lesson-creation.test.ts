@@ -10,6 +10,7 @@ import { LessonCreationPauseError, LessonCreationService, lessonCreationSettings
 import type { TeacherHost } from '../../src/lib/teacher/teacherService'
 import type { ChatOptions } from '../../src/lib/ai/types'
 import { buildChatRequest } from '../../src/lib/ai/chatRequest'
+import { streamChat } from '../../src/lib/ai/client'
 import { lessonSourceFixture, sourceFixtureTools } from '../fixtures/lesson-source'
 import { topicFixture } from '../fixtures/topic-lesson'
 import { NOW, workspaceFixture } from './fixtures'
@@ -62,23 +63,34 @@ async function conversation(h: Awaited<ReturnType<typeof setup>>) {
 }
 
 describe('shared lesson creation application workflow', () => {
-  it('uses the Nemotron customizations throughout Nebius source, lesson and quiz preparation', async () => {
+  it('recovers a captured malformed Nebius tool response and preserves Nemotron settings through both quizzes', async () => {
     const h = await setup()
     h.settings.selected = 'nebius'
     h.settings.profiles.nebius = { ...h.settings.profiles.nebius, model: 'nvidia/Nemotron-3_5-Lightning', apiKey: 'synthetic-nebius-key', keyOrigin: 'https://api.tokenfactory.nebius.com' }
     // The already-saved browser profile predates the Nebius wire adapter.
     delete h.settings.profiles.nebius.compatibility
     const original = h.transport.getMockImplementation()!
+    let malformed = false
     h.transport.mockImplementation(async request => {
       expect(request.generationTrace?.modelProfile.id).toBe('nemotron-lightning')
       expect(request.toolResponseDialect).toBe('native')
-      expect(buildChatRequest(request).payload).toMatchObject({ model: 'nvidia/Nemotron-3_5-Lightning', chat_template_kwargs: { enable_thinking: true } })
+      expect(buildChatRequest(request).payload).toMatchObject({ model: 'nvidia/Nemotron-3_5-Lightning', chat_template_kwargs: { enable_thinking: true }, parallel_tool_calls: false })
+      if (!malformed && request.tools?.[0]?.function.name === 'ground_lesson') {
+        malformed = true
+        const content = '\n<tool_call>\n<函\n</parameter>\n</function>\n</tool_call>'
+        const body = `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content } }] })}\n\n`
+          + 'data: {"choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}\n\ndata: [DONE]\n\n'
+        return streamChat({ ...request, fetcher: async () => new Response(body) })
+      }
       return original(request)
     })
     const id = await h.service.saveRequest(h.request)
     await h.service.createFromRequest(id)
     expect(h.service.status({ draftId: id }).phase).toBe('ready')
-    expect(h.transport.mock.calls.some(([request]) => request.tools?.[0]?.function.name === 'ground_lesson')).toBe(true)
+    const grounding = h.transport.mock.calls.filter(([request]) => request.tools?.[0]?.function.name === 'ground_lesson')
+    expect(grounding).toHaveLength(2)
+    expect(grounding[1]![0].messages.at(-1)!.content).toContain('without any native tool calls')
+    expect(JSON.stringify(grounding[1]![0].messages)).not.toContain('<函')
     expect(h.service.status({ draftId: id }).readiness).toMatchObject({ teaching: true, practice: { status: 'validated' }, check: { status: 'validated' } })
   })
   it('rejects another learner’s validated conversation request before capture or generation', async () => {
@@ -137,6 +149,16 @@ describe('shared lesson creation application workflow', () => {
     expect(planning).toContain('EARLIER_MESSAGE')
     expect(planning).toContain('请给我一杯茶')
     expect(planning).not.toMatch(/SIBLING_CONTENT|UNRELATED_LATER_MESSAGE|PRIVATE_REASONING|EDITED_AFTER_FREEZE/)
+    expect(planning).not.toMatch(/rootId|anchorId|learnerId|nodeId|"extract"|"refresh"/)
+    const groundingRequest = h.transport.mock.calls.find(([request]) => request.tools?.[0]?.function.name === 'ground_lesson')![0]
+    const current = groundingRequest.messages.at(-1)!.content!
+    expect(current).toContain('Current lesson\n')
+    expect(current).toContain('Student: Teach me how to order tea.')
+    expect(current).toContain('## Student Request\nTeach me how to order tea.')
+    expect(current).toContain('Practice and assessment use multiple-choice questions')
+    expect(current).not.toContain('"quizLevel"')
+    expect(current).toContain('Tutor: 请给我一杯茶。')
+    expect(current.indexOf('Current task:')).toBeGreaterThan(current.indexOf('Tutor:'))
     expect({ nodes: state.nodes, edges: state.edges }).toEqual(canvas)
     expect(state.exercises).toEqual([]); expect(state.events).toEqual([])
     expect(parseBackup(JSON.stringify(exportBackup(h.host.current(), NOW))).data).toEqual(state)

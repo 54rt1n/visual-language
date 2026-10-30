@@ -48,7 +48,7 @@ export type ChatOptions = {
     stage: string; settings: { maxTokens: number; temperature: number; reasoning: 'on' | 'off' };
     taskPlacement?: 'system' | 'user_context_tail';
     attempt?: { submission: number; request: number };
-    protocol?: { toolResponseDialect: 'native' | 'qwen_xml'; normalizeParameterNameQuotes?: boolean; allowAssistantPrefix?: boolean; normalizeFunctionOpening?: boolean };
+    protocol?: { toolResponseDialect: 'native' | 'qwen_xml'; toolChoice?: 'auto' | 'required'; normalizeParameterNameQuotes?: boolean; allowAssistantPrefix?: boolean; normalizeFunctionOpening?: boolean };
   };
   /** Featherless template reasoning; omitted requests keep ordinary chat concise. */
   featherlessThinking?: boolean;
@@ -62,6 +62,8 @@ export type ChatOptions = {
   messages: ChatMessage[]
   tools?: ToolDefinition[]
   toolChoice?: ToolChoice
+  /** Native lesson stages accept one submission per response. */
+  parallelToolCalls?: boolean
   maxTokens?: number
   temperature?: number
   timeoutMs?: number

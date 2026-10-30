@@ -45,7 +45,7 @@ export const lessonEvaluationPolicy = { execution: { ...defaultLessonExecutionPo
 const START = Date.UTC(2026, 9, 8, 12)
 export type CallEvidence = {
   stage: string; mode: string; repair: boolean; requestedModel: string; returnedModel?: string; durationMs: number; parsedResponseReceived: boolean;
-  request: Pick<ChatOptions, 'messages' | 'tools' | 'toolChoice' | 'maxTokens' | 'temperature' | 'compatibility' | 'featherlessThinking' | 'reasoningEnabled' | 'generationTrace' | 'toolResponseDialect' | 'responseMode' | 'contextBudget' | 'normalizeParameterNameQuotes' | 'allowAssistantPrefix' | 'normalizeFunctionOpening'>;
+  request: Pick<ChatOptions, 'messages' | 'tools' | 'toolChoice' | 'parallelToolCalls' | 'maxTokens' | 'temperature' | 'compatibility' | 'featherlessThinking' | 'reasoningEnabled' | 'generationTrace' | 'toolResponseDialect' | 'responseMode' | 'contextBudget' | 'normalizeParameterNameQuotes' | 'allowAssistantPrefix' | 'normalizeFunctionOpening'>;
   streamActivity: { reasoningCharacters: number; contentCharacters: number };
   requestHash: string; wireRequest?: Record<string, unknown>; wireRequestHash?: string; response?: Omit<ChatResult, 'reasoning'>; httpStatus?: number; error?: string;
   diagnostic?: ResponseDiagnostic; providerError?: ProviderStreamError; failure?: InferenceFailureRecord;
@@ -110,7 +110,7 @@ export async function runCase(entry: LessonCase, config: RunConfig, signal?: Abo
       transport: async options => {
       runSignal.throwIfAborted()
       if (calls.length >= envelope.maxRequests - (resume?.originalRequestCount ?? 0)) throw new Error('Evaluation call budget exhausted.')
-      const request = structuredClone({ messages: options.messages, tools: options.tools, toolChoice: options.toolChoice, maxTokens: options.maxTokens, temperature: options.temperature, compatibility: options.compatibility, featherlessThinking: options.featherlessThinking, reasoningEnabled: options.reasoningEnabled, generationTrace: options.generationTrace, toolResponseDialect: options.toolResponseDialect, responseMode: options.responseMode, contextBudget: options.contextBudget, normalizeParameterNameQuotes: options.normalizeParameterNameQuotes, allowAssistantPrefix: options.allowAssistantPrefix, normalizeFunctionOpening: options.normalizeFunctionOpening })
+      const request = structuredClone({ messages: options.messages, tools: options.tools, toolChoice: options.toolChoice, parallelToolCalls: options.parallelToolCalls, maxTokens: options.maxTokens, temperature: options.temperature, compatibility: options.compatibility, featherlessThinking: options.featherlessThinking, reasoningEnabled: options.reasoningEnabled, generationTrace: options.generationTrace, toolResponseDialect: options.toolResponseDialect, responseMode: options.responseMode, contextBudget: options.contextBudget, normalizeParameterNameQuotes: options.normalizeParameterNameQuotes, allowAssistantPrefix: options.allowAssistantPrefix, normalizeFunctionOpening: options.normalizeFunctionOpening })
       const input = preparationInput(options), mode = input.generationMode
       const current = options.messages.at(-1)
       const repair = options.messages.some(m => m.role === 'tool' && m.content?.includes('"ok":false'))

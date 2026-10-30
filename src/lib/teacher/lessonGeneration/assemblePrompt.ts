@@ -3,6 +3,7 @@ import { toolPrompt } from '../toolPrompt'
 import { LEARNER_REQUEST, REPAIR_EXPLANATION, WAYPOINT_RULES, waypointLessonInstructions, waypointAssessmentInstructions } from './prompts'
 import type { LessonStageContext } from './stages'
 import type { LessonTaskPlacement, NativeLessonExample } from './modelProfiles'
+import { preparationEvidence, preparationSettings } from './preparationPrompt'
 
 type LessonPromptOptions = {
   modelGuidance?: string
@@ -19,10 +20,14 @@ export function assembleLessonPrompt(tool: ToolDefinition['function'], context: 
   const prompt = toolPrompt(tool, dialect)
   const lessonGuidance = isolatedContext || options.preparation ? '' : `${WAYPOINT_RULES}\n${waypointLessonInstructions(context.kind)}\n`
   const currentTask = `${isolatedContext || options.preparation ? '' : `${waypointAssessmentInstructions(context.settings)}\n`}${task}`
-  const system = `${prompt.description}\n\n${LEARNER_REQUEST}\n${lessonGuidance}${taskPlacement === 'system' ? currentTask : ''}`
+  const examples = !isolatedContext && dialect === 'native'
+    ? (options.nativeExamples ?? []).map((example, index) =>
+      `Example ${index + 1} (reference material)\nInput: ${JSON.stringify(example.context)}\n${tool.name} arguments: ${JSON.stringify(example.arguments)}`).join('\n\n') : ''
+  const system = `${prompt.description}\n\n${LEARNER_REQUEST}\n${lessonGuidance}${taskPlacement === 'system' && (!options.preparation || dialect === 'qwen_xml') ? currentTask : ''}`
     // Isolated solvers use the offered tool description/footer for protocol.
     // Arbitrary profile guidance may contain semantic examples or answer clues.
     + (!isolatedContext && modelGuidance ? `\n\nModel guidance:\n${modelGuidance}` : '')
+    + (examples ? `\n\nWorked examples for this operation:\n${examples}` : '')
   const project = (nativeSubmissionIssue?: string, candidateSubmission?: unknown): ChatMessage => {
     // Target diagnostic verbosity only; authoring and protocol repairs keep their original instructions.
     const candidate = candidateSubmission && typeof candidateSubmission === 'object'
@@ -36,7 +41,7 @@ export function assembleLessonPrompt(tool: ToolDefinition['function'], context: 
       ? Object.fromEntries(Object.entries(candidate!).filter(([field]) => !overlongFields.includes(field))) : candidateSubmission
     const footer = overlongFields.length
       ? prompt.footer.replace('\n\nTool call:\n', `\n\nTool call:\n${REPAIR_EXPLANATION}\n`) : prompt.footer
-    const projected: Record<string, unknown> = { learnerRequest: LEARNER_REQUEST, ...(isolatedContext ?? { ...context, generationMode: tool.name }),
+    const projected: Record<string, unknown> = { ...(!options.preparation ? { learnerRequest: LEARNER_REQUEST } : {}), ...(isolatedContext ?? { ...context, generationMode: tool.name }),
       ...(nativeSubmissionIssue ? { nativeSubmissionIssue } : {}),
       ...(correctedCandidate === undefined ? {} : { candidateSubmission: correctedCandidate }) }
     if (taskPlacement === 'user_context_tail') {
@@ -44,15 +49,10 @@ export function assembleLessonPrompt(tool: ToolDefinition['function'], context: 
       delete projected.currentTask
       projected.currentTask = currentTask
     }
-    return { role: 'user', content: JSON.stringify(projected) + footer }
+    return { role: 'user', content: options.preparation
+      ? `Current lesson\n\n${preparationEvidence({ ...projected, settings: preparationSettings(context.settings) })}\n\nCurrent task: ${currentTask}${footer}`
+      : JSON.stringify(projected) + footer }
   }
-  const examples: ChatMessage[] = !isolatedContext && dialect === 'native'
-    ? (options.nativeExamples ?? []).flatMap((example, index): ChatMessage[] => {
-      const id = `lesson-example-${index + 1}`
-      return [{ role: 'user', content: JSON.stringify(example.context) },
-        { role: 'assistant', content: null, tool_calls: [{ id, type: 'function', function: { name: tool.name, arguments: JSON.stringify(example.arguments) } }] },
-        { role: 'tool', tool_call_id: id, content: 'Worked example recorded.' }]
-    }) : []
-  const prefix: ChatMessage[] = [{ role: 'system', content: system }, ...examples]
+  const prefix: ChatMessage[] = [{ role: 'system', content: system }]
   return { messages: [...prefix, project()], project, prefix }
 }

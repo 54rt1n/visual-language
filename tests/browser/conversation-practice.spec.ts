@@ -5,7 +5,7 @@ import { topicFixture } from '../fixtures/topic-lesson'
 import { lessonSourceFixture, sourceFixtureTools } from '../fixtures/lesson-source'
 import { quizLevels, englishAnswers, withPinyin, type QuizLevel } from '../../src/lib/domain/lessonPlan'
 
-async function fixture(page: Page, controls: { interruptCheckReview: boolean; failSource?: boolean; searchKey?: boolean; beforeStage?: (input: Record<string, any>) => Promise<void> } = { interruptCheckReview: false }) {
+async function fixture(page: Page, controls: { interruptCheckReview: boolean; failSource?: boolean; malformedSource?: boolean; searchKey?: boolean; beforeStage?: (input: Record<string, any>) => Promise<void> } = { interruptCheckReview: false }) {
   const inputs: Record<string, any>[] = []
   await page.route('https://api.journey-fixture.example/v1/chat/completions', async route => {
     const body = route.request().postDataJSON()
@@ -17,6 +17,15 @@ async function fixture(page: Page, controls: { interruptCheckReview: boolean; fa
       await route.fulfill({status:400,contentType:'application/json',body:JSON.stringify({error:{message:'Fixture interrupted check review'}})}).catch(() => { /* The learner may have paused this held request. */ }); return
     }
     const tool = body.tools?.[0]?.function.name
+    if (tool === 'ground_lesson' && controls.malformedSource) {
+      controls.malformedSource = false
+      expect(body.parallel_tool_calls).toBe(false)
+      if (input) inputs.push(input)
+      const content = '\n<tool_call>\n<函\n</parameter>\n</function>\n</tool_call>'
+      await route.fulfill({ contentType: 'text/event-stream', body: `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content } }] })}\n\n`
+        + 'data: {"choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}\n\ndata: [DONE]\n\n' })
+      return
+    }
     if (tool === 'propose_lesson_points' && controls.failSource) {
       if (input) inputs.push(input)
       await route.fulfill({ status: 400, json: { error: { message: 'Authored source interruption' } } }); return
@@ -44,7 +53,7 @@ async function fixture(page: Page, controls: { interruptCheckReview: boolean; fa
 for (const width of [1440, 320]) test(`node checklist creates a complete lesson from an older reply without saved cards at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: width === 320 ? 568 : 900 })
   await page.goto('/'); await expect(page.getByText('Saved on this device', { exact: false })).toBeVisible()
-  const inputs = await fixture(page, { interruptCheckReview: false, searchKey: true })
+  const inputs = await fixture(page, { interruptCheckReview: false, searchKey: true, malformedSource: width === 1440 })
   const searches: string[] = []
   await page.route('https://api.tavily.com/**', async route => { searches.push(route.request().url()); await route.abort() })
   const composer = page.getByRole('textbox', { name: 'Message to Zheng' })
@@ -71,6 +80,9 @@ for (const width of [1440, 320]) test(`node checklist creates a complete lesson 
   await expect(dialog.getByRole('button', { name: 'Start lesson', exact: true })).toBeVisible()
   await expect(dialog.getByRole('heading', { name: 'Your lesson is ready', exact: true })).toBeFocused()
   await expect(dialog.getByLabel('Prepared lesson')).toContainText('Lesson quiz')
+  const grounding = inputs.filter(input => input.generationMode === 'ground_lesson')
+  expect(grounding).toHaveLength(width === 1440 ? 2 : 1)
+  if (width === 1440) expect(grounding[1]!.nativeSubmissionIssue).toContain('without any native tool calls')
   await expect(page.getByRole('dialog', { name: 'Your lesson', exact: true })).toHaveCount(0)
   expect(JSON.stringify(inputs.filter(input => input.originalRequest))).toContain('OLDER_REPLY_SOURCE')
   expect(JSON.stringify(inputs.filter(input => input.originalRequest))).not.toContain('LATER_MESSAGE_EXCLUDED')
