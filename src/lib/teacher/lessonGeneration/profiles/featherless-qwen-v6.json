@@ -1,7 +1,0 @@
-{
-  "id": "qwen-featherless-template",
-  "version": "6-experimental",
-  "protocol": { "toolResponseDialect": "qwen_xml", "normalizeParameterNameQuotes": true, "allowAssistantPrefix": true, "normalizeFunctionOpening": true },
-  "stages": { "evaluateCoverage": { "generation": { "reasoning": "off" } } },
-  "guidance": "The listed tool is available for this request. Submit its result as one function call using your tool template: <tool_call><function=TOOL_NAME><parameter=FIELD_NAME>VALUE</parameter></function></tool_call>. Replace TOOL_NAME and FIELD_NAME with the offered tool and its schema fields. Include every required field; use JSON for array/object values. Do not write a signature, markdown, or explanatory prose outside the call."
-}

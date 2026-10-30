@@ -1,11 +1,11 @@
 /** Built-in connections use each vendor's documented OpenAI-compatible API. */
 export const providerIds = ['nebius', 'featherless', 'openai', 'anthropic', 'google', 'alibaba', 'minimax', 'openrouter', 'custom'] as const
 export type ProviderId = typeof providerIds[number]
-export const compatibilityIds = ['standard', 'alibaba', 'featherless', 'anthropic', 'minimax', 'openrouter'] as const
+export const compatibilityIds = ['standard', 'nebius', 'alibaba', 'featherless', 'anthropic', 'minimax', 'openrouter'] as const
 export type ProviderCompatibility = typeof compatibilityIds[number]
 type ProviderDefinition = { name: string; baseUrl: string; model: string; compatibility?: ProviderCompatibility; modelList: boolean; note: string; keyUrl?: string; envKeys: readonly string[] }
 export const providerCatalog: Record<ProviderId, ProviderDefinition> = {
-  nebius: { keyUrl: 'https://tokenfactory.nebius.com/', name: 'Nebius', baseUrl: 'https://api.tokenfactory.nebius.com/v1', model: 'deepseek-ai/DeepSeek-V4-Flash-0731', modelList: true, note: 'Connect with your Nebius Token Factory account.', envKeys: ['NEBIUS_API_KEY'] },
+  nebius: { keyUrl: 'https://tokenfactory.nebius.com/', name: 'Nebius', baseUrl: 'https://api.tokenfactory.nebius.com/v1', model: 'deepseek-ai/DeepSeek-V4-Flash-0731', compatibility: 'nebius', modelList: true, note: 'Connect with your Nebius Token Factory account.', envKeys: ['NEBIUS_API_KEY'] },
   featherless: { keyUrl: 'https://featherless.ai/account/api-keys', name: 'Featherless', baseUrl: 'https://api.featherless.ai/v1', model: 'deepseek-ai/DeepSeek-V4-Flash-0731', compatibility: 'featherless', modelList: true, note: 'Uses your Featherless subscription and its available models.', envKeys: ['FEATHERLESS_API_KEY'] },
   openai: { keyUrl: 'https://platform.openai.com/api-keys', name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4.1-mini', modelList: true, note: 'Uses the OpenAI Chat Completions API.', envKeys: ['OPENAI_API_KEY'] },
   anthropic: { keyUrl: 'https://platform.claude.com/settings/keys', name: 'Anthropic Claude', baseUrl: 'https://api.anthropic.com/v1', model: 'claude-sonnet-4-6', compatibility: 'anthropic', modelList: false, note: 'Uses Anthropic’s official OpenAI-compatible API. Enter your Claude model ID directly.', envKeys: ['ANTHROPIC_API_KEY'] },

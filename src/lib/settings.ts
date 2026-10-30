@@ -27,6 +27,10 @@ export type Settings = z.infer<typeof settingsSchema>
 export type ProviderProfile = Settings['profiles'][ProviderId]
 type StorageLike = Pick<Storage, 'getItem' | 'setItem'>
 
+export function profileCompatibility(profile: Pick<ProviderProfile, 'baseUrl' | 'compatibility'>, id: ProviderId) {
+  return profile.compatibility ?? (id === 'nebius' && profile.baseUrl.trim().replace(/\/+$/, '') === providerDefaults.nebius.baseUrl ? 'nebius' : undefined)
+}
+
 export const speechPreferencesSchema = z.strictObject({
   voiceURI: z.string().max(1000),
   rate: z.number().min(0.5).max(1.2),
@@ -104,7 +108,8 @@ export function resolveProviderAccess(settings: Settings, id = settings.selected
   const testKey = baseUrl === providerDefaults[id].baseUrl ? envApiKey(id) : ''
   const apiKey = profile.apiKey.trim() || testKey
   if (!apiKey) throw new Error(`Add your ${providerNames[id]} key in Settings.`)
-  return { provider: id, baseUrl, apiKey, ...(profile.compatibility ? { compatibility: profile.compatibility } : {}) }
+  const compatibility = profileCompatibility(profile, id)
+  return { provider: id, baseUrl, apiKey, ...(compatibility ? { compatibility } : {}) }
 }
 
 export function resolveProvider(settings: Settings, id = settings.selected) {

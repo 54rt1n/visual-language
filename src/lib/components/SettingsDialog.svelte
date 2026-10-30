@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte'
   import Modal from './Modal.svelte'
-  import { bindProfileKey, envApiKey, providerCatalog, providerDefaults, providerIds, providerNames, resolveProvider, resolveProviderAccess, saveSettings, type ProviderCompatibility, type Settings } from '../settings'
+  import { bindProfileKey, envApiKey, profileCompatibility, providerCatalog, providerDefaults, providerIds, providerNames, resolveProvider, resolveProviderAccess, saveSettings, type ProviderCompatibility, type Settings } from '../settings'
   import { testProviderConnection } from '../ai/connectionTest'
   import { listProviderModels, type ModelList } from '../ai/models'
   let { settings, onSave, onClose, allowNetwork = true }: { settings: Settings; onSave: (value: Settings) => void | Promise<void>; onClose: () => void; allowNetwork?: boolean } = $props()
@@ -130,7 +130,7 @@
   {#if probeText}<section class="probe" aria-label="Model test reply"><h3>Test reply</h3><p>{probeText}</p><p class="notice">This checks a text reply. Lesson tools are checked when preparing a lesson.</p></section>{/if}
   <details class="advanced" bind:open={advancedOpen}><summary>Advanced connection settings</summary>
     <label>API endpoint<input bind:value={profile.baseUrl} placeholder="https://…/v1" disabled={busy} /></label>
-    <label>API compatibility<select value={profile.compatibility ?? 'standard'} onchange={event => { profile.compatibility = event.currentTarget.value as ProviderCompatibility }} disabled={busy}><option value="standard">Standard OpenAI-compatible</option><option value="alibaba">Alibaba Qwen (non-thinking)</option><option value="featherless">Featherless (non-thinking where supported)</option><option value="anthropic">Anthropic OpenAI-compatible API</option><option value="minimax">MiniMax (separate reasoning)</option><option value="openrouter">OpenRouter</option></select></label>
+    <label>API compatibility<select value={profileCompatibility(profile, draft.selected) ?? 'standard'} onchange={event => { profile.compatibility = event.currentTarget.value as ProviderCompatibility }} disabled={busy}><option value="standard">Standard OpenAI-compatible</option><option value="nebius">Nebius Token Factory</option><option value="alibaba">Alibaba Cloud</option><option value="featherless">Featherless</option><option value="anthropic">Anthropic OpenAI-compatible API</option><option value="minimax">MiniMax (separate reasoning)</option><option value="openrouter">OpenRouter</option></select></label>
     {#if profile.compatibility === 'alibaba'}<p class="notice">Token Plan subscriptions use a dedicated endpoint and key. Match both to your plan; API compatibility alone does not switch accounts.</p>{/if}
     <p class="notice">Provider defaults are ready to use. Change these only for a different endpoint or API format. Saving approves this key for the selected endpoint.</p>
     <p class="notice">Branches can override the model. Use Node tools to manage a branch override.</p>

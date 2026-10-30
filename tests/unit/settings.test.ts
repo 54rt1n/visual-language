@@ -38,6 +38,19 @@ describe('browser key custody', () => {
     expect(loadSettings(storage)).toEqual(old)
     expect(storage.getItem(SETTINGS_KEY)).toBe(raw)
   })
+  it('resolves the Nebius adapter for an existing built-in connection without rewriting saved settings', () => {
+    const storage = memory(), settings = defaultSettings()
+    settings.profiles.nebius = bindProfileKey({ ...settings.profiles.nebius, model: 'nvidia/Nemotron-3_5-Lightning', apiKey: 'nebius-fixture-key' })
+    delete settings.profiles.nebius.compatibility
+    const raw = JSON.stringify(settings); storage.setItem(SETTINGS_KEY, raw)
+    expect(resolveProvider(loadSettings(storage))).toMatchObject({ compatibility: 'nebius', model: 'nvidia/Nemotron-3_5-Lightning', apiKey: 'nebius-fixture-key' })
+    expect(storage.getItem(SETTINGS_KEY)).toBe(raw)
+    settings.profiles.nebius.compatibility = 'standard'
+    expect(resolveProvider(settings).compatibility).toBe('standard')
+    delete settings.profiles.nebius.compatibility
+    settings.profiles.nebius = bindProfileKey({ ...settings.profiles.nebius, baseUrl: 'https://custom-nebius.example/v1' })
+    expect(resolveProvider(settings)).not.toHaveProperty('compatibility')
+  })
   it('allows model discovery with an approved key before a model is chosen', () => {
     const settings = defaultSettings()
     settings.selected = 'featherless'

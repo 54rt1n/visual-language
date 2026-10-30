@@ -3,6 +3,7 @@ import { normalizeEndpoint } from './http'
 import { GENERATION_OUTPUT_TOKENS } from './generationBudget'
 import { InferenceFailure } from './inferenceFailure'
 import { validateChatRequest } from './requestProtocol'
+import { modelIdentity } from './modelIdentity'
 
 /** One wire builder serves streaming and complete-response protocol controls. */
 export function buildChatRequest(options: ChatOptions) {
@@ -18,8 +19,10 @@ export function buildChatRequest(options: ChatOptions) {
   return { endpoint, payload: {
     model: options.model, messages, stream: options.responseMode !== 'complete',
     max_tokens: options.maxTokens ?? GENERATION_OUTPUT_TOKENS,
-    ...(options.compatibility === 'alibaba' ? { enable_thinking: false } : {}),
-    ...(options.compatibility === 'featherless' ? { chat_template_kwargs: { enable_thinking: options.featherlessThinking ?? false } } : {}),
+    ...(options.compatibility === 'alibaba' ? { enable_thinking: options.reasoningEnabled ?? false } : {}),
+    ...(options.compatibility === 'featherless' ? { chat_template_kwargs: { enable_thinking: options.featherlessThinking ?? options.reasoningEnabled ?? false } } : {}),
+    ...(options.compatibility === 'nebius' && modelIdentity(options.model) === 'nemotron35lightning' && options.reasoningEnabled !== undefined
+      ? { chat_template_kwargs: { enable_thinking: options.reasoningEnabled } } : {}),
     ...(options.compatibility === 'minimax' ? { reasoning_split: true } : {}),
     ...(options.compatibility === 'openrouter' && options.reasoningEnabled !== undefined ? { reasoning: { enabled: options.reasoningEnabled } } : {}),
     ...(options.temperature === undefined || options.compatibility === 'anthropic' ? {} : { temperature: options.temperature }),

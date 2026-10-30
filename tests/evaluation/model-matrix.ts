@@ -8,10 +8,12 @@ export const modelMatrix: ReadonlyArray<{ provider: EvaluationProvider; model: s
   { provider: 'featherless', model: 'Qwen/Qwen3.8-27B' },
   { provider: 'featherless', model: 'zai-org/GLM-5.3-Flash' },
   { provider: 'alibaba', model: 'qwen3.8-max' },
+  { provider: 'alibaba', model: 'qwen3.8-flash' },
   { provider: 'minimax', model: 'MiniMax-M2.7' },
   { provider: 'minimax', model: 'MiniMax-M3' },
   { provider: 'minimax', model: 'MiniMax-M3.1-Flash-Preview' },
   { provider: 'nebius', model: 'deepseek-ai/DeepSeek-V4-Flash-0731' },
+  { provider: 'nebius', model: 'nvidia/Nemotron-3_5-Lightning' },
   { provider: 'openrouter', model: 'nvidia/nemotron-3.5-lightning:free' },
 ]
 export const candidateModels = [...new Set(modelMatrix.map(entry => entry.model))]

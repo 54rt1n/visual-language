@@ -53,7 +53,9 @@ try {
   context = parseToolContext(contextMessage)
   const { proposalWaypoint, applyWaypoint } = await server.ssrLoadModule('/src/lib/teacher/lessonGraphTools.ts')
   const { validateLessonGraph } = await server.ssrLoadModule('/src/lib/domain/lessonGraph.ts')
-  const { lessonModelProfileSchema, defaultLessonModelProfile, resolveLessonModelProfile } = await server.ssrLoadModule('/src/lib/teacher/lessonGeneration/modelProfiles.ts')
+  const { lessonModelProfileSchema, defaultLessonModelProfile: sharedProfile, resolveLessonModelProfile } = await server.ssrLoadModule('/src/lib/teacher/lessonGeneration/modelProfiles.ts')
+  // This experiment controls the protocol explicitly; provider defaults are not an experimental variable.
+  const defaultLessonModelProfile = { ...sharedProfile, protocol: { toolResponseDialect: 'native' } }
   const { streamChat } = await server.ssrLoadModule('/src/lib/ai/client.ts')
   const { providerDefaults } = await server.ssrLoadModule('/src/lib/settings.ts')
   const { lessonFixture } = await server.ssrLoadModule('/tests/evaluation/lesson-runner.ts')
@@ -92,7 +94,7 @@ try {
     }
   }
   const candidateText = await readFile(resolve(options.candidate), 'utf8')
-  const fileProfile = lessonModelProfileSchema.parse(JSON.parse(candidateText))
+  const fileProfile = lessonModelProfileSchema.parse({ protocol: { toolResponseDialect: 'native' }, ...JSON.parse(candidateText) })
   const candidate = options['candidate-thinking'] ? lessonModelProfileSchema.parse({ ...fileProfile,
     stages: { ...(fileProfile.stages ?? {}), [definition.id]: { generation: { reasoning: 'on' } } } }) : fileProfile
   if (candidate.id === defaultLessonModelProfile.id && candidate.version === defaultLessonModelProfile.version) throw new Error('Give the candidate a distinct profile identity.')

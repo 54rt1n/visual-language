@@ -9,6 +9,7 @@ import { GraphService } from '../../src/lib/graph/graphService'
 import { LessonCreationPauseError, LessonCreationService, lessonCreationSettings, lessonCreationSetup, lessonConversationSetup, lessonCreationConnected, type LessonCreationProgress } from '../../src/lib/teacher/lessonCreationService'
 import type { TeacherHost } from '../../src/lib/teacher/teacherService'
 import type { ChatOptions } from '../../src/lib/ai/types'
+import { buildChatRequest } from '../../src/lib/ai/chatRequest'
 import { lessonSourceFixture, sourceFixtureTools } from '../fixtures/lesson-source'
 import { topicFixture } from '../fixtures/topic-lesson'
 import { NOW, workspaceFixture } from './fixtures'
@@ -61,6 +62,25 @@ async function conversation(h: Awaited<ReturnType<typeof setup>>) {
 }
 
 describe('shared lesson creation application workflow', () => {
+  it('uses the Nemotron customizations throughout Nebius source, lesson and quiz preparation', async () => {
+    const h = await setup()
+    h.settings.selected = 'nebius'
+    h.settings.profiles.nebius = { ...h.settings.profiles.nebius, model: 'nvidia/Nemotron-3_5-Lightning', apiKey: 'synthetic-nebius-key', keyOrigin: 'https://api.tokenfactory.nebius.com' }
+    // The already-saved browser profile predates the Nebius wire adapter.
+    delete h.settings.profiles.nebius.compatibility
+    const original = h.transport.getMockImplementation()!
+    h.transport.mockImplementation(async request => {
+      expect(request.generationTrace?.modelProfile.id).toBe('nemotron-lightning')
+      expect(request.toolResponseDialect).toBe('native')
+      expect(buildChatRequest(request).payload).toMatchObject({ model: 'nvidia/Nemotron-3_5-Lightning', chat_template_kwargs: { enable_thinking: true } })
+      return original(request)
+    })
+    const id = await h.service.saveRequest(h.request)
+    await h.service.createFromRequest(id)
+    expect(h.service.status({ draftId: id }).phase).toBe('ready')
+    expect(h.transport.mock.calls.some(([request]) => request.tools?.[0]?.function.name === 'ground_lesson')).toBe(true)
+    expect(h.service.status({ draftId: id }).readiness).toMatchObject({ teaching: true, practice: { status: 'validated' }, check: { status: 'validated' } })
+  })
   it('rejects another learner’s validated conversation request before capture or generation', async () => {
     const h = await setup(); await conversation(h)
     const id = await h.service.saveConversationRequest('tea-reply', { kind: 'topic', settings: lessonCreationSettings('Tea') })

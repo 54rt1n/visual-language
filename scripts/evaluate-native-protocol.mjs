@@ -85,7 +85,7 @@ try {
   hashes.push('tests/evaluation/focused-cases/english-stem-placement-qwen27b.json')
   hashes.push('tests/evaluation/focused-cases/review-reply-intent-qwen27b.json', 'tests/evaluation/focused-cases/coverage-reviewed-reply-eligibility-qwen27b.json', 'tests/evaluation/focused-cases/review-clause-joining-qwen27b.json', 'tests/evaluation/focused-cases/review-single-request-qwen27b.json', 'src/lib/domain/blindQuestion.ts', 'tests/evaluation/blind-question-view.ts', 'tests/evaluation/focused-cases/coverage-repair-echo-p12.json',
     'tests/evaluation/focused-cases/question-review-repair-p12.json')
-  hashes.push('src/lib/teacher/lessonGeneration/coverageContext.ts', 'tests/evaluation/protocol-control-summary.ts', 'tests/fixtures/tool-context.ts', 'src/lib/teacher/lessonGeneration/profiles/featherless-qwen-v6.json')
+  hashes.push('src/lib/teacher/lessonGeneration/coverageContext.ts', 'tests/evaluation/protocol-control-summary.ts', 'tests/fixtures/tool-context.ts', 'src/lib/teacher/lessonGeneration/profiles/qwen-v7.json', 'src/lib/teacher/lessonGeneration/providerProtocol.ts', 'src/lib/ai/modelIdentity.ts')
   hashes.push('tests/evaluation/focused-cases/question-review-reading-presentation-flashnext.json')
   hashes.push('tests/evaluation/focused-cases/question-plan-fresh-application-qwen27b.json')
   hashes.push('tests/evaluation/focused-cases/question-plan-reading-presentation-flashnext.json')

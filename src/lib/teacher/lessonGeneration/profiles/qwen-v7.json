@@ -1,0 +1,5 @@
+{
+  "id": "qwen",
+  "version": "7",
+  "stages": { "evaluateCoverage": { "generation": { "reasoning": "off" } } }
+}

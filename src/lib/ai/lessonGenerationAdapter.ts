@@ -4,7 +4,7 @@ import type { ChatOptions } from './types'
 export function lessonGenerationSettings(compatibility: ChatOptions['compatibility'], settings: {
   maxTokens: number; temperature: number; reasoning: 'on' | 'off';
 }) {
-  return { maxTokens: settings.maxTokens, temperature: settings.temperature,
+  return { maxTokens: settings.maxTokens, temperature: settings.temperature, reasoningEnabled: settings.reasoning === 'on',
     ...(compatibility === 'featherless' ? { featherlessThinking: settings.reasoning === 'on' } : {}),
-    ...(compatibility === 'openrouter' ? { reasoningEnabled: settings.reasoning === 'on' } : {}) }
+  }
 }

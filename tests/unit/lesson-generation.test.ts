@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 import type { ChatOptions } from '../../src/lib/ai/types'
 import { executeLessonStage } from '../../src/lib/teacher/lessonGeneration/executeStage'
 import { lessonStages } from '../../src/lib/teacher/lessonGeneration/stages'
-import evaluatedProfile from '../../src/lib/teacher/lessonGeneration/profiles/featherless-qwen-v6.json'
-import glmProfile from '../../src/lib/teacher/lessonGeneration/profiles/featherless-glm-native-v1.json'
+import evaluatedProfile from '../../src/lib/teacher/lessonGeneration/profiles/qwen-v7.json'
+import glmProfile from '../../src/lib/teacher/lessonGeneration/profiles/glm-native-v2.json'
 import { assembleLessonPrompt } from '../../src/lib/teacher/lessonGeneration/assemblePrompt'
 import { selectLessonModelProfile, resolveLessonModelProfile, lessonModelProfileSchema, type LessonModelProfile } from '../../src/lib/teacher/lessonGeneration/modelProfiles'
 import { generateLesson } from '../../src/lib/teacher/lessonGeneration/workflow'
@@ -24,15 +24,33 @@ const input: WaypointLessonInput = {
   targets: [{ cardId: 'c1', hanzi: '谢谢', meaning: 'Thank you.' }, { cardId: 'c2', hanzi: '对不起', meaning: 'Sorry.' }],
   sources: [{ id: 's1', title: 'Courtesy', excerpt: '谢谢 means thank you; 对不起 means sorry.' }],
 }
-const profile: LessonModelProfile = { id: 'test-model', version: '1', guidance: 'Use the named native tool.',
+const profile: LessonModelProfile = { id: 'test-model', version: '1', guidance: 'Use the named native tool.', protocol: { toolResponseDialect: 'native' },
   stages: { reviewWaypoint: { guidance: 'Keep the reason short.', generation: { temperature: 0, maxTokens: 1024, reasoning: 'on' } } } }
 const verdict = { decision: 'accept', reason: 'Authored review.' }
 
 describe('lesson generation framework boundaries', () => {
-  it('enables reasoning for the evaluated OpenRouter Nemotron model while keeping native tools', () => {
-    expect(resolveLessonModelProfile(undefined, 'buildWaypoint', { model: 'nvidia/nemotron-3.5-lightning:free', compatibility: 'openrouter' }))
-      .toMatchObject({ profile: { id: 'openrouter-nemotron-lightning' }, generation: { reasoning: 'on' }, protocol: { toolResponseDialect: 'native' } })
-    expect(selectLessonModelProfile(undefined, { model: 'nvidia/nemotron-3.5-lightning:free', compatibility: 'standard' }).id).toBe('shared')
+  it.each(['openrouter', 'nebius', 'featherless', 'alibaba', 'standard'] as const)('shares Nemotron guidance and reasoning across providers: %s', compatibility => {
+    const routed = resolveLessonModelProfile(undefined, 'groundLesson', { model: 'nvidia/nemotron-3.5-lightning:free', compatibility })
+    const canonical = resolveLessonModelProfile(undefined, 'groundLesson', { model: 'nvidia/Nemotron-3_5-Lightning', compatibility })
+    expect(canonical).toEqual(routed)
+    expect(canonical).toMatchObject({ profile: { id: 'nemotron-lightning' }, generation: { reasoning: 'on' }, protocol: { toolResponseDialect: 'native' } })
+  })
+  it('keeps identical Nemotron prompts while translating reasoning for Nebius and OpenRouter', async () => {
+    const requests: ChatOptions[] = []
+    const transport = async (request: ChatOptions) => { requests.push(request); return waypointResult(request, verdict) }
+    await executeLessonStage({ provider: { ...provider, model: 'nvidia/Nemotron-3_5-Lightning', compatibility: 'nebius' }, transport }, lessonStages.reviewWaypoint, input)
+    await executeLessonStage({ provider: { ...provider, model: 'nvidia/nemotron-3.5-lightning:free', compatibility: 'openrouter' }, transport }, lessonStages.reviewWaypoint, input)
+    expect(requests[0]!.messages).toEqual(requests[1]!.messages)
+    expect(requests[0]!.generationTrace!.modelProfile).toEqual(requests[1]!.generationTrace!.modelProfile)
+    expect(requests.every(request => request.reasoningEnabled === true && request.toolResponseDialect === 'native')).toBe(true)
+    const nebius = buildChatRequest(requests[0]!).payload, openrouter = buildChatRequest(requests[1]!).payload
+    expect(nebius).toMatchObject({ model: 'nvidia/Nemotron-3_5-Lightning', max_tokens: 4096, chat_template_kwargs: { enable_thinking: true } })
+    expect(nebius).not.toHaveProperty('reasoning')
+    expect(openrouter).toMatchObject({ model: 'nvidia/nemotron-3.5-lightning:free', reasoning: { enabled: true } })
+    expect(openrouter).not.toHaveProperty('chat_template_kwargs')
+    expect(nebius.tools).toEqual(openrouter.tools)
+    expect(nebius.tool_choice).toEqual(openrouter.tool_choice)
+    expect(buildChatRequest({ ...requests[0]!, model: 'another-model' }).payload).not.toHaveProperty('chat_template_kwargs')
   })
   it('opts one stage into task placement without changing accepted work or correction dispatches', async () => {
     const run = async (tail: boolean) => {
@@ -101,7 +119,7 @@ describe('lesson generation framework boundaries', () => {
     const selectedProvider = { ...provider, model: 'Qwen/Qwen3.8-27B' }
     const transport = async (request: ChatOptions) => { requests.push(request); return waypointResult(request, verdict) }
     const selected = selectLessonModelProfile(undefined, selectedProvider)
-    const strict = { ...selected, protocol: { ...selected.protocol!, normalizeFunctionOpening: false } }
+    const strict = { ...selected, protocol: { ...resolveLessonModelProfile(undefined, 'reviewWaypoint', selectedProvider).protocol, normalizeFunctionOpening: false } }
     await executeLessonStage({ provider: selectedProvider, transport, modelProfile: strict }, lessonStages.reviewWaypoint, input)
     await executeLessonStage({ provider: selectedProvider, transport }, lessonStages.reviewWaypoint, input)
     expect(requests[0]!.normalizeFunctionOpening).toBe(false)
@@ -171,12 +189,19 @@ describe('lesson generation framework boundaries', () => {
     expect(requests.every(request => currentToolMessage(request.messages).content!.includes('<tool_call><function='))).toBe(true)
     expect(requests.filter(request => request.generationTrace!.stage === 'evaluateCoverage').every(request => request.featherlessThinking === false)).toBe(true)
   })
-  it('retains the shared profile for unknown aliases and other providers', () => {
-    for (const candidate of [{ ...provider, model: 'Qwen/untested' }, { ...provider, model: 'qwen/qwen3.8-27b' },
-      { ...provider, model: 'Qwen/Qwen3.8-27B', compatibility: 'nebius' as const },
-      { ...provider, model: 'zai-org/GLM-5.3-Flash', compatibility: 'nebius' as const }]) {
+  it('retains the shared profile for unknown models', () => {
+    for (const candidate of [{ ...provider, model: 'Qwen/untested' }, { ...provider, model: 'nvidia/Nemotron-3-Super' }]) {
       expect(selectLessonModelProfile(undefined, candidate)).toEqual({ id: 'shared', version: '1' })
       expect(resolveLessonModelProfile(undefined, 'evaluateCoverage', candidate)).toMatchObject({ protocol: { toolResponseDialect: 'native' }, generation: { reasoning: 'on' } })
+    }
+  })
+  it.each(['nebius', 'alibaba', 'openrouter', 'standard'] as const)('carries Qwen and GLM guidance to %s without Featherless tool syntax', compatibility => {
+    for (const [model, expected] of [['qwen/qwen3.8-27b', evaluatedProfile], ['Qwen/Qwen3.8-Flash-Next', evaluatedProfile], ['zai-org/GLM-5.3-Flash', glmProfile]] as const) {
+      const selected = { model, compatibility }
+      expect(selectLessonModelProfile(undefined, selected)).toEqual(lessonModelProfileSchema.parse(expected))
+      const resolved = resolveLessonModelProfile(undefined, 'buildWaypoint', selected)
+      expect(resolved.protocol).toEqual({ toolResponseDialect: 'native' })
+      expect(resolved.guidance).not.toContain('<tool_call>')
     }
   })
   it('completes a GLM fixture lesson with native demonstrations preserved through correction', async () => {

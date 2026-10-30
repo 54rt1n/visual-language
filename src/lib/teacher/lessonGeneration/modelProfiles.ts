@@ -1,7 +1,9 @@
 import type { ChatOptions } from '../../ai/types'
-import featherlessQwenProfile from './profiles/featherless-qwen-v6.json'
-import featherlessGlmProfile from './profiles/featherless-glm-native-v1.json'
-import openrouterNemotronProfile from './profiles/openrouter-nemotron-lightning-v1.json'
+import qwenProfile from './profiles/qwen-v7.json'
+import glmProfile from './profiles/glm-native-v2.json'
+import nemotronProfile from './profiles/nemotron-lightning-v2.json'
+import { modelIdentity } from '../../ai/modelIdentity'
+import { lessonProviderProtocol } from './providerProtocol'
 import { z } from 'zod'
 import { GENERATION_OUTPUT_TOKENS } from '../../ai/generationBudget'
 import { englishAnswers, type LessonSettings } from '../../domain/lessonSettings'
@@ -30,31 +32,33 @@ export const lessonModelProfileSchema = adaptation.extend({
 export type LessonModelProfile = z.infer<typeof lessonModelProfileSchema>
 export type LessonTaskPlacement = NonNullable<LessonModelProfile['taskPlacement']>
 
-/** Unknown provider/model combinations keep the shared native profile. */
+/** Unknown models keep the shared guidance. */
 export const defaultLessonModelProfile: LessonModelProfile = { id: 'shared', version: '1' }
 type ProfileProvider = Pick<ChatOptions, 'model' | 'compatibility'>
-const evaluatedFeatherlessModels = new Set(['Qwen/Qwen3.8-27B', 'Qwen/Qwen3.8-Flash-Next'])
+const modelProfiles: Record<string, unknown> = {
+  qwen3827b: qwenProfile, qwen38flashnext: qwenProfile,
+  glm53flash: glmProfile, nemotron35lightning: nemotronProfile,
+}
 
-/** Explicit overrides win; exact evaluated provider/model IDs select their recorded profile. */
+/** Model guidance follows model identity across providers; explicit overrides win. */
 export function selectLessonModelProfile(profile?: LessonModelProfile, provider?: ProfileProvider): LessonModelProfile {
-  const known = provider?.compatibility === 'featherless' && evaluatedFeatherlessModels.has(provider.model)
-  const glm = provider?.compatibility === 'featherless' && provider.model === 'zai-org/GLM-5.3-Flash'
-  const nemotron = provider?.compatibility === 'openrouter' && provider.model === 'nvidia/nemotron-3.5-lightning:free'
-  return lessonModelProfileSchema.parse(profile ?? (known ? featherlessQwenProfile : glm ? featherlessGlmProfile : nemotron ? openrouterNemotronProfile : defaultLessonModelProfile))
+  return lessonModelProfileSchema.parse(profile ?? (provider && modelProfiles[modelIdentity(provider.model)]) ?? defaultLessonModelProfile)
 }
 
 export function resolveLessonModelProfile(profile: LessonModelProfile | undefined, stage: LessonStageId, provider?: ProfileProvider,
   quizLevel?: LessonSettings['quizLevel']) {
   const selected = selectLessonModelProfile(profile, provider)
+  const adapter = lessonProviderProtocol(provider)
   const override = selected.stages?.[stage]
   const baseGuidance = [selected.guidance, override?.guidance].filter(Boolean).join('\n')
   const direction = quizLevel === undefined ? undefined : englishAnswers(quizLevel) ? 'comprehensionGuidance' : 'replyGuidance'
   const contextualGuidance = direction ? [selected[direction], override?.[direction]].filter(Boolean).join('\n') : ''
+  const protocol = override?.protocol ?? selected.protocol ?? adapter.protocol
   return { profile: selected,
     nativeExamples: override?.nativeExamples ?? [],
     taskPlacement: override?.taskPlacement ?? selected.taskPlacement ?? 'system',
-    protocol: { toolResponseDialect: 'native' as const, ...selected.protocol, ...override?.protocol },
-    guidance: [baseGuidance, contextualGuidance].filter(Boolean).join('\n\n'),
+    protocol,
+    guidance: [baseGuidance, contextualGuidance, protocol.toolResponseDialect === 'qwen_xml' ? adapter.guidance : ''].filter(Boolean).join('\n\n'),
     generation: { maxTokens: GENERATION_OUTPUT_TOKENS, temperature: 0.2,
       reasoning: stage === 'evaluateCoverage' ? 'on' as const : 'off' as const,
       ...selected.generation, ...override?.generation },

@@ -43,6 +43,7 @@ describe('prepared waypoint lesson evaluation', () => {
     expect(candidateModels).toEqual(expect.arrayContaining(['MiniMax-M2.7', 'MiniMax-M3', 'MiniMax-M3.1-Flash-Preview', 'qwen3.8-max', 'deepseek-ai/DeepSeek-V4-Flash-0731']))
     expect(modelMatrix.find(row => row.model === 'MiniMax-M3')?.provider).toBe('minimax')
     expect(modelMatrix.find(row => row.model === 'nvidia/nemotron-3.5-lightning:free')?.provider).toBe('openrouter')
+    expect(modelMatrix.find(row => row.model === 'nvidia/Nemotron-3_5-Lightning')?.provider).toBe('nebius')
     const env = { MINIMAX_TOKEN_KEY: 'mini', ALIBABA_TOKEN_KEY: 'ali', FEATHERLESS_API_KEY: 'feather', OPENROUTER_API_KEY: 'router' }
     expect(evaluationApiKey('minimax', env)).toBe('mini')
     expect(evaluationApiKey('alibaba', env)).toBe('ali')
