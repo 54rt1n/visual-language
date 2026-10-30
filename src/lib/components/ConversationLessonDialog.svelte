@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { inferenceFailureDetails } from '../ai/inferenceFailure'
   import { onMount, tick, untrack } from 'svelte'
   import Modal from './Modal.svelte'
   import LessonCreationProgress from './LessonCreationProgress.svelte'
@@ -81,7 +82,7 @@
         await service.createFromRequest(selectedId, { signal, settings: $state.snapshot(lessonSettings) })
       } catch (cause) {
         pauseFailed = cause instanceof LessonCreationPauseError
-        if (!signal.aborted || pauseFailed) error = cause instanceof Error ? cause.message : 'Your lesson could not be created.'
+        if (!signal.aborted || pauseFailed) error = inferenceFailureDetails(cause)
       } finally {
         busy = false; controller = undefined; activeTask = undefined
       }
@@ -158,7 +159,7 @@
   </div>
   {#snippet footer()}
     <div class="creation-footer">
-      {#if error}<div class="error-status"><p role="alert">{pauseFailed ? error : 'Your lesson could not be created.'}</p>{#if !pauseFailed}<details><summary>Details</summary><p>{error}</p><button type="button" class="ghost" onclick={onConnection}>AI connection</button></details>{/if}</div>{/if}
+      {#if error || (!busy && creation.lesson?.generationFailure)}<div class="error-status"><p role="alert">{pauseFailed ? error : 'Your lesson could not be created.'}</p>{#if !pauseFailed}<details><summary>Details</summary><p style="white-space: pre-wrap">{error || creation.lesson?.generationFailure?.details}</p><button type="button" class="ghost" onclick={onConnection}>AI connection</button></details>{/if}</div>{/if}
       <div class="footer-actions">
         <button type="button" class="ghost" disabled={navigating} onclick={() => void leave(ready || started ? onLessons : onClose)}>{pauseFailed ? 'Retry save & close' : ready || started ? 'Back to lessons' : 'Cancel'}</button>
         {#if ready}<button type="button" disabled={navigating} onclick={startLesson}>Start lesson</button>

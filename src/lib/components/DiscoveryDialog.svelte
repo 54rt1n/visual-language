@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { inferenceFailureDetails } from '../ai/inferenceFailure'
   import { onMount, tick, untrack } from 'svelte'
   import Modal from './Modal.svelte'
   import SourceList from './SourceList.svelte'
@@ -80,7 +81,7 @@
       catch (cause) {
         pauseFailed = cause instanceof LessonCreationPauseError
         if (signal.aborted && !pauseFailed) notice = 'Paused. Your progress is saved.'
-        else error = cause instanceof Error ? cause.message : 'The lesson action could not complete.'
+        else error = inferenceFailureDetails(cause)
       }
       finally { busy = false; controller = undefined; activeTask = undefined }
     })()
@@ -165,7 +166,7 @@
   </div>
   {#snippet footer()}
     <div class="discovery-footer">
-      <div class="action-status">{#if busy && !showPreparation}<p role="status">{label}</p>{/if}{#if notice && !showPreparation}<p role="status" class="notice">{notice}</p>{/if}{#if error}<p role="alert" class="error">{pauseFailed ? error : material ? 'We couldn’t finish preparing your lesson.' : 'We couldn’t finish your lesson. You can try again or edit the topic.'}</p>{#if !pauseFailed}<details><summary>Details</summary><p class="small">{error}</p><button type="button" class="ghost" onclick={() => void close(onSettings)}>AI connection</button></details>{/if}{/if}</div>
+      <div class="action-status">{#if busy && !showPreparation}<p role="status">{label}</p>{/if}{#if notice && !showPreparation}<p role="status" class="notice">{notice}</p>{/if}{#if error || (!busy && creation.lesson?.generationFailure)}<p role="alert" class="error">{pauseFailed ? error : material ? 'We couldn’t finish preparing your lesson.' : 'We couldn’t finish your lesson. You can try again or edit the topic.'}</p>{#if !pauseFailed}<details><summary>Details</summary><p class="small" style="white-space: pre-wrap">{error || creation.lesson?.generationFailure?.details}</p><button type="button" class="ghost" onclick={() => void close(onSettings)}>AI connection</button></details>{/if}{/if}</div>
       <div class="footer-actions">
         <button type="button" class="ghost" onclick={() => void close()}>{pauseFailed ? 'Retry save & close' : 'Close'}</button>
         {#if busy}<button type="button" onclick={() => controller?.abort()}>Pause</button>

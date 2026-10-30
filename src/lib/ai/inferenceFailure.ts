@@ -55,6 +55,17 @@ export class InferenceFailure extends Error {
   }
 }
 
+/** User-visible diagnostics, without request bodies or credentials. */
+export function inferenceFailureDetails(error: unknown): string {
+  if (!(error instanceof InferenceFailure)) return error instanceof Error ? error.message : 'Unknown failure.'
+  const failure = error.failure, original = failure.originatingFailure
+  return [...new Set([
+    failure.stage ? `${failure.stage}: ${failure.category}` : failure.category,
+    failure.message, original?.message, ...(failure.fields ?? []), ...(original?.fields ?? []),
+    failure.requestId ? `Request: ${failure.requestId}` : undefined,
+  ].filter(Boolean))].join('\n\n').slice(0, 6000)
+}
+
 export function classifyInferenceFailure(error: unknown, signal?: AbortSignal): InferenceFailure {
   if (!signal?.aborted && error instanceof InferenceFailure) return error
   const reason = signal?.aborted ? signal.reason : error

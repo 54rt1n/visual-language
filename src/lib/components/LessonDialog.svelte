@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { inferenceFailureDetails } from '../ai/inferenceFailure'
   import { lessonForSession, lessonView } from '../domain/lesson'
   import { onMount, tick, untrack } from 'svelte'
   import Modal from './Modal.svelte'
@@ -126,7 +127,7 @@
       }
       catch (cause) {
         pauseFailed = cause instanceof LessonCreationPauseError
-        error = signal.aborted && !pauseFailed ? 'Paused. Your saved progress is ready when you return.' : cause instanceof Error ? cause.message : 'Practice could not continue.'
+        error = signal.aborted && !pauseFailed ? 'Paused. Your saved progress is ready when you return.' : inferenceFailureDetails(cause)
       }
       finally { busy = false; pending = undefined }
     })()
@@ -269,7 +270,7 @@
   </div>
   {#snippet footer()}
     <div class="journey-footer">
-      {#if busy && !(plan && !readiness?.ready)}<p role="status">{busyLabel}</p>{/if}{#if error}<p role="alert">{error}</p>{/if}
+      {#if busy && !(plan && !readiness?.ready)}<p role="status">{busyLabel}</p>{/if}{#if error}<p role="alert" style="white-space: pre-wrap">{error}</p>{:else if !busy && plan?.generationFailure}<details><summary>Details</summary><p style="white-space: pre-wrap">{plan.generationFailure.details}</p></details>{/if}
       <div class="actions">
         {#if session?.status === 'completed'}{#if session.lessonAttempt?.completion?.passed === false && session.lessonAttempt.activity !== 'practice'}<button type="button" disabled={busy} onclick={() => void retry()}>Try quiz again</button>{/if}<button type="button" class="ghost" onclick={() => void close(onLessons)}>Back to lessons</button>{/if}
         {#if session?.status !== 'completed' || !autoStart}<button type="button" class="ghost" onclick={() => void close(autoStart ? onLessons : () => onReturn(plan?.anchorId ?? anchorId))}>{pauseFailed ? 'Retry save & close' : autoStart ? 'Pause & back to lessons' : session && step ? 'Pause & return' : 'Return to source'}</button>{/if}

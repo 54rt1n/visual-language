@@ -18,12 +18,13 @@ type LessonPromptOptions = {
 export function assembleLessonPrompt(tool: ToolDefinition['function'], context: LessonStageContext, task: string, options: LessonPromptOptions = {}) {
   const { modelGuidance = '', dialect = 'native', isolatedContext, taskPlacement = 'system' } = options
   const prompt = toolPrompt(tool, dialect)
+  const readableQuiz = !isolatedContext && ['list_missing_questions', 'build_question_answers', 'revise_question_answers', 'verify_correct_question', 'evaluate_question_coverage'].includes(tool.name) && dialect === 'native'
   const lessonGuidance = isolatedContext || options.preparation ? '' : `${WAYPOINT_RULES}\n${waypointLessonInstructions(context.kind)}\n`
   const currentTask = `${isolatedContext || options.preparation ? '' : `${waypointAssessmentInstructions(context.settings)}\n`}${task}`
   const examples = !isolatedContext && dialect === 'native'
     ? (options.nativeExamples ?? []).map((example, index) =>
       `Example ${index + 1} (reference material)\nInput: ${JSON.stringify(example.context)}\n${tool.name} arguments: ${JSON.stringify(example.arguments)}`).join('\n\n') : ''
-  const system = `${prompt.description}\n\n${LEARNER_REQUEST}\n${lessonGuidance}${taskPlacement === 'system' && (!options.preparation || dialect === 'qwen_xml') ? currentTask : ''}`
+  const system = `${prompt.description}\n\n${LEARNER_REQUEST}\n${lessonGuidance}${!readableQuiz && taskPlacement === 'system' && (!options.preparation || dialect === 'qwen_xml') ? currentTask : ''}`
     // Isolated solvers use the offered tool description/footer for protocol.
     // Arbitrary profile guidance may contain semantic examples or answer clues.
     + (!isolatedContext && modelGuidance ? `\n\nModel guidance:\n${modelGuidance}` : '')
@@ -44,12 +45,16 @@ export function assembleLessonPrompt(tool: ToolDefinition['function'], context: 
     const projected: Record<string, unknown> = { ...(!options.preparation ? { learnerRequest: LEARNER_REQUEST } : {}), ...(isolatedContext ?? { ...context, generationMode: tool.name }),
       ...(nativeSubmissionIssue ? { nativeSubmissionIssue } : {}),
       ...(correctedCandidate === undefined ? {} : { candidateSubmission: correctedCandidate }) }
-    if (taskPlacement === 'user_context_tail') {
+    if (taskPlacement === 'user_context_tail' && !readableQuiz) {
       // Reserve this app-owned field and append it even if input carried the key.
       delete projected.currentTask
       projected.currentTask = currentTask
     }
-    return { role: 'user', content: options.preparation
+    return { role: 'user', content: readableQuiz
+      ? `Current lesson\n\n${preparationEvidence(projected)}\n\nCurrent task: ${nativeSubmissionIssue
+        ? `Correct the rejected candidateSubmission. ${nativeSubmissionIssue}\nPreserve its valid fields and submit the complete corrected arguments through ${tool.name}.`
+        : currentTask}${footer}`
+      : options.preparation
       ? `Current lesson\n\n${preparationEvidence({ ...projected, settings: preparationSettings(context.settings) })}\n\nCurrent task: ${currentTask}${footer}`
       : JSON.stringify(projected) + footer }
   }

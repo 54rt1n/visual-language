@@ -84,11 +84,10 @@ describe('lesson generation framework boundaries', () => {
         continue
       }
       expect(request.generationTrace!.taskPlacement).toBe('user_context_tail')
-      const { currentTask, ...projected } = parseToolProjection(currentToolMessage(request.messages).content!)
-      expect(Object.keys(parseToolProjection(currentToolMessage(request.messages).content!)).at(-1)).toBe('currentTask')
-      expect(parseToolContext(currentToolMessage(request.messages).content!)).toEqual(projected)
+      const projected = parseToolContext(currentToolMessage(request.messages).content!)
+      expect(currentToolMessage(request.messages).content).toContain('Current task:')
       expect(projected).toEqual(parseToolContext(original.messages[1]!.content!))
-      expect(request.messages[0]!.content).toBe(original.messages[0]!.content!.replace(currentTask, ''))
+      expect(request.messages).toEqual(original.messages)
       expect(request.tools).toEqual(original.tools)
       corrected ||= Boolean(projected.nativeSubmissionIssue)
     }

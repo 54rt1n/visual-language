@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { validateChatRequest } from '../../src/lib/ai/requestProtocol'
-import { InferenceFailure, classifyInferenceFailure, httpInferenceFailure } from '../../src/lib/ai/inferenceFailure'
+import { InferenceFailure, classifyInferenceFailure, httpInferenceFailure, inferenceFailureDetails } from '../../src/lib/ai/inferenceFailure'
 import { streamChat } from '../../src/lib/ai/client'
 import type { ChatMessage } from '../../src/lib/ai/types'
 import { z } from 'zod'
@@ -74,5 +74,19 @@ describe('structured inference failures', () => {
     const contextual = timeout.withContext({ stage: 'reviewGraph', attempt: 2 })
     expect(contextual.failure).toMatchObject({ category: 'timeout', stage: 'reviewGraph', attempt: 2 })
     expect(timeout.failure).not.toHaveProperty('stage')
+  })
+})
+
+
+describe('saved generation diagnostics', () => {
+  it('retains the underlying rejection when a recovery limit wraps it', () => {
+    const details = inferenceFailureDetails(new InferenceFailure({
+      category: 'budget_exhausted', layer: 'budget', retryable: false,
+      stage: 'buildQuestion', message: 'Creation paused.', fields: ['Stem must be English.'],
+      originatingFailure: { category: 'constraints_invalid', layer: 'validation', message: 'Question rejected.', fields: ['Stem must be English.'] },
+    }))
+    expect(details).toContain('buildQuestion: budget_exhausted')
+    expect(details).toContain('Question rejected.')
+    expect(details.match(/Stem must be English\./g)).toHaveLength(1)
   })
 })

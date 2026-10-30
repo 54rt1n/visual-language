@@ -33,6 +33,18 @@ describe('fresh lesson submission corrections', () => {
     expect(transport).toHaveBeenCalledOnce()
     expect(validate).not.toHaveBeenCalled()
   })
+  it('ends a quiz correction with the specific repair instead of the original authoring task', () => {
+    const stage = lessonStages.buildQuestion
+    const c = { ...context, phase: 'check' as const }
+    const prompt = assembleLessonPrompt({ name: stage.toolName, description: stage.description, parameters: {} }, c, stage.instructions(c))
+    const repaired = prompt.project('Feedback must refer to answer content, because choices are shuffled.', { feedback: 'Choice A is correct.' })
+    const task = repaired.content!.split('Current task:')[1]!.split('Tool call:')[0]!
+    expect(task).toContain('Correct the rejected candidateSubmission')
+    expect(task).toContain('Feedback must refer to answer content')
+    expect(task).not.toContain('Write one multiple-choice question')
+    expect(repaired.content).toContain('Choice A is correct.')
+  })
+
   it('keeps shared lesson and assessment context factual across stages and answer directions', () => {
     for (const kind of ['topic', 'scenario', 'reading'] as const) {
       for (const quizLevel of ['meaningHanzi', 'meaningPinyin', 'responseHanzi', 'responsePinyin'] as const) {
@@ -42,11 +54,12 @@ describe('fresh lesson submission corrections', () => {
           const prompt = assembleLessonPrompt({ name: stage.toolName, description: stage.description, parameters: {} }, c, stage.instructions(c))
           const system = prompt.messages[0]!.content!
           expect(system).toContain(`${kind.toUpperCase()} CONTEXT:`)
-          expect(system).toContain(quizLevel.startsWith('meaning') ? 'English answers' : 'Mandarin reply')
-          expect(system).toContain('One short Mandarin clause')
+          const instructions = prompt.messages.map(message => message.content).join('\n')
+          expect(instructions).toContain(quizLevel.startsWith('meaning') ? 'English answers' : 'Mandarin reply')
+          expect(instructions).toContain('One short Mandarin clause')
           for (const unrelated of ['Build waypoints', 'Plan comprehension questions', 'Plan a question about', 'During revision, change'])
             expect(system).not.toContain(unrelated)
-          expect(system).toContain(stage.instructions(c))
+          expect(instructions).toContain(stage.instructions(c))
         }
       }
     }

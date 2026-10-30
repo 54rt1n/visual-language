@@ -87,6 +87,7 @@ describe('shared lesson creation application workflow', () => {
     const id = await h.service.saveRequest(h.request)
     await h.service.createFromRequest(id)
     expect(h.service.status({ draftId: id }).phase).toBe('ready')
+    expect(h.service.status({ draftId: id }).lesson!.generationFailure).toBeUndefined()
     const grounding = h.transport.mock.calls.filter(([request]) => request.tools?.[0]?.function.name === 'ground_lesson')
     expect(grounding).toHaveLength(2)
     expect(grounding[1]![0].messages.at(-1)!.content).toContain('without any native tool calls')
@@ -220,12 +221,14 @@ describe('shared lesson creation application workflow', () => {
     expect(before.phase).toBe('lesson')
     expect(before.lesson!.preparation!.lesson.graph.waypoints).not.toHaveLength(0)
     expect(h.host.current().state.sessions.find(session => session.id === before.sessionId)!.status).toBe('paused')
+    expect(before.lesson!.generationFailure?.details).toContain('Interrupted question preparation')
     const graph = structuredClone(before.lesson!.preparation!.lesson), calls = h.transport.mock.calls.length
     expect(parseBackup(JSON.stringify(exportBackup(h.host.current(), NOW))).data).toEqual(h.host.current().state)
     h.controls.fail = ''
     const result = await h.createService().resume(before.sessionId!)
     expect(result.lessonId).toBe(before.lesson!.id)
     expect(h.service.status({ draftId: id }).phase).toBe('ready')
+    expect(h.service.status({ draftId: id }).lesson!.generationFailure).toBeUndefined()
     expect(h.service.status({ draftId: id }).lesson!.preparation!.lesson).toEqual(graph)
     const resumed = h.transport.mock.calls.slice(calls).map(([request]) => request.tools?.[0]?.function.name)
     expect(resumed).not.toContain('ground_lesson'); expect(resumed).not.toContain('add_lesson_waypoint')

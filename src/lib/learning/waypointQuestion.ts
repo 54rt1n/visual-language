@@ -13,11 +13,15 @@ export const waypointQuestionCandidateSchema = z.strictObject({
   answerC: text(200), answerD: text(200), correct: z.enum(choices), feedback: text(1000),
 })
 
-export function waypointQuestionSchema(settings: LessonSettings) {
+export function waypointQuestionSchema(settings: LessonSettings, phase?: 'practice' | 'check') {
   const english = englishAnswers(settings.quizLevel)
   const answer = text(200).describe(english ? 'An English meaning, intention or situation matching the expression.' : 'A Mandarin reply; the application supplies its pronunciation.')
   return waypointQuestionCandidateSchema.extend({
-    stem: waypointQuestionCandidateSchema.shape.stem.describe('A neutral English question whose answer depends on the displayed Mandarin.'),
+    stem: waypointQuestionCandidateSchema.shape.stem.describe(english
+      ? phase === 'check'
+        ? 'English-only instruction for a fresh task compared with practiceQuestions. After a meaning question, ask "In which situation would you say this?" and provide four English situations. The Mandarin text belongs in passage.'
+        : 'English-only instruction referring to passage as "this expression". Examples: "What does this expression mean?" or "In which situation would you say this?". The Mandarin text belongs in passage.'
+      : 'English-only situation and communicative goal, such as "You want a cup of tea. Which reply asks for it?". Mandarin replies belong in the answer fields.'),
     passage: (english ? waypointQuestionCandidateSchema.shape.passage.unwrap() : waypointQuestionCandidateSchema.shape.passage).describe(english ? 'Mandarin expression to interpret, including the selected target.' : 'Optional Mandarin context before the requested reply; omit if unnecessary.'),
     answerA: answer, answerB: answer, answerC: answer, answerD: answer,
     correct: waypointQuestionCandidateSchema.shape.correct.describe('The only correct choice.'),

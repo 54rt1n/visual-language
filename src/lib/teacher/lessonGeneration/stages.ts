@@ -11,7 +11,7 @@ import { NEXT_WAYPOINT, REVIEW_WAYPOINT, REVIEW_GRAPH, proposeQuestionsInstructi
   BLIND_QUESTION_INSTRUCTIONS, VISIBLE_QUESTION_INSTRUCTIONS, buildWaypointQuestionInstructions, verifyWaypointQuestionInstructions } from './prompts'
 
 export const LESSON_WORKFLOW_VERSION = 'lesson-generation-v43'
-export const LESSON_PROMPT_VERSION = 'lesson-guidance-v46'
+export const LESSON_PROMPT_VERSION = 'lesson-guidance-v47'
 export const lessonStageIds = ['groundLesson', 'planLesson', 'reviewLessonScope', 'prepareSource', 'reviewSource', 'buildWaypoint', 'reviseWaypoint', 'reviewWaypoint', 'reviewGraph',
   'proposeQuestions', 'buildQuestion', 'reviseQuestion', 'solveVisibleQuestion', 'reviewQuestion', 'solveEnglishQuestion', 'evaluateCoverage'] as const
 export type LessonStageId = typeof lessonStageIds[number]
@@ -71,11 +71,11 @@ export const lessonStages = {
     }), instructions: c => proposeQuestionsInstructions(c.settings, phase(c)) }),
   buildQuestion: defineStage({ id: 'buildQuestion', toolName: 'build_question_answers',
     description: 'Write one question, four choices, key and feedback for the selected learning point.',
-    schema: c => waypointQuestionSchema(c.settings),
+    schema: c => waypointQuestionSchema(c.settings, phase(c)),
     instructions: c => buildWaypointQuestionInstructions(c.settings, phase(c)) }),
   reviseQuestion: defineStage({ id: 'reviseQuestion', toolName: 'revise_question_answers',
     description: 'Revise only this Q/A group from its review issue.',
-    schema: c => waypointQuestionSchema(c.settings),
+    schema: c => waypointQuestionSchema(c.settings, phase(c)),
     instructions: c => `${buildWaypointQuestionInstructions(c.settings, phase(c))}\nCorrect candidateToRevise according to revision. Preserve the selected gap and target. Return only the complete question fields; selection is already fixed.` }),
   solveVisibleQuestion: defineStage({ id: 'solveVisibleQuestion', toolName: 'solve_visible_question',
     description: 'Identify every defensible choice from one visible multiple-choice question.',

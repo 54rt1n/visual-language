@@ -71,7 +71,7 @@ describe('layered native-protocol controls', () => {
     expect(context.kind).toBe(id === 'question-review-answer-mode' ? 'topic' : 'scenario')
     expect(context.visibleQuestion.choices).toHaveLength(4)
     expect(Boolean(context.visibleQuestion.passagePinyin)).toBe(context.settings.quizLevel.endsWith('Pinyin'))
-    expect(control.messages[0]!.content).toContain('English answers')
+    expect(control.messages.map(message => message.content).join('\n')).toContain('English answers')
     expect(Object.keys(control.tool.function.parameters.properties as object)).toEqual(['decision', 'reason'])
     expect(control.expected).toEqual({})
     const result = await runProtocolControl(control.id, { provider, responseMode: 'stream', toolChoice: 'named', thinking: false, transport: protocolFixture })
@@ -96,13 +96,14 @@ describe('layered native-protocol controls', () => {
   it('changes only one field description in the tool and rendered description', async () => {
     const options = { provider, responseMode: 'stream' as const, toolChoice: 'named' as const, thinking: false, footerFormat: 'qwen_xml' as const, transport: protocolFixture }
     const baseline = await runProtocolControl('question-build-english-stem', options)
+    const baselineDescription = (baseline.request.tools[0]!.function.parameters.properties as Record<string, { description: string }>).stem!.description
     const candidateDescription = 'English only; put all Chinese quotations in passage.'
     const candidate = await runProtocolControl('question-build-english-stem', { ...options,
-      fieldDescription: { field: 'stem', baselineDescription: 'A neutral English question whose answer depends on the displayed Mandarin.', candidateDescription } })
+      fieldDescription: { field: 'stem', baselineDescription, candidateDescription } })
     const restored = structuredClone(candidate.request)
     const properties = restored.tools[0]!.function.parameters.properties as Record<string, { description: string }>
-    properties.stem!.description = 'A neutral English question whose answer depends on the displayed Mandarin.'
-    for (const message of restored.messages) message.content = message.content!.replaceAll(candidateDescription, 'A neutral English question whose answer depends on the displayed Mandarin.')
+    properties.stem!.description = baselineDescription
+    for (const message of restored.messages) message.content = message.content!.replaceAll(candidateDescription, baselineDescription)
     expect(restored).toEqual(baseline.request)
     expect(candidate.request.messages[0]!.content).toContain(candidateDescription)
     expect(candidate.request.messages[1]).toEqual(baseline.request.messages[1])

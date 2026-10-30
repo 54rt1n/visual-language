@@ -9,6 +9,7 @@ export const lessonSchema = lessonPlanSchema.extend({
   id: identifier, learnerId: identifier, anchorId: identifier,
   title: shortText(200), goal: shortText(2000), context: z.string().max(8000), cardIds: ids(9).min(1),
   createdAt: timestamp, archivedAt: timestamp.optional(),
+  generationFailure: z.strictObject({ at: timestamp, details: z.string().max(6000) }).optional(),
   opportunity: z.strictObject({
     id: identifier, kind: z.enum(['initial', 'review', 'maintenance']), eligibleAt: timestamp,
     previousSessionId: identifier.optional(),

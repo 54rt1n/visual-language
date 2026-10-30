@@ -1,4 +1,5 @@
 import { sameRecord } from '../domain/common'
+import { inferenceFailureDetails } from '../ai/inferenceFailure'
 import { nid } from '../id'
 import { effectiveConfiguration } from '../graph/contracts'
 import { resolveProviderAccess } from '../settings'
@@ -204,6 +205,7 @@ export class LessonCreationService {
     const session = state.sessions.find(saved => saved.id === sessionId)
     if (!session || session.learnerId !== state.activeLearnerId || session.status === 'completed' || !lessonForSession(state, session)) throw new Error('Choose an unfinished lesson to continue.')
     operation.target = { sessionId, learnerId: session.learnerId }
+    await this.saveGenerationFailure(operation.target)
     operation.onProgress?.({ phase: 'lesson', stage: 'Preparing your lesson…', sessionId })
     signal.throwIfAborted()
     if (session.status !== 'active') await this.host.apply((snapshot, repository) => new LearningService(repository, this.clock).setSessionStatus(snapshot, sessionId, 'active'))
@@ -227,11 +229,26 @@ export class LessonCreationService {
         if (operation.target) {
           this.pendingPause = operation.target
           await this.savePendingPause()
+          if (!signal.aborted) await this.saveGenerationFailure(operation.target, error)
         }
         throw error
       } finally { if (this.active === operation) this.active = undefined }
     })
     operation.finished = result.then(() => {}, () => {})
     return result
+  }
+
+  private async saveGenerationFailure(target: PauseTarget, error?: unknown) {
+    await this.host.apply((snapshot, repository) => {
+      const session = snapshot.state.sessions.find(saved => saved.id === target.sessionId && saved.learnerId === target.learnerId)
+      const lesson = lessonForSession(snapshot.state, session)
+      if (!lesson || lesson.preparation?.check?.complete || (error === undefined && !lesson.generationFailure)) return Promise.resolve(snapshot)
+      const at = this.clock.now(), details = error === undefined ? undefined : inferenceFailureDetails(error)
+      return repository.mutate(snapshot.version, { id: nid('op'), kind: 'lesson-generation-diagnostic', intent: { lessonId: lesson.id }, at }, document => {
+        const saved = document.lessons.find(value => value.id === lesson.id)!
+        if (details === undefined) delete saved.generationFailure
+        else saved.generationFailure = { at, details }
+      })
+    })
   }
 }
