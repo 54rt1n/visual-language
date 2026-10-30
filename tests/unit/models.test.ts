@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { listProviderModels } from '../../src/lib/ai/models'
+import { testProviderConnection } from '../../src/lib/ai/connectionTest'
 
 const config = { provider: 'custom' as const, baseUrl: 'https://catalog.example/v1', apiKey: 'catalog-private-key' }
 describe('explicit provider model discovery', () => {
@@ -41,6 +42,55 @@ describe('explicit provider model discovery', () => {
     const fetcher = vi.fn<typeof fetch>()
     await expect(listProviderModels(config, '', controller.signal, fetcher)).rejects.toMatchObject({ name: 'AbortError' })
     await expect(listProviderModels({ ...config, baseUrl: 'https://secret@example.com' }, '', undefined, fetcher)).rejects.toThrow('HTTPS endpoint')
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+})
+
+describe('provider connection probe', () => {
+  const model = { ...config, model: 'test-model', compatibility: 'openrouter' as const }
+  const event = (delta: unknown, finish_reason: string | null = null) => `data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason }] })}\n\n`
+  const stream = (body: string) => new Response(body + 'data: [DONE]\n\n')
+
+  it('allows reasoning headroom in a single text request without offering lesson tools', async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => stream(event({ content: '你好 — hello.' }, 'stop')))
+    await expect(testProviderConnection(model, undefined, fetcher)).resolves.toEqual({ content: '你好 — hello.', outputLimited: false, problem: undefined })
+    expect(fetcher).toHaveBeenCalledOnce()
+    const payload = JSON.parse(fetcher.mock.calls[0]![1]!.body as string)
+    expect(payload).toMatchObject({ model: 'test-model', max_tokens: 4096, reasoning: { enabled: false } })
+    expect(payload).not.toHaveProperty('tools')
+    expect(payload).not.toHaveProperty('tool_choice')
+  })
+
+  it.each([
+    [{ content: '你好 — hello' }, '你好 — hello'],
+    [{ reasoning_content: 'Private model reasoning.' }, ''],
+  ])('recognizes connectivity on length completion and keeps only visible answer text', async (delta, content) => {
+    const fetcher = vi.fn<typeof fetch>(async () => stream(event(delta, 'length')))
+    await expect(testProviderConnection(model, undefined, fetcher)).resolves.toEqual({ content, outputLimited: true, problem: undefined })
+    expect(fetcher).toHaveBeenCalledOnce()
+  })
+
+  it.each(['stop', 'length'])('still identifies an unusable reply with finish status %s', async finish => {
+    const result = await testProviderConnection(model, undefined, async () => stream(event({ content: '!'.repeat(48) }, finish)))
+    expect(result.problem).toContain('repeated symbols')
+  })
+
+  it.each([
+    [() => new Response('{}', { status: 401 }), 'http_rejected'],
+    [() => new Response('{}', { status: 429 }), 'rate_limited'],
+    [() => stream(event({ content: 'Blocked.' }, 'content_filter')), 'protocol_error'],
+    [() => stream(event({ content: 'An interrupted reply.' })), 'stream_incomplete'],
+    [() => stream('data: {invalid}\n\n'), 'protocol_error'],
+  ])('preserves actual authentication, capacity and protocol failures', async (respond, category) => {
+    const fetcher = vi.fn<typeof fetch>(async () => respond())
+    await expect(testProviderConnection(model, undefined, fetcher)).rejects.toMatchObject({ failure: { category } })
+    expect(fetcher).toHaveBeenCalledOnce()
+  })
+
+  it('cancels before sending a request', async () => {
+    const controller = new AbortController(); controller.abort()
+    const fetcher = vi.fn<typeof fetch>()
+    await expect(testProviderConnection(model, controller.signal, fetcher)).rejects.toMatchObject({ name: 'AbortError' })
     expect(fetcher).not.toHaveBeenCalled()
   })
 })

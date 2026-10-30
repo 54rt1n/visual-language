@@ -2,9 +2,8 @@
   import { tick, untrack } from 'svelte'
   import Modal from './Modal.svelte'
   import { bindProfileKey, envApiKey, providerCatalog, providerDefaults, providerIds, providerNames, resolveProvider, resolveProviderAccess, saveSettings, type ProviderCompatibility, type Settings } from '../settings'
-  import { streamChat } from '../ai/client'
+  import { testProviderConnection } from '../ai/connectionTest'
   import { listProviderModels, type ModelList } from '../ai/models'
-  import { unusableReplyReason } from '../ai/replyQuality'
   let { settings, onSave, onClose, allowNetwork = true }: { settings: Settings; onSave: (value: Settings) => void | Promise<void>; onClose: () => void; allowNetwork?: boolean } = $props()
   let draft = $state<Settings>(untrack(() => structuredClone($state.snapshot(settings))))
   let status = $state('')
@@ -78,10 +77,10 @@
     testing = true; status = 'Checking the selected model…'; probeText = ''; controller = new AbortController()
     try {
       const config = resolveProvider(approved())
-      const result = await streamChat({ ...config, messages: [{ role: 'user', content: 'Reply with a short Mandarin greeting and its English meaning. Nothing else.' }], maxTokens: 256, temperature: 0.2, handlers: { signal: controller.signal } })
-      const problem = unusableReplyReason(result.content, true)
+      const result = await testProviderConnection(config, controller.signal)
       probeText = result.content.slice(0, 1000)
-      status = problem ? `The connection worked, but the reply was not usable. ${problem}` : `Connected to ${providerNames[config.provider]}.`
+      status = result.problem ? `The connection worked, but the reply was not usable. ${result.problem}`
+        : `Connected to ${providerNames[config.provider]}.${result.outputLimited ? (result.content.trim() ? ' The test reply reached its output limit.' : ' The model reached the test’s output limit before returning a reply.') : ''}`
     } catch (error) { status = connectionError(error) }
     finally { testing = false; await focusResult() }
   }

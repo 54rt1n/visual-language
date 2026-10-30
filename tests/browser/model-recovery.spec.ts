@@ -152,6 +152,40 @@ async function backup(page: Page): Promise<Workspace> {
 }
 const frame = (text: string, model = 'reported-fixture', finish: string | null = null) => `data: ${JSON.stringify({ model, choices: [{ index: 0, delta: { content: text }, finish_reason: finish }] })}\n\n`
 
+test('connection test distinguishes output limits from rejected keys without retrying or saving', async ({ page }) => {
+  let reply: 'partial' | 'reasoning' | 'rejected' = 'partial', calls = 0
+  await page.route('https://openrouter.ai/api/v1/chat/completions', async route => {
+    calls++
+    const payload = route.request().postDataJSON()
+    expect(payload).toMatchObject({ max_tokens: 4096, reasoning: { enabled: false } })
+    expect(payload).not.toHaveProperty('tools')
+    if (reply === 'rejected') { await route.fulfill({ status: 401, json: { error: { message: 'Invalid key' } } }); return }
+    const body = reply === 'partial' ? frame('你好 — hello', 'probe-model', 'length')
+      : `data: ${JSON.stringify({ choices: [{ index: 0, delta: { reasoning_content: 'Private model reasoning.' }, finish_reason: 'length' }] })}\n\n`
+    await route.fulfill({ contentType: 'text/event-stream', body: body + 'data: [DONE]\n\n' })
+  })
+  await ready(page); await openTool(page, 'AI connection')
+  await page.getByLabel('Provider', { exact: true }).selectOption('openrouter')
+  const keyInput = page.getByLabel('OpenRouter API key', { exact: true })
+  await keyInput.fill('synthetic-probe-key')
+  const button = page.getByRole('button', { name: 'Test connection', exact: true })
+  const status = page.getByRole('dialog').getByRole('status')
+  await button.click()
+  await expect(status).toHaveText('Connected to OpenRouter. The test reply reached its output limit.')
+  await expect(page.getByRole('region', { name: 'Model test reply' })).toContainText('你好 — hello')
+  expect(calls).toBe(1)
+  reply = 'reasoning'; await button.click()
+  await expect(status).toHaveText('Connected to OpenRouter. The model reached the test’s output limit before returning a reply.')
+  await expect(page.getByRole('region', { name: 'Model test reply' })).toHaveCount(0)
+  await expect(page.getByRole('dialog')).not.toContainText('Private model reasoning')
+  expect(calls).toBe(2)
+  reply = 'rejected'; await button.click()
+  await expect(status).toHaveText('Check your API key above.')
+  await expect(keyInput).toBeFocused()
+  expect(calls).toBe(3)
+  expect(await page.evaluate(() => localStorage.getItem('vl-settings-v2'))).toBeNull()
+})
+
 test('provider IDs are chosen explicitly and bad test replies do not masquerade as a successful model check', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 568 })
   const requests: string[] = []
